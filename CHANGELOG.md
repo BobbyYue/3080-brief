@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+### Changed
+
+- Replaced the Codex-only installation flow with agent-agnostic GitHub, manual-folder, and upload instructions for Agent Skills-compatible clients.
+
 ## [0.1.0] - 2026-07-13
 
 ### Added

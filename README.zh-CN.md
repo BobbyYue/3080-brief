@@ -30,17 +30,47 @@
 
 ## 安装
 
-可以直接让 Codex 从本仓库的 `skills/3080-brief` 路径安装该 skill。
+`3080-brief` 遵循开放的 [Agent Skills](https://agentskills.io/) 文件夹格式，可用于任何支持该格式的 Agent。不同 Agent 的安装命令、Skill 目录和重新加载方式并不相同；具体产品说明可查看官方 [Client Showcase](https://agentskills.io/clients)。
 
-也可以使用 Codex 自带安装器：
+### 方式一：直接让 Agent 安装
 
-```bash
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
-  --repo BobbyYue/3080-brief \
-  --path skills/3080-brief
+如果你的 Agent 支持从 GitHub 安装 Skill，可以向它发送：
+
+```text
+请安装 https://github.com/BobbyYue/3080-brief 中的 Agent Skill，
+Skill 子目录是 skills/3080-brief。请保留完整目录，将其注册到你的 Skill 目录，
+并告诉我安装后是否需要重新加载或重启。
 ```
 
-安装后重启 Codex，使新 skill 完成注册。
+### 方式二：手动安装完整目录
+
+```bash
+git clone --depth 1 https://github.com/BobbyYue/3080-brief.git
+cp -R ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-brief"
+```
+
+Windows PowerShell：
+
+```powershell
+git clone --depth 1 https://github.com/BobbyYue/3080-brief.git
+Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-brief"
+```
+
+将 `<YOUR_AGENT_SKILLS_DIR>` 替换成该 Agent 文档规定的用户级或项目级 Skill 目录。必须复制完整的 `skills/3080-brief`，不能只复制 `SKILL.md`，因为运行还需要 `scripts/`、`references/`、`config/` 和 `evals/`。如果产品文档要求，安装后重新加载或重启 Agent。
+
+### 方式三：在 Web 或桌面客户端上传
+
+下载[最新 Release](https://github.com/BobbyYue/3080-brief/releases/latest)并解压，通过客户端的 Skill 导入入口上传 `skills/3080-brief`。除非客户端明确支持仓库子路径，否则不要直接上传整个仓库根目录。
+
+### 验证安装
+
+确认安装后的 Skill 根目录包含 `SKILL.md`，然后发送：
+
+```text
+请使用 $3080-brief，把这份文档新建为读者视角决策简报。
+```
+
+如果某个 Agent 尚未原生支持 Agent Skills，可以把完整 Skill 目录作为项目上下文提供给它，并要求其遵循 `SKILL.md`。核心指令仍可使用，但自动发现、按需加载资源、执行脚本和依赖审批能力取决于宿主 Agent。
 
 ## 触发样例
 
@@ -74,7 +104,7 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/inst
 
 缺少这些依赖只会阻断飞书路径。skill 会展示准确来源、版本、安装目录、联网/文件影响和命令，并向用户申请明确许可，不会静默安装。
 
-## 验证
+## 开发验证
 
 运行完整离线测试：
 

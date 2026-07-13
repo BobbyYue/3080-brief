@@ -30,17 +30,47 @@ The example above contains synthetic evaluation data only.
 
 ## Install
 
-Ask Codex to install the skill from this repository at `skills/3080-brief`.
+`3080-brief` follows the open [Agent Skills](https://agentskills.io/) folder format. It can be used by any agent that supports this format; the install command, skills directory, and reload behavior vary by client. See the official [client showcase](https://agentskills.io/clients) for client-specific documentation.
 
-Or use the bundled Codex skill installer:
+### Option 1: ask your agent
 
-```bash
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
-  --repo BobbyYue/3080-brief \
-  --path skills/3080-brief
+Send this instruction to an agent that can install skills from GitHub:
+
+```text
+Install the Agent Skill from https://github.com/BobbyYue/3080-brief,
+using the subdirectory skills/3080-brief. Preserve the complete skill folder,
+register it in your skills directory, and tell me whether a reload is required.
 ```
 
-Restart Codex after installation so the skill is registered.
+### Option 2: install the folder manually
+
+```bash
+git clone --depth 1 https://github.com/BobbyYue/3080-brief.git
+cp -R ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-brief"
+```
+
+Windows PowerShell:
+
+```powershell
+git clone --depth 1 https://github.com/BobbyYue/3080-brief.git
+Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-brief"
+```
+
+Replace `<YOUR_AGENT_SKILLS_DIR>` with the user-level or project-level skills directory documented by your agent. Copy the **entire** `skills/3080-brief` folder—not only `SKILL.md`—because the skill also uses its `scripts/`, `references/`, `config/`, and `evals/` resources. Reload or restart the agent if its documentation requires it.
+
+### Option 3: upload in a web or desktop client
+
+Download the [latest release](https://github.com/BobbyYue/3080-brief/releases/latest), extract it, and upload `skills/3080-brief` through the client's Skill import UI. Do not upload the repository root unless the client explicitly supports repository subpaths.
+
+### Verify the installation
+
+Confirm that the installed skill root contains `SKILL.md`, then ask:
+
+```text
+Use $3080-brief to turn this document into a reader-first decision brief.
+```
+
+If an agent does not natively support Agent Skills, provide the complete skill folder as project context and instruct it to follow `SKILL.md`. Core instructions remain usable, but automatic discovery, conditional resource loading, script execution, and dependency approval depend on the host agent.
 
 ## Try it
 
@@ -74,7 +104,7 @@ Feishu/Lark output additionally requires:
 
 Missing Feishu dependencies block only the Feishu path. The skill displays the exact source, version, destination, network/file effects, and command, then asks for explicit installation approval. It does not silently install dependencies.
 
-## Verify
+## Development verification
 
 Run the complete offline test suite:
 
@@ -97,7 +127,7 @@ python3 skills/3080-brief/scripts/check_dependencies.py --mode feishu --json
 ## Repository layout
 
 ```text
-skills/3080-brief/   installable Codex skill
+skills/3080-brief/   installable Agent Skill
 docs/assets/         public, synthetic examples
 .github/workflows/   offline CI
 ```
