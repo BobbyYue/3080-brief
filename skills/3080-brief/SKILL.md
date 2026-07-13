@@ -13,7 +13,7 @@ Create a new reader-first decision brief from a source document. Match the sourc
 
 Open with `TLDR`, or a short source-language equivalent explicitly requested by the user. It contains exactly three core units:
 
-1. **一句话 / one-sentence summary**: a short Pyramid opening that gives the core judgment, decisive evidence/value, and next action or boundary within 30 seconds.
+1. **一句话 / one-sentence judgment**: the first line carries exactly one highest-level judgment; 1–3 short lines may follow only as evidence, action, or boundary support. Together they form one opening unit that works within 30 seconds.
 2. **一张图 / one-picture summary**: one auditable visual covering at least 80% of value-weighted non-appendix claims; Feishu/Lark uses an editable whiteboard.
 3. **一个表 / one key-question table**: 3–5 source-grounded questions using `问题 / 结论 / 为什么` or `Question / Conclusion / Why`.
 
@@ -68,7 +68,7 @@ Ask before drafting only when uncertainty can change the main conclusion, metric
 
 ### 4. Draft For The Reader
 
-Identify decision-maker, cross-functional, domain, implementer, and skeptical-reader gaps that actually matter. Structure the body from the source logic and reader decision path; make headings short judgments whose scan order explains the argument. Use a 2–4-line Pyramid opening by default, one information unit per line. Keep the question table inside TLDR; split dense rows or move detail to the body. Apply semantic meaning before color and retain signs/arrows/wording as non-color cues.
+Identify decision-maker, cross-functional, domain, implementer, and skeptical-reader gaps that actually matter. Structure the body from the source logic and reader decision path; make headings short judgments whose scan order explains the argument. Start the Pyramid opening with one primary judgment line, followed by 1–3 short evidence/action/boundary support lines; support lines must not introduce a second peer conclusion. Keep the question table inside TLDR; split dense rows or move detail to the body. Apply semantic meaning before color and retain signs/arrows/wording as non-color cues.
 
 ### 5. Design The Visual
 

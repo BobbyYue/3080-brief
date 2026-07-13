@@ -64,9 +64,16 @@
     },
     {
       "id": "TLDR-01",
-      "requirement": "TLDR contains exactly one-sentence, one-picture, and one-table units.",
+      "requirement": "TLDR contains one opening unit with exactly one primary judgment plus 1-3 evidence/action/boundary support lines, one picture, and one table.",
       "owner": {"file": "config/3080-brief.json", "marker": "\"tldr\""},
-      "enforced_by": ["scripts/preflight_check.py", "evals/fixtures/invalid-missing-tldr.md", "scripts/run_evals.py"]
+      "enforced_by": [
+        "scripts/preflight_check.py",
+        "evals/fixtures/invalid-missing-tldr.md",
+        "evals/fixtures/invalid-opening-two-blocks.md",
+        "evals/fixtures/invalid-opening-too-many-support-lines.md",
+        "evals/fixtures/invalid-opening-no-support.xml",
+        "scripts/run_evals.py"
+      ]
     },
     {
       "id": "VIS-01",

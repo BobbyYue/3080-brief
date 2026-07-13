@@ -88,7 +88,7 @@ Use three independent reviewer roles:
 
 1. **Reader Comprehension Reviewer**
    - Persona: mixed reader layer, including decision maker, cross-functional reader, domain reader, implementer, and capable novice.
-   - Focus: whether the document can be understood, whether the one-sentence summary lets readers get the source document's core value within 30 seconds, whether the opening follows Pyramid Principle instead of a reusable template, whether the key-question table answers what readers most want to ask while reading, whether the body follows SUCCESs Framework and Stepwise Information Delivery, whether Novice Reverse Review catches jargon/background gaps, and whether reader questions are anticipated.
+   - Focus: whether the document can be understood; whether the first opening line contains exactly one highest-level judgment; whether its 1–3 support lines contain only evidence, action, or boundary rather than a second peer conclusion; whether the opening works within 30 seconds and follows Pyramid Principle instead of a reusable template; whether the key-question table answers what readers most want to ask; whether the body follows SUCCESs Framework and Stepwise Information Delivery; and whether Novice Reverse Review catches jargon/background gaps.
 
 2. **Source Coverage And Grounding Reviewer**
    - Persona: source auditor.
@@ -150,7 +150,7 @@ Role-specific pass conditions:
   - Reader confusion risks are non-blocking or resolved.
   - A reader can understand the opening without reading implementation details.
   - The opening `TLDR` section contains the one-sentence summary, one-picture summary, and one compact key-question table.
-  - The one-sentence summary makes the source document's core value clear within 30 seconds.
+  - The one-sentence judgment makes the source document's core value clear within 30 seconds; its support lines add only evidence, action, or boundary and do not introduce a second peer conclusion.
   - The key-question table answers the questions readers most want to ask while reading and explains necessary terms/口径 without becoming a separate body section.
   - The key-question table uses output-language reader-facing headers: `问题 / 结论 / 为什么` for Chinese or `Question / Conclusion / Why` for English; it does not use method labels such as `读者最想问`, `理解口径`, or `必要术语/口径`.
   - The key-question table is visually readable; if any cell needs more than 3 visual lines, the row height/vertical spacing is increased, the row is split, or detail is moved into the body.

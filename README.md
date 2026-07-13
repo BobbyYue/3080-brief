@@ -11,7 +11,7 @@ Source-grounded decision briefs that help readers understand the conclusion quic
 
 `3080-brief` turns a source document into a new, reader-first brief without modifying the source. Its opening has exactly three units:
 
-1. a concise Pyramid-style takeaway;
+1. one primary judgment sentence followed by 1–3 short evidence, action, or boundary support lines;
 2. one auditable visual covering at least 80% of value-weighted, non-appendix claims;
 3. one key-question table answering what readers are most likely to ask.
 

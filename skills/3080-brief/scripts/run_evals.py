@@ -46,6 +46,34 @@ def main():
         "--source-inventory", str(inventory_zh),
     )
     run(sys.executable, str(SCRIPTS / "preflight_check.py"), str(FIXTURES / "invalid-missing-tldr.md"), "--source-inventory", str(inventory_zh), expect=1)
+    two_openings = run(
+        sys.executable,
+        str(SCRIPTS / "preflight_check.py"),
+        str(FIXTURES / "invalid-opening-two-blocks.md"),
+        "--source-inventory", str(inventory_zh),
+        expect=1,
+    )
+    if "exactly one opening callout block" not in two_openings.stdout:
+        raise SystemExit("preflight did not reject two peer opening blocks")
+    too_many_support = run(
+        sys.executable,
+        str(SCRIPTS / "preflight_check.py"),
+        str(FIXTURES / "invalid-opening-too-many-support-lines.md"),
+        "--source-inventory", str(inventory_zh),
+        expect=1,
+    )
+    if "1-3 support lines" not in too_many_support.stdout:
+        raise SystemExit("preflight did not reject an oversized opening support block")
+    no_xml_support = run(
+        sys.executable,
+        str(SCRIPTS / "preflight_check.py"),
+        str(FIXTURES / "invalid-opening-no-support.xml"),
+        "--format", "xml",
+        "--source-inventory", str(inventory_zh),
+        expect=1,
+    )
+    if "1-3 support lines" not in no_xml_support.stdout:
+        raise SystemExit("preflight did not reject an XML opening with no support line")
     run(sys.executable, str(SCRIPTS / "preflight_check.py"), str(FIXTURES / "invalid-audience-heading.md"), "--source-inventory", str(inventory_zh), expect=1)
     warning_result = run(sys.executable, str(SCRIPTS / "preflight_check.py"), str(FIXTURES / "warning-vague-brief.md"), "--source-inventory", str(inventory_zh))
     if "discouraged vague phrase" not in warning_result.stdout:
@@ -410,6 +438,16 @@ def main():
         raise SystemExit("blind-reader replay roles are incomplete")
     if len(replay.get("escalation_conditions", [])) != 6:
         raise SystemExit("blind-reader replay escalation gate is incomplete")
+    opening = config.get("tldr", {}).get("opening_unit", {})
+    if opening != {
+        "primary_judgment_count": 1,
+        "support_lines_min": 1,
+        "support_lines_max": 3,
+        "allowed_support_roles": ["evidence", "action", "boundary"],
+    }:
+        raise SystemExit("TLDR opening-unit contract is missing or inconsistent")
+    if {"default_summary_lines_min", "default_summary_lines_max"} & set(config.get("tldr", {})):
+        raise SystemExit("legacy summary-line configuration must not return")
     language_policy = config.get("language_policy", {})
     if language_policy.get("default_output_basis") != "source_primary_language":
         raise SystemExit("language policy default must follow source primary language")

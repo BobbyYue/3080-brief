@@ -52,8 +52,12 @@
     "default_title": "TLDR",
     "default_table_headers": ["问题", "结论", "为什么"],
     "english_table_headers": ["Question", "Conclusion", "Why"],
-    "default_summary_lines_min": 2,
-    "default_summary_lines_max": 4,
+    "opening_unit": {
+      "primary_judgment_count": 1,
+      "support_lines_min": 1,
+      "support_lines_max": 3,
+      "allowed_support_roles": ["evidence", "action", "boundary"]
+    },
     "questions_min": 3,
     "questions_max": 5
   },

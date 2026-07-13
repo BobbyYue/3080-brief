@@ -143,6 +143,45 @@ def markdown_table_info(lines):
     return tables
 
 
+def markdown_callout_blocks(lines):
+    blocks = []
+    cursor = 0
+    source_pattern = re.compile(r"^(来源|Source)\s*[:：]", re.I)
+    while cursor < len(lines):
+        if not lines[cursor].lstrip().startswith(">"):
+            cursor += 1
+            continue
+        start = cursor
+        content = []
+        while cursor < len(lines) and lines[cursor].lstrip().startswith(">"):
+            value = re.sub(r"^\s*>\s?", "", lines[cursor]).strip()
+            if source_pattern.match(value):
+                content = []
+                break
+            if value:
+                content.append(value)
+            cursor += 1
+        if content:
+            blocks.append((start, content))
+        if cursor == start:
+            cursor += 1
+    return blocks
+
+
+def add_opening_unit_errors(opening_lines, line, config, errors):
+    contract = config["tldr"]["opening_unit"]
+    primary_count = contract["primary_judgment_count"]
+    support_count = len(opening_lines) - primary_count
+    minimum = contract["support_lines_min"]
+    maximum = contract["support_lines_max"]
+    if len(opening_lines) < primary_count or not minimum <= support_count <= maximum:
+        errors.append((
+            line,
+            f"opening unit must contain {primary_count} primary judgment and {minimum}-{maximum} support lines",
+            f"found {len(opening_lines)} total lines",
+        ))
+
+
 def check_markdown(text, config, errors, warnings):
     lines = text.splitlines()
     headings = []
@@ -174,7 +213,8 @@ def check_markdown(text, config, errors, warnings):
     next_heading = next((index for index, _, _ in headings if index > tldr_index), len(lines))
     section = lines[tldr_index + 1:next_heading]
     section_offset = tldr_index + 1
-    summary_positions = [i for i, line in enumerate(section) if line.lstrip().startswith(">") and not re.match(r"^>\s*(来源|Source)\s*[:：]", line, re.I)]
+    opening_blocks = markdown_callout_blocks(section)
+    summary_positions = [start for start, _ in opening_blocks]
     picture_positions = [
         i for i, line in enumerate(section)
         if "<whiteboard" in line or re.search(r"!\[[^]]*\]\([^)]+\)", line) or re.search(r"<img\b", line, re.I)
@@ -184,6 +224,10 @@ def check_markdown(text, config, errors, warnings):
 
     if not summary_positions:
         errors.append((tldr_index + 2, "missing one-sentence/Pyramid opening callout", ""))
+    elif len(opening_blocks) != 1:
+        errors.append((section_offset + opening_blocks[1][0] + 1, "TLDR must contain exactly one opening callout block", str(len(opening_blocks))))
+    else:
+        add_opening_unit_errors(opening_blocks[0][1], section_offset + opening_blocks[0][0] + 1, config, errors)
     if not picture_positions:
         errors.append((tldr_index + 2, "missing one-picture summary", ""))
     elif len(picture_positions) != 1:
@@ -318,6 +362,10 @@ def check_xml(text, config, errors, warnings):
         positions = [tags.index(tag) for tag in required]
         if positions != sorted(positions):
             errors.append((1, "TLDR order must be callout -> whiteboard -> table", ""))
+    callout_nodes = [node for node in section if node.tag == "callout"]
+    if len(callout_nodes) == 1:
+        opening_lines = [element_text(node) for node in callout_nodes[0].findall(".//p") if element_text(node)]
+        add_opening_unit_errors(opening_lines, 1, config, errors)
     source_nodes = [node for node in section if node.tag in {"blockquote", "p"} and re.match(r"^(来源|Source)\s*[:：]", element_text(node), re.I)]
     if not source_nodes:
         errors.append((1, "missing compact source citation in TLDR", ""))
