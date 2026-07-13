@@ -6,6 +6,7 @@ SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 python3 "$SCRIPT_DIR/check_dependencies.py" --mode core
 python3 "$SCRIPT_DIR/validate_skill.py" "$SKILL_DIR"
+python3 "$SCRIPT_DIR/check_context_budget.py" "$SKILL_DIR"
 python3 "$SCRIPT_DIR/run_evals.py"
 
 CODEX_ROOT="${CODEX_HOME:-$HOME/.codex}"

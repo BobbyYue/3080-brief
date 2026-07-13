@@ -26,6 +26,7 @@ The example above contains synthetic evaluation data only.
 - Format-aware: Feishu/Lark creates a new Feishu/Lark document; Word creates a new `.docx`; Markdown creates new Markdown.
 - Visual by design: the opening visual is editable in Feishu and is checked against a value-weighted claim ledger.
 - Reviewable: deterministic preflight, three independent review roles, and blind-reader replay are part of the release gate.
+- Lean by default: normal runtime loads only `SKILL.md` (currently 11.4KB); detailed references load only when their branch is reached.
 
 ## Install
 
@@ -79,6 +80,12 @@ Run the complete offline test suite:
 
 ```bash
 bash skills/3080-brief/scripts/self_test.sh
+```
+
+Check the single-owner capability ledger and runtime context budget directly:
+
+```bash
+python3 skills/3080-brief/scripts/check_context_budget.py skills/3080-brief --json
 ```
 
 Check the current Feishu dependency state without installing anything:

@@ -26,6 +26,7 @@
 - 格式匹配：飞书输入默认新建飞书文档，Word 输入默认新建 `.docx`，Markdown 输入默认新建 Markdown。
 - 图不是装饰：使用价值加权 claim ledger 校验一张图的覆盖率；飞书画板保持可编辑。
 - 有发布门禁：包含确定性预检、三个独立审阅角色和盲读者复述。
+- 默认加载轻量：正常运行只加载 `SKILL.md`（当前 11.4KB），细则只在进入对应分支时读取。
 
 ## 安装
 
@@ -79,6 +80,12 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/inst
 
 ```bash
 bash skills/3080-brief/scripts/self_test.sh
+```
+
+单独检查能力唯一归属与运行上下文预算：
+
+```bash
+python3 skills/3080-brief/scripts/check_context_budget.py skills/3080-brief --json
 ```
 
 只检查飞书依赖状态，不执行安装：

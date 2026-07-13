@@ -32,6 +32,7 @@ def main():
     inventory_zh = FIXTURES / "inventory-zh-source.md"
 
     run(sys.executable, str(SCRIPTS / "validate_skill.py"), str(SKILL))
+    run(sys.executable, str(SCRIPTS / "check_context_budget.py"), str(SKILL))
     run(sys.executable, str(SCRIPTS / "check_dependencies.py"), "--mode", "core")
 
     run(sys.executable, str(SCRIPTS / "preflight_check.py"), str(FIXTURES / "valid-brief.md"), "--source-inventory", str(inventory_zh))
@@ -419,8 +420,7 @@ def main():
     replay_path = SKILL / "references" / "blind-reader-replay.md"
     if not replay_path.is_file() or "Run Blind Reader Replay only after" not in replay_path.read_text(encoding="utf-8"):
         raise SystemExit("blind-reader replay reference is missing")
-    runtime_text = (SKILL / "references" / "runtime-core.md").read_text(encoding="utf-8")
-    if "## Blind Reader Replay" not in runtime_text or "### 7. Run Blind Reader Replay" not in skill_text:
+    if "### 7. Replay Reader Understanding" not in skill_text or "references/blind-reader-replay.md" not in skill_text:
         raise SystemExit("blind-reader replay is not connected to the runtime workflow")
     print("3080-brief evals PASS")
 

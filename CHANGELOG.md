@@ -16,3 +16,9 @@ All notable changes to this project are documented here. The project follows [Se
 - Balanced trigger evaluation fixtures and offline self-test.
 - Approval-gated dependency diagnostics for Feishu CLIs and `beautiful-feishu-whiteboard`.
 - Bilingual project documentation and GitHub community files.
+
+### Changed
+
+- Replaced three mandatory runtime documents with one 11.4KB `SKILL.md` execution kernel and conditional reference routing.
+- Added a 12-capability single-owner contract plus CI-enforced 15KB/200-line context budget.
+- Retired the duplicated `runtime-core` and user-supplement synchronization chain after migrating their unique rules.
