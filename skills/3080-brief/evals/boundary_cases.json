@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "skill_name": "3080-brief",
+  "policy": "These cases require a product-boundary decision before they can enter automated trigger scoring. Do not expose recommended labels or reasoning to an evaluated agent.",
+  "cases": [
+    {
+      "id": "boundary-executive-onepager-01",
+      "status": "policy_review",
+      "query": "把这份技术方案做成高管能快速看懂的一页纸。",
+      "question": "没有明确要求一张图时，高管、快速看懂和一页纸是否足以隐式触发？",
+      "recommended_label": true,
+      "reason": "这些信号强烈暗示 reader-first decision brief；触发后可按 3080 默认补全一图和问答表。"
+    },
+    {
+      "id": "boundary-decision-summary-02",
+      "status": "policy_review",
+      "query": "给我一份面向决策者的新摘要文档。",
+      "question": "只有决策者和新文档信号，是否足以区别于普通摘要？",
+      "recommended_label": false,
+      "reason": "缺少快速判断、一图、一页纸或 reader-first 重建等信号，当前更像普通摘要。"
+    },
+    {
+      "id": "boundary-tldr-visual-03",
+      "status": "policy_review",
+      "query": "给这个飞书文档加一个 TLDR 和一张总览图。",
+      "question": "“给文档加”是在原文内编辑，还是创建新产物？",
+      "recommended_label": false,
+      "reason": "默认语义更接近编辑原文；只有用户明确要求新文档后才应触发。"
+    },
+    {
+      "id": "boundary-critique-and-regenerate-04",
+      "status": "policy_review",
+      "query": "先评审这份现有 3080 Brief，再根据问题重新生成一个改进版本。",
+      "question": "包含审阅现有产物但最终要求新版本时，是否由 3080 接管完整任务？",
+      "recommended_label": true,
+      "reason": "最终目标是创建新的来源驱动决策简报，但需要明确原始来源是否可用。"
+    }
+  ]
+}

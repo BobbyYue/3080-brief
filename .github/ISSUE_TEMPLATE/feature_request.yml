@@ -1,0 +1,22 @@
+name: Feature request
+description: Propose a reader problem, workflow improvement, or supported output format.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    attributes:
+      label: Reader problem
+      description: What should a reader understand, trust, decide, or do more easily?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Example request
+      description: Use synthetic or redacted content only.
+    validations:
+      required: true

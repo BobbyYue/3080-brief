@@ -1,0 +1,177 @@
+{
+  "version": 1,
+  "skill_name": "3080-brief",
+  "evaluation": {
+    "runs_per_case": 3,
+    "positive_min_trigger_rate": 0.67,
+    "negative_max_trigger_rate": 0.33,
+    "hard_negative_max_trigger_rate": 0.0,
+    "validation_min_balanced_accuracy": 0.9,
+    "runner_contract": "Pass only query to the agent. Keep labels, categories, rationales, and thresholds hidden from the evaluated agent. Detect whether 3080-brief/SKILL.md was loaded from the client trace; do not infer triggering from response wording."
+  },
+  "cases": [
+    {
+      "id": "trigger-explicit-lark-zh-01",
+      "split": "train",
+      "should_trigger": true,
+      "category": "explicit_alias",
+      "query": "使用 3080-brief 总结这个飞书文档，原文不要动，生成一个新文档。",
+      "rationale": "明确点名 skill，提供来源类型，并要求创建新简报且保持原文不变。"
+    },
+    {
+      "id": "trigger-explicit-word-zh-02",
+      "split": "validation",
+      "should_trigger": true,
+      "category": "explicit_alias",
+      "query": "用 3080skill 处理 ~/Downloads/experiment-review.docx，另存一份同格式的决策简报。",
+      "rationale": "使用明确别名，并要求从 Word 来源创建同格式新简报。"
+    },
+    {
+      "id": "trigger-implicit-full-intent-zh-03",
+      "split": "train",
+      "should_trigger": true,
+      "category": "implicit_full_intent",
+      "query": "这份实验复盘太长了，请重新做一份跨团队决策简报：30 秒能判断结论，一张图看懂主要证据，再回答大家最可能问的几个问题。",
+      "rationale": "没有点名 skill，但完整表达了 30 秒判断、一图总结和关键问题表的核心意图。"
+    },
+    {
+      "id": "trigger-executive-onepager-zh-04",
+      "split": "validation",
+      "should_trigger": true,
+      "category": "executive_onepager",
+      "query": "把这份技术方案转换成一份给产品和管理层阅读的一页纸。需要先讲判断，再用一张图说明收益、风险和下一步；不要修改原文件。",
+      "rationale": "要求从来源创建新的读者视角决策一页纸，并明确一图、判断和原文不变。"
+    },
+    {
+      "id": "trigger-data-analysis-zh-05",
+      "split": "train",
+      "should_trigger": true,
+      "category": "data_analysis",
+      "query": "基于这份增长实验分析新建一个 brief，保留样本、周期和指标口径，把核心效果和风险做成一张可审计的图，方便评审会直接决策。",
+      "rationale": "数据分析来源、决策用途、新文档和可审计视觉均与 skill 定位一致。"
+    },
+    {
+      "id": "trigger-technical-design-zh-06",
+      "split": "train",
+      "should_trigger": true,
+      "category": "technical_design",
+      "query": "请把这份架构设计整理成新的读者视角决策简报，让不熟悉实现的协作方先看懂为什么要改、关键取舍和风险，再决定是否推进。",
+      "rationale": "技术方案被转换为面向跨职能读者的来源驱动决策简报。"
+    },
+    {
+      "id": "trigger-product-plan-zh-07",
+      "split": "validation",
+      "should_trigger": true,
+      "category": "product_plan",
+      "query": "为这个产品规划另做一份 30 秒可读的管理层版本，用一张图串起目标、证据、优先级和边界，再放一个简短问答表。",
+      "rationale": "明确要求新版本、快速判断、一图和问答表。"
+    },
+    {
+      "id": "trigger-casual-language-zh-08",
+      "split": "train",
+      "should_trigger": true,
+      "category": "casual_language",
+      "query": "这个方案写得太绕了，帮我另做一份让老板半分钟能看懂的版本，最好一张图把结论、依据和风险串起来，原稿别动。",
+      "rationale": "口语化表达仍包含新简报、30 秒阅读、一图总结和不修改来源。"
+    },
+    {
+      "id": "trigger-buried-long-context-zh-09",
+      "split": "validation",
+      "should_trigger": true,
+      "category": "buried_in_long_context",
+      "query": "下周要做跨部门评审，参会人包括商业化、产品、算法和财务，大多数人不了解项目背景。请先完整读取我给的评估文档和其中的图表，不使用附录内容，然后创建一份新的决策 brief：开头要能快速判断，一张图覆盖主要结论、证据和风险，并回答参会人最可能追问的问题。",
+      "rationale": "触发意图埋在长上下文中，但来源、读者、新简报、快速判断和一图总结均明确。"
+    },
+    {
+      "id": "trigger-implicit-english-10",
+      "split": "train",
+      "should_trigger": true,
+      "category": "english_implicit",
+      "query": "Turn this product review into a new reader-first decision brief with a 30-second judgment, one evidence-backed visual, and a compact question table. Keep the source unchanged.",
+      "rationale": "英文隐式请求完整表达 skill 的来源、新文档、读者、视觉和原文保护要求。"
+    },
+    {
+      "id": "no-trigger-edit-source-zh-01",
+      "split": "train",
+      "should_trigger": false,
+      "hard_negative": true,
+      "category": "edit_in_place",
+      "query": "直接修改这份原文，在开头增加一个 30 秒摘要和一张图，不要创建新文档。",
+      "rationale": "明确要求编辑原文，违反只创建新简报的边界。"
+    },
+    {
+      "id": "no-trigger-generic-summary-zh-02",
+      "split": "validation",
+      "should_trigger": false,
+      "category": "generic_summary",
+      "query": "给老板写一个三句话摘要，不用做图、表格或新文档。",
+      "rationale": "这是普通短摘要，并显式排除了 3080 的核心输出。"
+    },
+    {
+      "id": "no-trigger-whiteboard-only-zh-03",
+      "split": "train",
+      "should_trigger": false,
+      "hard_negative": true,
+      "category": "whiteboard_only",
+      "query": "基于这份文档只画一张覆盖 80% 信息的白板，不要生成总结文档。",
+      "rationale": "仅要求白板，没有新决策简报。"
+    },
+    {
+      "id": "no-trigger-review-existing-zh-04",
+      "split": "train",
+      "should_trigger": false,
+      "category": "review_existing",
+      "query": "检查这份现有 3080 Brief 有没有遗漏数据，只给我审阅意见，不要重新生成。",
+      "rationale": "任务是审查现有产物而不是从来源创建新简报。"
+    },
+    {
+      "id": "no-trigger-explain-method-zh-05",
+      "split": "validation",
+      "should_trigger": false,
+      "category": "explain_method",
+      "query": "3080-brief 里的 30 和 80 分别是什么意思？给我解释一下方法。",
+      "rationale": "这是知识问答，不是执行简报生成工作流。"
+    },
+    {
+      "id": "no-trigger-explicit-negation-zh-06",
+      "split": "train",
+      "should_trigger": false,
+      "hard_negative": true,
+      "category": "explicit_negation",
+      "query": "不要使用 3080-brief，只需要把这份文档压缩成三个 bullet。",
+      "rationale": "用户明确否定使用 skill，别名不应覆盖否定意图。"
+    },
+    {
+      "id": "no-trigger-presentation-zh-07",
+      "split": "validation",
+      "should_trigger": false,
+      "category": "adjacent_presentation",
+      "query": "把这份方案做成一页 PPT，突出三个卖点并加演讲备注。",
+      "rationale": "目标产物是演示文稿，不是 3080 决策简报。"
+    },
+    {
+      "id": "no-trigger-chart-only-zh-08",
+      "split": "train",
+      "should_trigger": false,
+      "category": "chart_only",
+      "query": "读取文档里的实验数据，单独画一个趋势图，不需要总结或决策建议。",
+      "rationale": "只需要数据图，没有 reader-first brief。"
+    },
+    {
+      "id": "no-trigger-translation-zh-09",
+      "split": "train",
+      "should_trigger": false,
+      "category": "translation",
+      "query": "把这份产品文档翻译成英文，保持原有结构和格式，不要重新组织内容。",
+      "rationale": "任务是翻译和格式保持，不是重建决策叙事。"
+    },
+    {
+      "id": "no-trigger-document-comparison-zh-10",
+      "split": "validation",
+      "should_trigger": false,
+      "category": "document_comparison",
+      "query": "比较这两份方案文档，列出结论和指标差异，不要创建新的总结文档。",
+      "rationale": "任务是文档比较，且明确不创建新总结。"
+    }
+  ]
+}

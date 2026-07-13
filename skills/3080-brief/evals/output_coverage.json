@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "skill_name": "3080-brief",
+  "source_archetypes": [
+    "data analysis",
+    "product plan",
+    "technical design",
+    "current-state inventory",
+    "risk review"
+  ],
+  "failure_archetypes": [
+    "missing denominator",
+    "conflicting metrics",
+    "appendix contamination",
+    "embedded chart not inspected",
+    "chartable metrics rendered as boxes and prose",
+    "source/output language mismatch inferred from conversation language"
+  ]
+}

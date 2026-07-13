@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="758" viewBox="0 0 1600 758">
+<defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0 0 L10 4 L0 8 z"/></marker></defs>
+<rect x="0" y="0" width="1600" height="758" fill="#FFFFFF"/>
+<text x="70" y="68" font-size="42" font-weight="800" fill="#172033" text-anchor="start">3080 Brief</text>
+<text x="70" y="112" font-size="24" font-weight="650" fill="#0055A4" text-anchor="start">30-second judgment, 80% in one picture</text>
+<rect x="60" y="129" width="1480" height="250" rx="8" fill="#FFFFFF" stroke="#D6DAE3"/>
+<text x="95" y="165" font-size="24" font-weight="700" fill="#172033" text-anchor="start">分层比较揭示有效差异</text>
+<text x="95" y="228" font-size="17" font-weight="600" fill="#172033" text-anchor="start">汇总</text>
+<rect x="245" y="210" width="735.0" height="22" rx="3" fill="#1456F0"/>
+<text x="990.0" y="228" font-size="17" font-weight="700" fill="#1456F0" text-anchor="start">42</text>
+<text x="95" y="260" font-size="17" font-weight="600" fill="#172033" text-anchor="start">分层</text>
+<rect x="245" y="242" width="1190.0" height="22" rx="3" fill="#2EA121"/>
+<text x="1445.0" y="260" font-size="17" font-weight="700" fill="#2EA121" text-anchor="start">68</text>
+<rect x="60" y="407" width="1480" height="250" rx="8" fill="#FFFFFF" stroke="#D6DAE3"/>
+<text x="95" y="443" font-size="24" font-weight="700" fill="#172033" text-anchor="start">通过验证阈值后再扩大范围</text>
+<rect x="135" y="508" width="997.5" height="28" rx="4" fill="#E9EDF4"/>
+<rect x="1132.5" y="508" width="332.5" height="28" rx="4" fill="#DCF4A2"/>
+<line x1="1132.5" y1="488" x2="1132.5" y2="558" stroke="#172033" stroke-width="3"/>
+<circle cx="1039.4" cy="522" r="11" fill="#DE7802"/>
+<text x="1132.5" y="578" font-size="17" font-weight="600" fill="#172033" text-anchor="middle">Required 75</text>
+<text x="1039.4" y="608" font-size="17" font-weight="700" fill="#DE7802" text-anchor="middle">Current 68</text>
+<text x="135" y="648" font-size="17" font-weight="500" fill="#172033" text-anchor="start">Synthetic values are used only for script evaluation.</text>
+</svg>

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "3080 Brief Visual Spec",
+  "type": "object",
+  "required": ["title", "language", "style", "reading_path", "blocks"],
+  "properties": {
+    "title": {"type": "string"},
+    "language": {"type": "string", "minLength": 2},
+    "style": {"type": "string"},
+    "reading_path": {"type": "string"},
+    "palette": {
+      "type": "object",
+      "properties": {
+        "primary": {"type": "string"},
+        "accent": {"type": "string"},
+        "risk": {"type": "string"},
+        "background": {"type": "string"},
+        "text": {"type": "string"}
+      }
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "claim_ids", "title"],
+        "properties": {
+          "id": {"type": "string"},
+          "type": {"enum": ["bar", "dot", "threshold", "matrix", "timeline", "flow", "annotation"]},
+          "claim_ids": {"type": "array", "items": {"type": "string"}},
+          "title": {"type": "string"},
+          "semantic_direction": {"enum": ["favorable", "unfavorable", "warning", "neutral", "unknown"]},
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "semantic_direction": {"enum": ["favorable", "unfavorable", "warning", "neutral", "unknown"]}
+              }
+            }
+          },
+          "rows": {"type": "array"},
+          "columns": {"type": "array"},
+          "cells": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "semantic_direction": {"enum": ["favorable", "unfavorable", "warning", "neutral", "unknown"]}
+              }
+            }
+          },
+          "minimum": {"type": "number"},
+          "maximum": {"type": "number"},
+          "threshold": {"type": "number"},
+          "value": {"type": "number"},
+          "note": {"type": "string"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdict", "summary", "blocking_issues", "non_blocking_issues"],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["PASS", "FAIL"]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "blocking_issues": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "non_blocking_issues": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

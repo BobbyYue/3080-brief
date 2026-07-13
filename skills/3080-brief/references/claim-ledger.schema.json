@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "3080 Brief Claim Ledger",
+  "type": "object",
+  "required": ["source", "claims"],
+  "properties": {
+    "source": {
+      "type": "object",
+      "required": ["title", "location", "language", "output_language", "output_language_basis"],
+      "properties": {
+        "title": {"type": "string"},
+        "location": {"type": "string"},
+        "language": {"type": "string", "minLength": 2},
+        "output_language": {"type": "string", "minLength": 2},
+        "output_language_basis": {"enum": ["source_primary_language", "explicit_user_request"]},
+        "explicit_language_override_evidence": {"type": "string"}
+      }
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "claim", "priority", "source_location", "board_status"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^C[0-9]{2,}$"},
+          "claim": {"type": "string"},
+          "priority": {"enum": ["P0", "P1", "P2"]},
+          "kind": {"enum": ["conclusion", "evidence", "logic", "risk", "boundary", "action", "context", "term"]},
+          "source_location": {"type": "string"},
+          "source_excerpt": {"type": "string"},
+          "board_status": {"enum": ["covered", "partial", "omitted"]},
+          "board_block": {"type": "string"},
+          "body_section": {"type": "string"},
+          "semantic_direction": {"enum": ["favorable", "unfavorable", "warning", "neutral", "unknown"]},
+          "display_values": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+          },
+          "omission_reason": {"type": "string"},
+          "appendix": {"type": "boolean", "default": false},
+          "inference": {"type": "boolean", "default": false}
+        }
+      }
+    }
+  }
+}

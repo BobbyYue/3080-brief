@@ -1,0 +1,39 @@
+{
+  "title": "分层证据与决策边界",
+  "language": "zh-CN",
+  "style": "evaluation-only restrained palette",
+  "reading_path": "先比较证据，再检查决策边界",
+  "palette": {
+    "primary": "#0055A4",
+    "accent": "#DCF4A2",
+    "risk": "#C94B4B",
+    "background": "#FFFFFF",
+    "text": "#172033"
+  },
+  "blocks": [
+    {
+      "id": "B01",
+      "type": "bar",
+      "claim_ids": ["C01", "C02"],
+      "title": "分层比较揭示有效差异",
+      "items": [
+        {"label": "汇总", "value": 42, "display": "42", "semantic_direction": "neutral"},
+        {"label": "分层", "value": 68, "display": "68", "semantic_direction": "favorable"}
+      ]
+    },
+    {
+      "id": "B02",
+      "type": "threshold",
+      "claim_ids": ["C03", "C04"],
+      "title": "通过验证阈值后再扩大范围",
+      "minimum": 0,
+      "maximum": 100,
+      "threshold": 75,
+      "value": 68,
+      "semantic_direction": "warning",
+      "threshold_label": "Required",
+      "value_label": "Current",
+      "note": "Synthetic values are used only for script evaluation."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+name: Bug report
+description: Report reproducible behavior using synthetic or redacted inputs.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: checkboxes
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed document tokens, credentials, tenant identifiers, and private source content.
+          required: true
+  - type: input
+    attributes:
+      label: Version or commit
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproduction
+      description: Include the request, synthetic input shape, output format, and commands run.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true

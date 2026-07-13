@@ -1,0 +1,66 @@
+{
+  "source": {
+    "title": "Synthetic Evaluation Source",
+    "location": "eval fixture",
+    "language": "zh-CN",
+    "output_language": "zh-CN",
+    "output_language_basis": "source_primary_language",
+    "explicit_language_override_evidence": "none"
+  },
+  "claims": [
+    {
+      "id": "C01",
+      "claim": "汇总指标掩盖了分层差异",
+      "priority": "P0",
+      "kind": "conclusion",
+      "source_location": "Section 1",
+      "board_status": "covered",
+      "board_block": "B01",
+      "body_section": "汇总指标掩盖了真正差异",
+      "semantic_direction": "neutral",
+      "display_values": ["42"],
+      "appendix": false,
+      "inference": false
+    },
+    {
+      "id": "C02",
+      "claim": "分层比较保留高价值信号",
+      "priority": "P0",
+      "kind": "evidence",
+      "source_location": "Section 2",
+      "board_status": "covered",
+      "board_block": "B01",
+      "body_section": "汇总指标掩盖了真正差异",
+      "semantic_direction": "favorable",
+      "display_values": ["+26pp"],
+      "appendix": false,
+      "inference": false
+    },
+    {
+      "id": "C03",
+      "claim": "机制解释仍需验证",
+      "priority": "P1",
+      "kind": "boundary",
+      "source_location": "Section 3",
+      "board_status": "partial",
+      "board_block": "B02",
+      "body_section": "分层验证决定能否扩大使用",
+      "semantic_direction": "warning",
+      "display_values": ["68"],
+      "appendix": false,
+      "inference": false
+    },
+    {
+      "id": "C04",
+      "claim": "先验证稳定性再扩大范围",
+      "priority": "P1",
+      "kind": "action",
+      "source_location": "Section 4",
+      "board_status": "covered",
+      "board_block": "B02",
+      "body_section": "分层验证决定能否扩大使用",
+      "appendix": false,
+      "inference": false
+    }
+  ]
+}

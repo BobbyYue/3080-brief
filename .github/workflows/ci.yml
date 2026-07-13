@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-validation:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run offline skill validation and evals
+        run: bash skills/3080-brief/scripts/self_test.sh
+      - name: Reject local state and common secret patterns
+        run: |
+          test -z "$(git ls-files | grep -E '(^|/)(\.sync-state|__pycache__)/|\.pyc$' || true)"
+          ! grep -RInE '/Users/[^/]+|app_secret|client_secret|Authorization:[[:space:]]*Bearer' \
+            --exclude-dir=.git --exclude='*.md' skills/3080-brief

@@ -1,0 +1,11 @@
+{
+  "reviewer_role": "reader",
+  "artifact_set_id": "fixture-artifact-set",
+  "review_round": 1,
+  "verdict": "PASS",
+  "checks": [{"name": "reader gates", "result": "PASS", "reason": "fixture"}],
+  "blocking_issues": [],
+  "unsupported_claims": [],
+  "missing_coverage": [],
+  "required_fixes": []
+}

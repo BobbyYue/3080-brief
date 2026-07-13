@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "python": {
+    "minimum_version": "3.9"
+  },
+  "node": {
+    "minimum_version": "20.0.0"
+  },
+  "tools": {
+    "lark-cli": {
+      "command": "lark-cli",
+      "environment_variable": "LARK_CLI",
+      "package": "@larksuite/cli",
+      "install_version": "1.0.60",
+      "minimum_version": "1.0.60",
+      "version_policy": "minimum"
+    },
+    "whiteboard-cli": {
+      "command": "whiteboard-cli",
+      "environment_variable": "WHITEBOARD_CLI",
+      "package": "@larksuite/whiteboard-cli",
+      "install_version": "0.2.11",
+      "version_policy": "exact"
+    }
+  },
+  "skills": {
+    "beautiful-feishu-whiteboard": {
+      "environment_variable": "BEAUTIFUL_FEISHU_WHITEBOARD_SKILL",
+      "minimum_version": "1.1.1",
+      "version_policy": "minimum",
+      "required_paths": [
+        "SKILL.md",
+        "CATALOG.md",
+        "RULES.md",
+        "templates"
+      ],
+      "source": {
+        "repo": "zarazhangrui/beautiful-feishu-whiteboard",
+        "path": ".",
+        "ref": "main"
+      }
+    }
+  }
+}

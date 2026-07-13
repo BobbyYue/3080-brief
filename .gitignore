@@ -1,0 +1,14 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*.log
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+**/.sync-state/
+**/node_modules/
+coverage/
+dist/
+build/

@@ -1,0 +1,154 @@
+{
+  "version": 6,
+  "language_policy": {
+    "default_output_basis": "source_primary_language",
+    "allowed_override_basis": "explicit_user_request",
+    "forbidden_inference_bases": [
+      "conversation_language",
+      "request_language",
+      "context_language",
+      "user_locale",
+      "inferred_preference"
+    ]
+  },
+  "coverage": {
+    "minimum_percent": 80,
+    "weights": {
+      "P0": 3,
+      "P1": 2,
+      "P2": 1
+    },
+    "countable_statuses": ["covered", "partial", "omitted"],
+    "partial_credit": 0.5
+  },
+  "semantic_colors": {
+    "favorable": {
+      "body": "green",
+      "svg": "#2EA121",
+      "svg_tint": "#E8F5E6"
+    },
+    "unfavorable": {
+      "body": "red",
+      "svg": "#D83931",
+      "svg_tint": "#FDE9E7"
+    },
+    "warning": {
+      "body": "orange",
+      "svg": "#DE7802",
+      "svg_tint": "#FFF1DE"
+    },
+    "neutral": {
+      "body": "blue",
+      "svg": "#1456F0",
+      "svg_tint": "#E8F0FF"
+    },
+    "unknown": {
+      "body": "gray",
+      "svg": "#646A73",
+      "svg_tint": "#EFF0F1"
+    }
+  },
+  "tldr": {
+    "default_title": "TLDR",
+    "default_table_headers": ["问题", "结论", "为什么"],
+    "english_table_headers": ["Question", "Conclusion", "Why"],
+    "default_summary_lines_min": 2,
+    "default_summary_lines_max": 4,
+    "questions_min": 3,
+    "questions_max": 5
+  },
+  "trigger": {
+    "aliases": [
+      "3080-brief",
+      "3080 brief",
+      "3080skill",
+      "读者视角总结",
+      "3080总结",
+      "3080summary",
+      "3080-onepager"
+    ],
+    "non_trigger_intents": [
+      "edit or polish the source in place",
+      "generic summary without a 30-second or visual requirement",
+      "standalone whiteboard style exploration without a new summary document"
+    ]
+  },
+  "banned_whiteboard_styles": [
+    "Grove",
+    "Macchiato",
+    "Monochrome",
+    "Cobalt Bloom",
+    "Linen Cut",
+    "Raw Grid",
+    "Riptide Cobalt",
+    "Soft Editorial",
+    "BlockFrame",
+    "Burst Panel",
+    "Crayon Stack",
+    "Neo-Grid Bold",
+    "Riso Brut"
+  ],
+  "forbidden_headings": [
+    "来源文档",
+    "原文链接",
+    "Source Document",
+    "先回答关键问题",
+    "Key Questions First",
+    "术语与口径",
+    "Glossary",
+    "30 秒判断",
+    "30秒判断",
+    "30 秒读法",
+    "30-second read",
+    "剩余 20% 信息",
+    "Remaining 20%"
+  ],
+  "forbidden_heading_fragments": [
+    "给 Leader",
+    "For Leader",
+    "For Leaders"
+  ],
+  "forbidden_meta_statements": [
+    "原文正文数据支持这个顺序",
+    "原文支持该顺序",
+    "the source supports this order"
+  ],
+  "forbidden_placeholders": [
+    "SOURCE_URL",
+    "按原文填写",
+    "...svg...",
+    "实际输出必须插入可编辑白板"
+  ],
+  "discouraged_phrases": [
+    "有差异",
+    "有变化",
+    "有价值",
+    "值得关注",
+    "整体有效",
+    "整体不错",
+    "优化提升",
+    "继续观察"
+  ],
+  "review_roles": {
+    "reader": "Reader Comprehension Reviewer",
+    "source": "Source Coverage And Grounding Reviewer",
+    "visual": "Visualization And Expression Reviewer"
+  },
+  "blind_reader_replay": {
+    "question_count": 3,
+    "primary_role": "primary",
+    "roles": {
+      "primary": "理解业务、产品和常见指标，不了解技术实现，无决策能力。",
+      "technical": "具备相关领域的专业知识和通用技术能力，注重底层逻辑和可行性。",
+      "decision": "阅读时间有限，不具备项目隐含背景，不希望先阅读实施细节，注重收益和成功的可复制性。"
+    },
+    "escalation_conditions": [
+      "document_addresses_multiple_functions",
+      "primary_cannot_replay_p0_core_conclusion",
+      "primary_cannot_identify_next_action",
+      "primary_cannot_judge_conclusion_value",
+      "primary_cannot_judge_conclusion_feasibility",
+      "conclusion_affects_resources_risk_or_broad_rollout"
+    ]
+  }
+}

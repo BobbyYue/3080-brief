@@ -1,0 +1,8 @@
+interface:
+  display_name: "3080 Brief"
+  short_description: "30-second judgment, 80% in one picture"
+  brand_color: "#0055A4"
+  default_prompt: "Use $3080-brief for 30-second judgment and 80% in one picture: create a new source-backed brief in the input format, keep the source unchanged, and include one key-question table."
+
+policy:
+  allow_implicit_invocation: true
