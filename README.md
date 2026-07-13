@@ -15,10 +15,6 @@ Source-grounded decision briefs that help readers understand the conclusion quic
 2. one auditable visual covering at least 80% of value-weighted, non-appendix claims;
 3. one key-question table answering what readers are most likely to ask.
 
-![Synthetic 3080 Brief visual](docs/assets/synthetic-brief.svg)
-
-The example above contains synthetic evaluation data only.
-
 ## Why use it
 
 - Source-grounded: every number, conclusion, risk, and recommendation must be traceable or labeled as an inference.
@@ -128,7 +124,6 @@ python3 skills/3080-brief/scripts/check_dependencies.py --mode feishu --json
 
 ```text
 skills/3080-brief/   installable Agent Skill
-docs/assets/         public, synthetic examples
 .github/workflows/   offline CI
 ```
 
