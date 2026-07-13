@@ -26,7 +26,7 @@ The example above contains synthetic evaluation data only.
 - Format-aware: Feishu/Lark creates a new Feishu/Lark document; Word creates a new `.docx`; Markdown creates new Markdown.
 - Visual by design: the opening visual is editable in Feishu and is checked against a value-weighted claim ledger.
 - Reviewable: deterministic preflight, three independent review roles, and blind-reader replay are part of the release gate.
-- Lean by default: normal runtime loads only `SKILL.md` (currently 11.4KB); detailed references load only when their branch is reached.
+- Lean by default: normal runtime loads only `SKILL.md` (currently 11.6KB); detailed references load only when their branch is reached.
 
 ## Install
 
