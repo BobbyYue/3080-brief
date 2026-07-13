@@ -7,7 +7,7 @@
 
 Source-grounded decision briefs that help readers understand the conclusion quickly and see the argument as one auditable visual.
 
-[简体中文](README.zh-CN.md)
+[Chinese (Simplified)](README.zh-CN.md)
 
 `3080-brief` turns a source document into a new, reader-first brief without modifying the source. Its opening has exactly three units:
 
@@ -80,8 +80,9 @@ Keep the source unchanged and create the output in the same format.
 Natural-language invocation:
 
 ```text
-请基于这份方案新建一份读者视角总结：30 秒看懂结论，
-一张图覆盖核心信息，再用一个表回答读者最关心的问题。
+Create a new reader-first brief from this proposal: make the conclusion clear
+in 30 seconds, cover the core information in one picture, and use one table
+to answer readers' most important questions.
 ```
 
 It should not trigger for source editing in place, generic summaries without the reader/visual contract, or standalone whiteboard styling.

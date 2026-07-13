@@ -21,6 +21,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Run offline skill validation and evals
         run: bash skills/3080-brief/scripts/self_test.sh
+      - name: Keep the English README English
+        run: python -c 'from pathlib import Path; import re; text = Path("README.md").read_text(encoding="utf-8"); assert not re.search(r"[\u3400-\u9fff]", text), "README.md contains Chinese characters"'
       - name: Reject local state and common secret patterns
         run: |
           test -z "$(git ls-files | grep -E '(^|/)(\.sync-state|__pycache__)/|\.pyc$' || true)"
