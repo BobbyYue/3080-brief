@@ -101,6 +101,8 @@ Feishu/Lark output additionally requires:
 
 Missing Feishu dependencies block only the Feishu path. The skill displays the exact source, version, destination, network/file effects, and command, then asks for explicit installation approval. It does not silently install dependencies.
 
+After approval, `beautiful-feishu-whiteboard` is downloaded from [`zarazhangrui/beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard), verified, and installed beside `3080-brief` so the flow works across Agent Skills-compatible clients without a Codex-only installer. Set `BRIEF3080_SKILL_INSTALL_ROOT` only when your agent uses a different skills directory, then reload or restart that agent.
+
 ## Development verification
 
 Run the complete offline test suite:

@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The project follows [Se
 ### Changed
 
 - Replaced the Codex-only installation flow with agent-agnostic GitHub, manual-folder, and upload instructions for Agent Skills-compatible clients.
+- Replaced the Codex-only `beautiful-feishu-whiteboard` dependency installer with a verified GitHub archive installer that targets the active agent's skill root.
 - Made the English README fully English, including its language link and natural-language trigger example.
 
 ### Removed

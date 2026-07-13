@@ -36,6 +36,8 @@
       ],
       "source": {
         "repo": "zarazhangrui/beautiful-feishu-whiteboard",
+        "url": "https://github.com/zarazhangrui/beautiful-feishu-whiteboard",
+        "archive_url": "https://github.com/zarazhangrui/beautiful-feishu-whiteboard/archive/refs/heads/main.zip",
         "path": ".",
         "ref": "main"
       }

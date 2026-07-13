@@ -98,7 +98,7 @@ After all three reviewers pass the same artifact set, follow the blind-reader re
 
 ### 8. Create And Verify The New Output
 
-Create the new output only after the selected gates pass. For Feishu, query and inspect the live board for clipping, overlap, overflow, and stale rendering. Verify source unchanged, format/language correctness, source citation, TLDR's three units, coverage, semantic consistency, accessible output, and final artifact hashes with `scripts/verify_reviewed_artifacts.py`. Never publish a Feishu artifact while a required dependency is SKIP/BLOCKED or before a newly installed skill is registered after restart.
+Create the new output only after the selected gates pass. For Feishu, query and inspect the live board for clipping, overlap, overflow, and stale rendering. Verify source unchanged, format/language correctness, source citation, TLDR's three units, coverage, semantic consistency, accessible output, and final artifact hashes with `scripts/verify_reviewed_artifacts.py`. Never publish a Feishu artifact while a required dependency is SKIP/BLOCKED or before a newly installed skill is registered after reloading the current agent.
 
 ## Delivery
 

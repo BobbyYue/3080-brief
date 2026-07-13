@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 
+SKILL_ENTRY_DIR = Path(__file__).absolute().parents[1]
 SKILL_DIR = Path(__file__).resolve().parents[1]
 CONFIG_PATH = SKILL_DIR / "config" / "dependencies.json"
 
@@ -36,13 +37,25 @@ def default_cache_root():
 
 
 def default_skill_roots():
-    roots = []
+    roots = [default_skill_install_root()]
     extra = os.environ.get("BRIEF3080_SKILL_ROOTS")
     if extra:
         roots.extend(Path(value).expanduser() for value in extra.split(os.pathsep) if value)
     codex_home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).expanduser()
     roots.extend((codex_home / "skills", Path.home() / ".agents" / "skills"))
-    return roots
+    unique = []
+    seen = set()
+    for root in roots:
+        key = str(root)
+        if key not in seen:
+            unique.append(root)
+            seen.add(key)
+    return unique
+
+
+def default_skill_install_root():
+    override = os.environ.get("BRIEF3080_SKILL_INSTALL_ROOT")
+    return Path(override).expanduser() if override else SKILL_ENTRY_DIR.parent
 
 
 def tool_prefix(cache_root, tool_id, spec):
@@ -307,8 +320,8 @@ def install_item(tool_id, spec, cache_root, npm_path):
 
 
 def skill_install_item(skill_id, spec):
-    codex_home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).expanduser()
-    destination = codex_home / "skills" / skill_id
+    destination_root = default_skill_install_root().resolve()
+    destination = destination_root / skill_id
     source = spec["source"]
     return {
         "type": "skill",
@@ -318,13 +331,15 @@ def skill_install_item(skill_id, spec):
         "install_root": str(destination),
         "network_access": True,
         "creates": [str(destination)],
-        "requires_codex_restart": True,
+        "requires_agent_reload": True,
         "command": [
             sys.executable,
             str(SKILL_DIR / "scripts" / "install_skill_dependency.py"),
             "--skill",
             skill_id,
             "--user-approved",
+            "--install-root",
+            str(destination_root),
         ],
         "blocked_by": [],
     }

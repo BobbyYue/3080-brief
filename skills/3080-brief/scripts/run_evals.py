@@ -5,6 +5,7 @@ import py_compile
 import subprocess
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 
 
@@ -197,6 +198,7 @@ def main():
         isolated_env.pop("LARK_CLI", None)
         isolated_env.pop("WHITEBOARD_CLI", None)
         isolated_env.pop("BEAUTIFUL_FEISHU_WHITEBOARD_SKILL", None)
+        isolated_env.pop("BRIEF3080_SKILL_INSTALL_ROOT", None)
         isolated_env.pop("BRIEF3080_SKILL_ROOTS", None)
         isolated_env.pop("NODE", None)
         missing = run(
@@ -218,6 +220,10 @@ def main():
         requested_dependencies = {item.get("tool") or item.get("skill") for item in request.get("installations", [])}
         if requested_dependencies != {"lark-cli", "whiteboard-cli", "beautiful-feishu-whiteboard"}:
             raise SystemExit("installation request does not cover both Feishu CLIs and the whiteboard style skill")
+        requested_skill = next(item for item in request["installations"] if item.get("skill") == "beautiful-feishu-whiteboard")
+        expected_default_root = (SKILL.parent / "beautiful-feishu-whiteboard").resolve()
+        if requested_skill.get("install_root") != str(expected_default_root):
+            raise SystemExit("dependency diagnostic did not default to the active agent skill root")
         if len(request.get("approval_commands", [])) != 2:
             raise SystemExit("mixed CLI/skill dependency request must emit separate approval-gated commands")
 
@@ -254,6 +260,7 @@ def main():
             sys.executable,
             str(SCRIPTS / "install_skill_dependency.py"),
             "--skill", "beautiful-feishu-whiteboard",
+            "--install-root", str(tmp_path / "refused-skills"),
             expect=3,
         )
         if "explicit user approval" not in skill_refusal.stderr:
@@ -262,11 +269,70 @@ def main():
             sys.executable,
             str(SCRIPTS / "install_skill_dependency.py"),
             "--skill", "beautiful-feishu-whiteboard",
+            "--install-root", str(tmp_path / "portable-skills"),
             "--dry-run",
         )
         skill_plan = json.loads(skill_dry_run.stdout)["installation"]
-        if skill_plan["source"]["repo"] != "zarazhangrui/beautiful-feishu-whiteboard" or not skill_plan["requires_codex_restart"]:
-            raise SystemExit("skill install plan omitted the verified source or restart requirement")
+        if skill_plan["source"]["repo"] != "zarazhangrui/beautiful-feishu-whiteboard":
+            raise SystemExit("skill install plan omitted the verified GitHub source")
+        if skill_plan.get("download_url") != "https://github.com/zarazhangrui/beautiful-feishu-whiteboard/archive/refs/heads/main.zip":
+            raise SystemExit("skill install plan omitted the verified GitHub archive")
+        if not skill_plan.get("requires_agent_reload") or "requires_codex_restart" in skill_plan:
+            raise SystemExit("skill install plan must use an agent-agnostic reload requirement")
+        expected_install = (tmp_path / "portable-skills" / "beautiful-feishu-whiteboard").resolve()
+        if skill_plan["install_root"] != str(expected_install):
+            raise SystemExit("skill install plan ignored the host agent skill root")
+
+        local_archive = tmp_path / "beautiful-feishu-whiteboard.zip"
+        archive_root = "beautiful-feishu-whiteboard-main"
+        with zipfile.ZipFile(local_archive, "w") as bundle:
+            bundle.writestr(
+                f"{archive_root}/SKILL.md",
+                "---\nname: beautiful-feishu-whiteboard\nversion: 1.1.1\ndescription: fixture\n---\n",
+            )
+            bundle.writestr(f"{archive_root}/CATALOG.md", "# Catalogue\n")
+            bundle.writestr(f"{archive_root}/RULES.md", "# Rules\n")
+            bundle.writestr(f"{archive_root}/templates/example/design.md", "# Example\n")
+        portable_root = tmp_path / "installed-agent-skills"
+        portable_install = run(
+            sys.executable,
+            str(SCRIPTS / "install_skill_dependency.py"),
+            "--skill", "beautiful-feishu-whiteboard",
+            "--install-root", str(portable_root),
+            "--archive", str(local_archive),
+            "--user-approved",
+        )
+        if "RELOAD REQUIRED" not in portable_install.stdout:
+            raise SystemExit("portable skill installer omitted the current-agent reload instruction")
+        installed_skill = portable_root / "beautiful-feishu-whiteboard"
+        if not (installed_skill / "SKILL.md").is_file() or not (installed_skill / "templates").is_dir():
+            raise SystemExit("portable skill installer did not preserve the complete skill folder")
+        no_overwrite = run(
+            sys.executable,
+            str(SCRIPTS / "install_skill_dependency.py"),
+            "--skill", "beautiful-feishu-whiteboard",
+            "--install-root", str(portable_root),
+            "--archive", str(local_archive),
+            "--user-approved",
+            expect=1,
+        )
+        if "will not be overwritten" not in no_overwrite.stderr:
+            raise SystemExit("portable skill installer did not protect an existing destination")
+
+        unsafe_archive = tmp_path / "unsafe-skill.zip"
+        with zipfile.ZipFile(unsafe_archive, "w") as bundle:
+            bundle.writestr("beautiful-feishu-whiteboard-main/../../outside.txt", "unsafe\n")
+        unsafe_install = run(
+            sys.executable,
+            str(SCRIPTS / "install_skill_dependency.py"),
+            "--skill", "beautiful-feishu-whiteboard",
+            "--install-root", str(tmp_path / "unsafe-agent-skills"),
+            "--archive", str(unsafe_archive),
+            "--user-approved",
+            expect=1,
+        )
+        if "unsafe archive member" not in unsafe_install.stderr:
+            raise SystemExit("portable skill installer did not reject archive path traversal")
 
         fake_cache = tmp_path / "fake-cache"
         fake_node = tmp_path / "node"

@@ -100,6 +100,8 @@ Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-
 
 缺少这些依赖只会阻断飞书路径。skill 会展示准确来源、版本、安装目录、联网/文件影响和命令，并向用户申请明确许可，不会静默安装。
 
+用户同意后，skill 会从 [`zarazhangrui/beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 下载并校验完整目录，默认安装到 `3080-brief` 所在的同一 Skill 根目录，不再依赖 Codex 专用安装器。如果当前 Agent 使用其他目录，可设置 `BRIEF3080_SKILL_INSTALL_ROOT`；安装后重新加载或重启当前 Agent。
+
 ## 开发验证
 
 运行完整离线测试：

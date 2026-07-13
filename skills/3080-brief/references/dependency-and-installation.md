@@ -30,18 +30,18 @@ When `installation_request.required` is true:
 2. Ask for explicit installation approval. A request for a Feishu document is not installation approval.
 3. Do not call the installer in the same turn before approval.
 4. After approval, run only the diagnostic-provided `approval_commands`, which include `--user-approved`; do not add this flag without the user's explicit approval.
-5. If `beautiful-feishu-whiteboard` was installed, tell the user to restart Codex so it is registered. Do not claim it is available to the active task merely because the files now exist.
-6. After restart, re-run `check_dependencies.py --mode feishu --json` and continue only when every required CLI and skill returns `PASS`.
+5. If `beautiful-feishu-whiteboard` was installed, tell the user to reload or restart the current agent so it is registered. Do not claim it is available to the active task merely because the files now exist.
+6. After the agent reloads, re-run `check_dependencies.py --mode feishu --json` and continue only when every required CLI and skill returns `PASS`.
 
 The installer uses an isolated user cache (`$BRIEF3080_TOOL_CACHE` or `${XDG_CACHE_HOME:-~/.cache}/3080-brief/tools`) and exact npm package versions. It must not add `node_modules` to the skill or repository.
 
-The skill installer uses Codex's official `skill-installer` with source `zarazhangrui/beautiful-feishu-whiteboard`, repo path `.`, ref `main`, destination `${CODEX_HOME:-~/.codex}/skills/beautiful-feishu-whiteboard`, and a minimum declared skill version of `1.1.1`. It validates `SKILL.md`, `CATALOG.md`, `RULES.md`, and `templates` after installation and never overwrites an existing destination.
+The portable skill installer downloads `https://github.com/zarazhangrui/beautiful-feishu-whiteboard` at ref `main` and installs the complete repository beside the active `3080-brief` skill by default. Set `BRIEF3080_SKILL_INSTALL_ROOT` only when the host agent requires a different skill root. It validates archive paths plus `SKILL.md`, declared version `1.1.1` or newer, `CATALOG.md`, `RULES.md`, and `templates` before an atomic install, and never overwrites an existing destination.
 
 If Node.js/npm is absent, show that prerequisite and request a separate platform-appropriate Node.js 20+ installation approval. Do not guess or silently run an OS package manager.
 
 ## Decline Or Failure
 
-- If the user declines or has not restarted Codex after a new skill installation, keep the Feishu output `BLOCKED`; do not silently publish an unverified board.
+- If the user declines or has not reloaded the current agent after a new skill installation, keep the Feishu output `BLOCKED`; do not silently publish an unverified board.
 - Offer Markdown/Word only as an explicit user choice, not an automatic fallback.
 - If installation or smoke testing fails, report the exact failed command/status and keep the task `BLOCKED`.
 
