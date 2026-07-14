@@ -28,6 +28,8 @@ Before creating/updating docs, read the relevant lark references:
 ## New Doc Contract
 
 - Create a new doc unless the user explicitly asks to update an already generated summary doc.
+- After deterministic preflight passes, create the complete review draft immediately, store its URL/token, and apply later review fixes to that generated document.
+- For a Feishu/Lark source, create a native Feishu/Lark doc; never substitute or upload `.docx` unless the user explicitly requests Word output.
 - Never edit the source doc.
 - Do not include source appendix / 附录 / Appendix content in the generated summary unless the user explicitly requests it.
 - Use XML by default.

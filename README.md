@@ -79,6 +79,8 @@ If an agent does not natively support Agent Skills, provide the complete skill f
 
 For Feishu output, installation is not verified merely because the agent can display `3080-brief` or `lark-doc` instructions. The host must execute a real source-document read and return a new-document link; otherwise it must report the exact missing capability as `BLOCKED`.
 
+Runtime order is fixed for more consistent execution across models: dependency diagnostic or source fetch first, deterministic preflight second, complete review-draft creation third, then review/update and final verification. Acknowledgements and plans are never terminal responses. If independent reviewers are unavailable, the skill performs role-separated self-review, discloses `review_status=LIMITED`, and still completes the document unless independent review was explicitly required.
+
 ## Try it
 
 Explicit invocation:

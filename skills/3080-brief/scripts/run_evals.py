@@ -27,6 +27,22 @@ def main():
     for script in SCRIPTS.glob("*.py"):
         py_compile.compile(str(script), doraise=True)
     config = json.loads((SKILL / "config" / "3080-brief.json").read_text(encoding="utf-8"))
+    expected_execution = {
+        "first_action": "dependency_diagnostic_if_needed_else_source_fetch",
+        "forbidden_terminal_before_output": [
+            "acknowledgement",
+            "plan",
+            "status_recap",
+            "capability_description",
+            "promise_to_continue",
+        ],
+        "create_after": "deterministic_preflight_pass",
+        "create_before": "independent_review",
+        "review_fallback": "role_separated_self_review",
+        "feishu_output_type": "native_feishu_doc",
+    }
+    if config.get("execution") != expected_execution:
+        raise SystemExit("action-first execution contract is missing or inconsistent")
     dependency_config = json.loads((SKILL / "config" / "dependencies.json").read_text(encoding="utf-8"))
     bundle_contract = dependency_config.get("installation_bundle", {})
     if bundle_contract.get("approval_mode") != "single_explicit_approval":
@@ -586,9 +602,21 @@ def main():
     output_coverage = json.loads((SKILL / "evals" / "output_coverage.json").read_text(encoding="utf-8"))
     json.loads((SKILL / "evals" / "review.schema.json").read_text(encoding="utf-8"))
     skill_text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
-    if "merely loading or returning their Skill specification does not count" not in skill_text:
+    for required_execution_marker in (
+        "## Action-First Contract",
+        "The first externally observable action must be the required dependency diagnostic",
+        "Immediately after deterministic preflight passes, create the new output",
+        "never silently substitute `.docx`",
+        "review_status=LIMITED",
+    ):
+        if required_execution_marker not in skill_text:
+            raise SystemExit(f"action-first runtime marker missing: {required_execution_marker}")
+    openai_yaml = (SKILL / "agents" / "openai.yaml").read_text(encoding="utf-8")
+    if "Use $3080-brief now: start with the required tool action" not in openai_yaml:
+        raise SystemExit("default prompt does not reinforce action-first execution")
+    if "A Skill specification, plan, or acknowledgement is not a read result" not in skill_text:
         raise SystemExit("runtime contract does not distinguish Skill text from executable Feishu capability")
-    if "A Feishu run is complete only after a real create operation returns an accessible new-document URL/token" not in skill_text:
+    if "A run is complete only when the new URL/path is accessible and distinct from the source" not in skill_text:
         raise SystemExit("runtime contract does not require a real generated-document delivery result")
     frontmatter = skill_text.split("---", 2)[1].casefold()
     for alias in config["trigger"]["aliases"]:
@@ -687,7 +715,7 @@ def main():
     replay_path = SKILL / "references" / "blind-reader-replay.md"
     if not replay_path.is_file() or "Run Blind Reader Replay only after" not in replay_path.read_text(encoding="utf-8"):
         raise SystemExit("blind-reader replay reference is missing")
-    if "### 7. Replay Reader Understanding" not in skill_text or "references/blind-reader-replay.md" not in skill_text:
+    if "### 4. Review Without Stalling" not in skill_text or "references/blind-reader-replay.md" not in skill_text:
         raise SystemExit("blind-reader replay is not connected to the runtime workflow")
     print("3080-brief evals PASS")
 

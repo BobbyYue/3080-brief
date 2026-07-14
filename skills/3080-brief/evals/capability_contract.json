@@ -89,19 +89,19 @@
     },
     {
       "id": "REV-01",
-      "requirement": "Three independent reviewers use isolated, role-specific, hash-locked packets.",
+      "requirement": "Use three independent hash-locked reviewers when available; otherwise run transparent role-separated self-review without stalling creation.",
       "owner": {"file": "config/3080-brief.json", "marker": "\"review_roles\""},
       "enforced_by": ["references/review-loop.md", "scripts/build_review_packet.py", "scripts/aggregate_reviews.py", "scripts/run_evals.py"]
     },
     {
       "id": "RPL-01",
-      "requirement": "Blind reader replay starts after audit PASS and preserves role isolation.",
+      "requirement": "Blind reader replay starts after independent audit PASS; unavailable independent execution is disclosed instead of falsely claimed or used to stall creation.",
       "owner": {"file": "config/3080-brief.json", "marker": "\"blind_reader_replay\""},
       "enforced_by": ["references/blind-reader-replay.md", "scripts/run_evals.py"]
     },
     {
       "id": "DEL-01",
-      "requirement": "Delivery verifies format, language, source integrity, visual state, reviews, replay, artifact hashes, and a real generated-output link/path.",
+      "requirement": "After deterministic preflight, create before review; delivery verifies native format, language, source integrity, visual state, review status, hashes, and a real generated-output link/path.",
       "owner": {"file": "SKILL.md", "marker": "## Delivery"},
       "enforced_by": ["scripts/verify_reviewed_artifacts.py", "scripts/run_evals.py"]
     },

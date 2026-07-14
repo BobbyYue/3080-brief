@@ -8,6 +8,8 @@ Run Blind Reader Replay only after the deterministic preflight passes and all th
 
 If any replay exposes a blocking comprehension failure, revise the artifact and restart from deterministic preflight and all three audit reviewers. Run Blind Reader Replay again only after the revised artifact passes all three audit reviewers.
 
+If the host cannot run independent reviewers/readers, do not block creation and do not claim Blind Reader Replay. Run one Primary comprehension self-check against the rendered generated draft, fix blocking defects, and report `blind_reader_status=UNAVAILABLE` with `review_status=LIMITED`. Do not launch or simulate the Technical and Decision roles in this fallback.
+
 ## Isolation
 
 - Give each blind reader only its role definition and the rendered reader-facing artifact for the current artifact-set ID.

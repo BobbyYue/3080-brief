@@ -78,6 +78,8 @@ If any item affects the main decision, ask first.
 
 Before final output, create three role-specific, hash-locked packets using [review-packet-template.md](review-packet-template.md) and `scripts/build_review_packet.py --role all`, then send them to three reviewer subagents at the same time. They must evaluate independently and must not see each other's comments before submitting their own verdicts.
 
+Create the complete generated review draft after deterministic preflight and before starting this protocol. Review and revision update that generated draft; they never delay initial artifact creation or modify the source.
+
 The main agent must not expose, quote, summarize, hint at, or use any reviewer's comments in prompts to the other reviewers before all three reviews have been submitted.
 
 The reviewers are auditors, not co-authors. They should identify problems and required fixes; the main agent owns the revision.
@@ -222,21 +224,23 @@ Use this wording:
 
 Use the review tier that matches the task risk:
 
-- **Full Review**: default for strategy, experiment result, data analysis, management-facing, policy/rule change, or any doc with material business/risk implications. Run all three reviewers with full scoring and required fixes.
-- **Light Review**: allowed for low-risk internal summaries or quick drafts when the source is short and factual. Still run all three reviewers independently, but each returns only `Verdict`, `Top Issues`, and `Required Fixes`. Any `FAIL` still blocks final output.
+- **Full Review**: use when independent reviewer execution is available, especially for strategy, experiments, data analysis, management-facing work, policy/rule changes, or material risk. Run all three reviewers with full scoring and required fixes.
+- **Limited Fallback**: when independent reviewer execution is unavailable, run three sequential role-separated self-checks against the same Reader, Source, and Visualization gates. Fix every blocker, set `review_status=LIMITED`, never describe the checks as independent, and continue unless the user explicitly required independent review.
+- **Light Review**: allowed for low-risk internal summaries or quick drafts when independent reviewers are available. Still run all three independently, but each returns only `Verdict`, `Top Issues`, and `Required Fixes`.
 - **Skip Review**: allowed only when the user explicitly asks for fastest possible output or says to skip review. Run a lightweight self-check against the same PASS criteria and disclose that reviewer validation was skipped.
 
-Never use review tiering to bypass source grounding, clarification of blocking ambiguity, the new-doc-only rule, or Blind Reader Replay. If review is explicitly skipped, disclose that replay cannot be treated as reviewer-approved validation.
+Never use review tiering to bypass deterministic preflight, source grounding, blocking ambiguity, native output routing, or the new-doc-only rule. Limited/Skip modes cannot claim independent review or reviewer-approved Blind Reader Replay.
 
 ## Post-Review Reader Replay
 
-Audit review and Blind Reader Replay are sequential quality gates, not parallel substitutes. After all three audit reviewers pass the same artifact set, follow [blind-reader-replay.md](blind-reader-replay.md): run Primary first, conditionally escalate to Technical and Decision, and restart preflight plus all three reviewers after any blocking replay-driven revision.
+For Full/Light Review, audit and Blind Reader Replay are sequential gates. After all three reviewers pass, follow [blind-reader-replay.md](blind-reader-replay.md). For Limited Fallback, perform only a Primary comprehension self-check, set `blind_reader_status=UNAVAILABLE`, and do not call it blind or independent.
 
 ## Final Output Rule
 
-Do not present a generated doc as final until either:
+The generated review draft is created immediately after deterministic preflight. Present it as final only when one of these conditions holds:
 
 - All three reviewers return `PASS` and the required Blind Reader Replay completes without a blocking comprehension failure, or
+- Limited Fallback resolves every self-check blocker and delivery clearly discloses `review_status=LIMITED` plus `blind_reader_status=UNAVAILABLE`, unless the user explicitly required independent review, or
 - The user explicitly asks to publish despite known unresolved issues.
 
 If the user asks to skip review, still run a lightweight self-check against the same PASS criteria and disclose the skipped-review risk.

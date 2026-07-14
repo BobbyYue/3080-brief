@@ -1,5 +1,19 @@
 {
-  "version": 6,
+  "version": 7,
+  "execution": {
+    "first_action": "dependency_diagnostic_if_needed_else_source_fetch",
+    "forbidden_terminal_before_output": [
+      "acknowledgement",
+      "plan",
+      "status_recap",
+      "capability_description",
+      "promise_to_continue"
+    ],
+    "create_after": "deterministic_preflight_pass",
+    "create_before": "independent_review",
+    "review_fallback": "role_separated_self_review",
+    "feishu_output_type": "native_feishu_doc"
+  },
   "language_policy": {
     "default_output_basis": "source_primary_language",
     "allowed_override_basis": "explicit_user_request",

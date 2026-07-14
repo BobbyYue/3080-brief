@@ -9,6 +9,10 @@ description: Create a new source-grounded decision brief in the source format by
 
 Create a new reader-first decision brief from a source document. Match the source format by default and keep the source unchanged.
 
+## Action-First Contract
+
+For an explicit creation request, start tool work in the same turn. Do not end a turn with an acknowledgement, plan, status recap, capability description, or promise to continue. The first externally observable action must be the required dependency diagnostic when readiness is unknown; otherwise it must be the source fetch. Only a required approval or genuinely blocking clarification may interrupt execution. After either is resolved, resume immediately without asking whether to continue. Keep working until an output link/path exists or an exact blocker with its concrete next action is returned.
+
 ## Output Contract
 
 Open with `TLDR`, or a short source-language equivalent explicitly requested by the user. It contains exactly three core units:
@@ -54,31 +58,19 @@ Do not preload references. Read a resource only when its condition becomes true.
 
 ## Runtime State Machine
 
-### 1. Route And Gate
+### 1. Gate, Then Fetch
 
-Determine source type, requested output type, user constraints, and explicit language override. During `3080-brief` installation, register the primary Skill first, run the Feishu dependency diagnostic, display the complete `approval_bundle`, and ask exactly once whether to install or enable every listed missing dependency. One explicit approval authorizes all displayed CLI commands, companion-Skill registrations, and host-capability enablement actions; never ask once per item. A decline keeps the primary Skill installed for non-Feishu output and the Feishu path blocked. For later Feishu/Lark runs, use the same bundle flow before fetching or writing. Feishu readiness requires callable `lark-doc` and `lark-whiteboard` workflows; merely loading or returning their Skill specification does not count. Show every known exact source/version, destination, network/file/restart effect, and either the emitted command or `host_install_prompt`; stop before installation until approval. When `host_registration_required` is true, use the current host's native integration/plugin/Skill enablement flow after approval; if that capability is unavailable, present `host_install_prompt` and keep the task blocked. Never infer a registry root from the script location. Node.js installation without an exact platform command and Feishu authentication remain separate approvals. A document request is not installation or authentication approval. Non-Feishu work never prompts for Feishu dependencies.
+Determine source/output type, constraints, and explicit language override. For Feishu, run the dependency diagnostic first and declare `lark-doc` / `lark-whiteboard` host capabilities only when their workflows are actually callable. If anything is missing, display the complete `approval_bundle`, ask once to install or enable all listed items, execute the approved host actions, reload when required, and rerun the diagnostic. Keep Node.js installation without an exact command plus Feishu authentication/permissions as separate approvals. A document request is not installation approval. Non-Feishu work never prompts for Feishu dependencies.
 
-### 2. Ground The Source
+Once ready, fetch the source immediately. A Skill specification, plan, or acknowledgement is not a read result. If no document content returns, report `BLOCKED: lark-doc runtime capability unavailable` plus the concrete host action; never ask a generic “continue?” question. Inventory embedded sheets, Base, images, charts, and whiteboards; inspect every object carrying P0/P1 evidence or chartable data. Build `source_inventory.md` and `claim_ledger.json`, including source/output language, excluded appendix, stable claim IDs, source locations, risks, actions, board/body mappings, and omission reasons.
 
-Fetch with the matching tool and inventory every embedded sheet, Base, image, chart, and whiteboard before deciding relevance. For Feishu, the first source-read operation must return actual document content; a Skill description/specification, plan, or acknowledgement is not a successful read. If no executable read result is returned, report `BLOCKED: lark-doc runtime capability unavailable` with the host enablement action and stop—do not ask a generic “continue?” question. Inspect every embedded object carrying P0/P1 evidence or chartable data. Build `source_inventory.md` and `claim_ledger.json`; record source/output language, valid language basis, exact override evidence, excluded appendix, stable P0/P1/P2 claim IDs, source locations, chartable data, risks, actions, board/body mappings, and omission reasons. Use these compact artifacts by default and reopen the source only to resolve a missing fact, excerpt, object, or dispute.
+### 2. Draft And Preflight
 
-### 3. Clarify Blocking Ambiguity
+Ask at most three questions only when ambiguity can change the main conclusion, metric meaning/scope, risk boundary, reader, next action, or language decision. Otherwise continue with explicit missing-source/inference labels. Rebuild the narrative around the reader decision path; use short judgment headings, the required Pyramid opening, and the key-question table.
 
-Ask before drafting only when uncertainty can change the main conclusion, metric meaning/denominator/period/sample/scope, risk boundary, target reader, next action, or source-language decision. Ask at most three blocking questions at a time. Proceed through non-blocking gaps only with an explicit missing-source or inference label.
+Create `visual_spec.json` before drawing and map each block to claim IDs. Preserve P0 claims and required weighted coverage. Use real quantitative encoding when the source supports it; otherwise show a truthful boundary. For Feishu, select an allowed `beautiful-feishu-whiteboard` style, use editable native-shape SVG, preserve semantic meaning beyond color, and validate the board.
 
-### 4. Draft For The Reader
-
-Identify decision-maker, cross-functional, domain, implementer, and skeptical-reader gaps that actually matter. Structure the body from the source logic and reader decision path; make headings short judgments whose scan order explains the argument. Start the Pyramid opening with one primary judgment line, followed by 1–3 short evidence/action/boundary support lines; support lines must not introduce a second peer conclusion. Keep the question table inside TLDR; split dense rows or move detail to the body. Apply semantic meaning before color and retain signs/arrows/wording as non-color cues.
-
-### 5. Design The Visual
-
-Create `visual_spec.json` before drawing and map each block to claim IDs. The board must reach configured value-weighted coverage and cannot silently omit P0 claims. If the source has at least three quantitative claims, or the main conclusion depends on quantitative evidence, include a real quantitative encoding beyond boxes and prose; if data cannot be extracted reliably, show a truthful boundary instead of false precision.
-
-For Feishu, choose an allowed `beautiful-feishu-whiteboard` style automatically from `CATALOG.md` unless the user already chose one; read only that style's `design.md`. Keep semantic colors consistent with the body. Use editable native-shape SVG and validate it. Bitmap generation is inspiration only: never send internal source text, identifiers, links, names, or real metrics, and never let bitmap output carry critical evidence or conclusions.
-
-### 6. Preflight And Audit
-
-Run deterministic gates before reviewers:
+Run and fix all deterministic gates before creating the output:
 
 ```bash
 scripts/preflight_check.py DRAFT --source-inventory source_inventory.md --claim-ledger claim_ledger.json
@@ -88,17 +80,19 @@ scripts/validate_visual_spec.py visual_spec.json claim_ledger.json
 
 Validate the rendered visual for its target format; for Feishu use `scripts/validate_whiteboard.sh`. Fix deterministic failures before review.
 
-Build three role-specific, hash-locked packets: Reader receives the readable draft; Source receives non-appendix outline, P0/P1 excerpts, and ledger; Visualization receives preview, visual spec, coverage, validation, and semantic mapping. Launch Reader Comprehension, Source Coverage And Grounding, and Visualization And Expression reviewers independently. Until all submit, never reveal or use one reviewer's comments with another. Any FAIL, unsupported claim, blocking issue, or failed gate requires revision and all three reviewers rerun, up to three rounds. Do not claim independent review when unavailable.
+### 3. Create The Review Draft
 
-Aggregate only matching roles, rounds, and artifact hashes with `scripts/aggregate_reviews.py`.
+Immediately after deterministic preflight passes, create the new output and store its URL/path; do not wait for independent reviewers. Write a complete review draft, not an empty placeholder. Feishu/Lark input must create a native Feishu/Lark document with an editable whiteboard; never silently substitute `.docx` unless the user explicitly requests Word. Keep the source unchanged. All later revisions update only this generated draft.
 
-### 7. Replay Reader Understanding
+### 4. Review Without Stalling
 
-After all three reviewers pass the same artifact set, follow the blind-reader reference. Start with Primary using only the rendered artifact and exactly three document-specific question-answer replays. Add Technical and Decision readers only under the configured escalation conditions; do not expose sources, expected answers, reviewer output, another replay, or the escalation reason. A blocking comprehension defect restarts preflight, all three reviews, and Primary replay.
+When independent reviewer execution is available, build the three hash-locked role packets, run reviewers independently, aggregate matching artifact hashes, revise on any blocker, and rerun all three up to three rounds. After PASS, run Blind Reader Replay from Primary and escalate only under its configured conditions.
 
-### 8. Create And Verify The New Output
+When independent reviewers are unavailable, do not stop or pretend they ran. Perform three sequential, role-separated self-checks using the same Reader, Source, and Visualization gates; fix every deterministic, grounding, or comprehension blocker; set `review_status=LIMITED` and `blind_reader_status=UNAVAILABLE`; then continue unless the user explicitly required independent review. This fallback may reduce validation strength but must not turn a document-creation request into a plan-only response.
 
-Create the new output only after the selected gates pass. For Feishu, query and inspect the live board for clipping, overlap, overflow, and stale rendering. Verify source unchanged, format/language correctness, source citation, TLDR's three units, coverage, semantic consistency, accessible output, and final artifact hashes with `scripts/verify_reviewed_artifacts.py`. Never publish a Feishu artifact while a required dependency is SKIP/BLOCKED or before a newly installed skill is registered after reloading the current agent. A Feishu run is complete only after a real create operation returns an accessible new-document URL/token distinct from the source; Skill text, a plan, an acknowledgement, or a promise to continue is not delivery. Without that result, return the exact blocker and required host action instead of claiming completion or asking for redundant task approval.
+### 5. Update, Verify, Deliver
+
+Apply review fixes to the generated draft, never the source. For Feishu, inspect the live board for clipping, overlap, overflow, and stale rendering. Verify source unchanged, native output type, language, citation, TLDR units, coverage, semantic consistency, accessibility, and final artifact hashes with `scripts/verify_reviewed_artifacts.py`. A run is complete only when the new URL/path is accessible and distinct from the source. Progress text, Skill instructions, plans, acknowledgements, or promises to continue are never delivery; keep using tools or return the exact blocker.
 
 ## Delivery
 

@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The project follows [Se
 
 ### Changed
 
+- Reworked the runtime into an action-first, lower-freedom flow for more reliable execution on GPT-5.4-class models: tool action first, review-draft creation immediately after deterministic preflight, native Feishu format enforcement, and a disclosed role-separated review fallback when independent reviewers are unavailable.
 - Added executable host-capability gates for `lark-doc` and `lark-whiteboard`; loading Skill specifications no longer counts as Feishu runtime readiness, and a run cannot complete without a real new-document link.
 - Replaced the Codex-only installation flow with agent-agnostic GitHub, manual-folder, and upload instructions for Agent Skills-compatible clients.
 - Replaced the Codex-only `beautiful-feishu-whiteboard` dependency installer with a verified GitHub archive installer for hosts that explicitly expose a persistent Skill registry.
