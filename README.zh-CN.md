@@ -34,8 +34,10 @@
 
 ```text
 请安装 https://github.com/BobbyYue/3080-brief 中的 Agent Skill，
-Skill 子目录是 skills/3080-brief。请保留完整目录，将其注册到你的 Skill 目录，
-并告诉我安装后是否需要重新加载或重启。
+使用完整子目录 skills/3080-brief，并注册到你的正式 Skill 目录。
+随后运行飞书依赖检查，向我一次性展示全部缺失依赖及安装影响，并只询问一次是否全部安装。
+如果我同意，请安装清单中的所有项目，不要逐项重复申请；其中 beautiful-feishu-whiteboard
+必须作为独立 Skill 注册。如果我拒绝，保留 3080-brief，但保持飞书输出为阻断状态。
 ```
 
 ### 方式二：手动安装完整目录
@@ -57,6 +59,8 @@ Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-
 ### 方式三：在 Web 或桌面客户端上传
 
 下载[最新 Release](https://github.com/BobbyYue/3080-brief/releases/latest)并解压，通过客户端的 Skill 导入入口上传 `skills/3080-brief`。除非客户端明确支持仓库子路径，否则不要直接上传整个仓库根目录。
+
+无论使用哪种安装方式，Agent 都应在宣告飞书能力可用前运行依赖检查，并通过一次捆绑审批处理全部缺失依赖。
 
 ### 验证安装
 
@@ -100,14 +104,11 @@ Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-
 
 缺少这些依赖只会阻断飞书路径。skill 会展示准确来源、版本、已知的联网/文件影响，以及审批命令或宿主原生注册请求，并向用户申请明确许可，不会静默安装。
 
-`3080-brief` 不再根据脚本执行目录猜测 Skill 注册目录，因为托管 Agent 可能从一次性临时仓库运行安装脚本。如果宿主没有提供已验证的注册目录，应通过当前 Agent 自带的安装器或导入入口，把 [`zarazhangrui/beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 作为独立 Skill 安装。文件复制成功只会标记为“等待运行时复检”，不会标记为 `PASS`；重新加载 Agent 并在正式运行环境复检通过后才能继续。如果宿主明确提供持久注册目录，可设置 `BRIEF3080_SKILL_INSTALL_ROOT`。
+安装阶段的依赖检查会生成一个审批包，覆盖清单中的全部飞书缺失依赖。用户明确同意一次，即授权执行所有已展示的 CLI 命令，并把 [`beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 作为独立 Skill 注册；不能再逐项重复申请。用户拒绝时，保留核心 Skill，并保持飞书输出阻断。
 
-可直接发送给宿主 Agent：
+`3080-brief` 不根据脚本执行目录猜测 Skill 注册目录，因为托管 Agent 可能从一次性临时仓库运行安装脚本。如果宿主没有提供已验证的注册目录，应使用当前 Agent 自带的安装器或导入入口。文件复制成功只会标记为“等待运行时复检”，不会标记为 `PASS`；重新加载 Agent 并在正式运行环境复检通过后才能继续。如果宿主明确提供持久注册目录，可设置 `BRIEF3080_SKILL_INSTALL_ROOT`。
 
-```text
-请将 https://github.com/zarazhangrui/beautiful-feishu-whiteboard 作为独立 Agent Skill 安装，
-注册到当前 Agent 的正式 Skill 目录，并告诉我安装后是否需要重新加载。
-```
+如果缺少 Node.js 且没有已知的平台安装命令，或需要进行飞书登录、权限授权，仍须单独确认；一次捆绑审批不能覆盖未展示的系统命令或账号授权影响。
 
 ## 开发验证
 

@@ -371,6 +371,21 @@ def skill_install_item(skill_id, spec, install_root=None):
     }
 
 
+def approval_bundle(config, installations):
+    contract = config["installation_bundle"]
+    covered = [item.get("tool") or item.get("skill") for item in installations]
+    return {
+        "id": contract["id"],
+        "approval_mode": contract["approval_mode"],
+        "approval_scope": contract["approval_scope"],
+        "approval_prompt": contract["approval_prompt"],
+        "single_approval_covers": covered,
+        "on_approve": contract["on_approve"],
+        "on_decline": contract["on_decline"],
+        "excludes": contract["excludes"],
+    }
+
+
 def build_report(mode, cache_root, isolated, skill_roots, skill_install_root=None):
     config = load_config()
     feishu_required = mode == "feishu"
@@ -419,6 +434,7 @@ def build_report(mode, cache_root, isolated, skill_roots, skill_install_root=Non
         "reason": "Feishu output requires the missing CLI and skill dependencies" if feishu_required else "optional Feishu dependencies are unavailable",
         "network_access": bool(installations),
         "host_registration_required": any(item.get("requires_host_registration") for item in install_skills),
+        "approval_bundle": approval_bundle(config, installations),
         "installations": installations,
         "approval_commands": approval_commands,
     }
@@ -432,6 +448,10 @@ def print_human(report):
     print(f"OVERALL {report['overall_status']}")
     request = report["installation_request"]
     if request["required"]:
+        bundle = request["approval_bundle"]
+        print("ONE APPROVAL FOR ALL LISTED DEPENDENCIES")
+        print(bundle["approval_prompt"])
+        print("Covers: " + ", ".join(bundle["single_approval_covers"]))
         print("INSTALLATION APPROVAL REQUIRED")
         for item in request["installations"]:
             label = item.get("tool") or item.get("skill")
@@ -481,6 +501,7 @@ def main():
                 "reason": "Feishu adapters are outside the core offline validation surface",
                 "network_access": False,
                 "host_registration_required": False,
+                "approval_bundle": approval_bundle(config, []),
                 "installations": [],
                 "approval_commands": [],
             },

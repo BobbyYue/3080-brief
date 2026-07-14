@@ -26,13 +26,17 @@ python3 scripts/check_dependencies.py --mode feishu --json
 
 When `installation_request.required` is true:
 
-1. Show the user every missing dependency, exact npm package version or GitHub skill source/minimum version, every known install root/network/file/restart effect, and either the approval command or `host_install_prompt` from the diagnostic JSON.
-2. Ask for explicit installation approval. A request for a Feishu document is not installation approval.
-3. Do not call the installer in the same turn before approval.
-4. If `host_registration_required` is true, do not run a local file installer. After approval, use the current host's native registry/import capability to install `host_install_prompt`; if no such capability is callable, present the prompt to the user and keep the task `BLOCKED`.
-5. Otherwise, after approval, run only the diagnostic-provided `approval_commands`, which include `--user-approved`; do not add this flag without the user's explicit approval.
-6. Treat `FILES INSTALLED AND VERIFIED` only as `PENDING_RUNTIME_RECHECK`, never as dependency `PASS`.
-7. Tell the user to reload or restart the current agent. Then re-run `check_dependencies.py --mode feishu --json` from its normal registered runtime and continue only when every required CLI and skill returns `PASS`.
+1. During primary Skill installation, register `3080-brief`, run the diagnostic, and display the complete `approval_bundle` before declaring installation complete. On later Feishu runs, use the same flow for anything still missing.
+2. Show every covered dependency, exact npm package version or GitHub skill source/minimum version, every known install root/network/file/restart effect, and either the approval command or `host_install_prompt`.
+3. Ask exactly one explicit question using `approval_bundle.approval_prompt`. Do not request approval separately for each listed dependency.
+4. A single explicit yes authorizes every item in `single_approval_covers`, every displayed `approval_command`, and every displayed host-native registration action. Execute the complete plan, stopping on the first failure.
+5. A decline installs nothing from the dependency bundle: keep `3080-brief` available for non-Feishu output and keep the Feishu path `BLOCKED`.
+6. If `host_registration_required` is true, do not run a local file installer. After approval, use the current host's native registry/import capability to install `host_install_prompt`; if no such capability is callable, present the prompt and keep the task `BLOCKED`.
+7. Otherwise, after approval, run only the diagnostic-provided `approval_commands`, which include `--user-approved`; do not add this flag without the user's explicit approval.
+8. Treat `FILES INSTALLED AND VERIFIED` only as `PENDING_RUNTIME_RECHECK`, never as dependency `PASS`.
+9. Reload or restart the current agent when required. Then re-run `check_dependencies.py --mode feishu --json` from its normal registered runtime and continue only when every required CLI and skill returns `PASS`.
+
+The bundle excludes Node.js installation when no exact platform command is known, and excludes Feishu/Lark authentication or permission grants. Request those separately with their exact effects; never stretch the bundle approval to cover an undisclosed command or account authorization.
 
 The installer uses an isolated user cache (`$BRIEF3080_TOOL_CACHE` or `${XDG_CACHE_HOME:-~/.cache}/3080-brief/tools`) and exact npm package versions. It must not add `node_modules` to the skill or repository.
 

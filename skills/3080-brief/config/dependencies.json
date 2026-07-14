@@ -1,5 +1,17 @@
 {
   "schema_version": 1,
+  "installation_bundle": {
+    "id": "feishu-dependencies",
+    "approval_mode": "single_explicit_approval",
+    "approval_scope": "all_missing_feishu_dependencies",
+    "approval_prompt": "Install all missing 3080-brief Feishu dependencies listed in this plan? One approval covers every listed CLI command and host-native companion Skill registration action.",
+    "on_approve": "Execute every listed approval command and host-native registration action; stop on the first failure, reload the agent when required, then rerun the dependency check from the normal runtime.",
+    "on_decline": "Keep 3080-brief installed for non-Feishu output, install no optional Feishu dependency, and keep the Feishu path BLOCKED.",
+    "excludes": [
+      "Node.js installation when no exact platform command is known",
+      "Feishu/Lark authentication or permission grants"
+    ]
+  },
   "python": {
     "minimum_version": "3.9"
   },

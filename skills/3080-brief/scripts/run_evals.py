@@ -27,7 +27,12 @@ def main():
     for script in SCRIPTS.glob("*.py"):
         py_compile.compile(str(script), doraise=True)
     config = json.loads((SKILL / "config" / "3080-brief.json").read_text(encoding="utf-8"))
-    json.loads((SKILL / "config" / "dependencies.json").read_text(encoding="utf-8"))
+    dependency_config = json.loads((SKILL / "config" / "dependencies.json").read_text(encoding="utf-8"))
+    bundle_contract = dependency_config.get("installation_bundle", {})
+    if bundle_contract.get("approval_mode") != "single_explicit_approval":
+        raise SystemExit("dependency config must require one explicit bundled approval")
+    if bundle_contract.get("approval_scope") != "all_missing_feishu_dependencies":
+        raise SystemExit("dependency config approval scope must cover all missing Feishu dependencies")
     json.loads((SKILL / "references" / "claim-ledger.schema.json").read_text(encoding="utf-8"))
     json.loads((SKILL / "references" / "visual-spec.schema.json").read_text(encoding="utf-8"))
     inventory_zh = FIXTURES / "inventory-zh-source.md"
@@ -220,6 +225,18 @@ def main():
         requested_dependencies = {item.get("tool") or item.get("skill") for item in request.get("installations", [])}
         if requested_dependencies != {"lark-cli", "whiteboard-cli", "beautiful-feishu-whiteboard"}:
             raise SystemExit("installation request does not cover both Feishu CLIs and the whiteboard style skill")
+        bundle = request.get("approval_bundle", {})
+        if bundle.get("approval_mode") != "single_explicit_approval":
+            raise SystemExit("missing dependencies did not produce one bundled approval")
+        if set(bundle.get("single_approval_covers", [])) != requested_dependencies:
+            raise SystemExit("single approval does not cover every listed missing dependency")
+        if bundle.get("approval_scope") != "all_missing_feishu_dependencies" or "all missing" not in bundle.get("approval_prompt", "").casefold():
+            raise SystemExit("bundle approval prompt does not clearly ask once for all missing dependencies")
+        if "non-Feishu" not in bundle.get("on_decline", "") or "BLOCKED" not in bundle.get("on_decline", ""):
+            raise SystemExit("bundle decline behavior must preserve the core Skill and block only Feishu output")
+        excluded_text = " ".join(bundle.get("excludes", [])).casefold()
+        if "node.js" not in excluded_text or "authentication" not in excluded_text:
+            raise SystemExit("bundle must exclude undisclosed Node.js installation and account authorization")
         requested_skill = next(item for item in request["installations"] if item.get("skill") == "beautiful-feishu-whiteboard")
         if requested_skill.get("install_root") is not None or requested_skill.get("command") is not None:
             raise SystemExit("dependency diagnostic guessed a Skill registry without an explicit host root")
@@ -229,6 +246,17 @@ def main():
             raise SystemExit("host registration request omitted the verified whiteboard Skill source")
         if len(request.get("approval_commands", [])) != 1:
             raise SystemExit("unresolved host Skill registration must not emit a local file-install command")
+        human_missing = run(
+            sys.executable,
+            str(SCRIPTS / "check_dependencies.py"),
+            "--mode", "feishu",
+            "--isolated",
+            "--tool-cache", str(empty_cache),
+            expect=3,
+            env=isolated_env,
+        )
+        if "ONE APPROVAL FOR ALL LISTED DEPENDENCIES" not in human_missing.stdout:
+            raise SystemExit("human dependency plan did not present one bundled approval")
 
         explicit_root = tmp_path / "explicit-host-registry"
         explicit_env = isolated_env.copy()
@@ -392,7 +420,6 @@ def main():
         fake_node = tmp_path / "node"
         fake_node.write_text("#!/bin/sh\necho v20.0.0\n", encoding="utf-8")
         fake_node.chmod(0o755)
-        dependency_config = json.loads((SKILL / "config" / "dependencies.json").read_text(encoding="utf-8"))
         for tool_id, spec in dependency_config["tools"].items():
             prefix = fake_cache / tool_id / spec["install_version"]
             package_root = prefix / "node_modules" / Path(spec["package"])
