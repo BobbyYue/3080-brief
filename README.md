@@ -9,20 +9,20 @@ Source-grounded decision briefs that help readers understand the conclusion quic
 
 [Chinese (Simplified)](README.zh-CN.md)
 
-`3080-brief` turns a source document into a new, reader-first brief without modifying the source. Its opening has exactly three units:
+`3080-brief` turns a source document into a new, reader-first brief without modifying the source. The result is organized around four reader-facing elements:
 
 1. one primary judgment sentence followed by 1–3 short evidence, action, or boundary support lines;
-2. one auditable visual covering at least 80% of value-weighted, non-appendix claims;
-3. one key-question table answering what readers are most likely to ask.
+2. one clear storyline that helps readers untangle the source's logic;
+3. one auditable visual covering at least 80% of value-weighted, non-appendix claims;
+4. one key-question table answering what readers are most likely to ask.
 
 ## Why use it
 
-- Source-grounded: every number, conclusion, risk, and recommendation must be traceable or labeled as an inference.
 - Reader-first: reorganizes the source around what readers need to understand, trust, decide, or do.
-- Format-aware: Feishu/Lark creates a new Feishu/Lark document; Word creates a new `.docx`; Markdown creates new Markdown.
-- Visual by design: the opening visual is editable in Feishu and is checked against a value-weighted claim ledger.
-- Reviewable: deterministic preflight, three independent review roles, and blind-reader replay are part of the release gate.
-- Lean by default: normal runtime loads only `SKILL.md` (currently 11.6KB); detailed references load only when their branch is reached.
+- Core-value extraction: separates decision-critical conclusions, evidence, risks, and actions from background noise and implementation detail.
+- Clear storyline: turns fragmented or technical source logic into a coherent argument whose headings make the reasoning easy to scan.
+- Fast understanding: combines a 30-second judgment, one-picture summary, and key-question table so readers can grasp the main line quickly.
+- Reliable delivery: keeps claims traceable, preserves the source, matches the output format, and applies deterministic review gates.
 
 ## Install
 
