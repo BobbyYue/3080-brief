@@ -35,9 +35,10 @@
 ```text
 请安装 https://github.com/BobbyYue/3080-brief 中的 Agent Skill，
 使用完整子目录 skills/3080-brief，并注册到你的正式 Skill 目录。
-随后运行飞书依赖检查，向我一次性展示全部缺失依赖及安装影响，并只询问一次是否全部安装。
-如果我同意，请安装清单中的所有项目，不要逐项重复申请；其中 beautiful-feishu-whiteboard
-必须作为独立 Skill 注册。如果我拒绝，保留 3080-brief，但保持飞书输出为阻断状态。
+随后运行飞书依赖检查，向我一次性展示全部缺失依赖及安装影响，并只询问一次是否全部安装或启用。
+如果我同意，请处理清单中的所有项目，不要逐项重复申请；其中 beautiful-feishu-whiteboard
+必须作为独立 Skill 注册；缺少时还要启用宿主可实际执行的 lark-doc 和 lark-whiteboard 工作流。
+仅加载或返回 Skill 规范不算能力可用。如果我拒绝，保留 3080-brief，但保持飞书输出为阻断状态。
 ```
 
 ### 方式二：手动安装完整目录
@@ -68,9 +69,13 @@ Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-
 
 ```text
 请使用 $3080-brief，把这份文档新建为读者视角决策简报。
+不要在加载 Skill 说明后停止：请返回新文档链接，或明确报告具体的 BLOCKED 运行时能力
+及宿主原生启用动作；不要再次询问我是否继续。
 ```
 
 如果某个 Agent 尚未原生支持 Agent Skills，可以把完整 Skill 目录作为项目上下文提供给它，并要求其遵循 `SKILL.md`。核心指令仍可使用，但自动发现、按需加载资源、执行脚本和依赖审批能力取决于宿主 Agent。
+
+对于飞书输出，Agent 能展示 `3080-brief` 或 `lark-doc` 的说明并不代表安装验证通过。宿主必须真正读取源文档并返回新文档链接，否则应把缺失的可执行能力明确报告为 `BLOCKED`。
 
 ## 触发样例
 
@@ -79,6 +84,7 @@ Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-
 ```text
 请使用 $3080-brief，把这份文档新建为读者视角决策简报。
 保持源文档不变，输出格式跟随输入格式。
+最终必须返回生成结果链接，或明确报告具体的 BLOCKED 运行时能力。
 ```
 
 自然语言调用：
@@ -96,15 +102,16 @@ Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-
 
 飞书输出额外要求：
 
+- 宿主可实际执行 `lark-doc` 文档读取/创建和 `lark-whiteboard` 查询/更新工作流，而不只是加载它们的 Skill 文本；
 - Node.js 20+；
 - `@larksuite/cli` / `lark-cli` 1.0.60+；
 - 隔离工具缓存中的 `@larksuite/whiteboard-cli` 必须为 0.2.11；
 - [`beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 1.1.1+；
 - 飞书账号认证与必要的文档权限。
 
-缺少这些依赖只会阻断飞书路径。skill 会展示准确来源、版本、已知的联网/文件影响，以及审批命令或宿主原生注册请求，并向用户申请明确许可，不会静默安装。
+缺少这些依赖只会阻断飞书路径。对于软件包依赖，skill 会展示准确来源、版本、已知的联网/文件影响及审批命令；对于运行时能力，则展示明确的宿主原生启用动作。它会先申请用户许可，不会静默安装或启用。
 
-安装阶段的依赖检查会生成一个审批包，覆盖清单中的全部飞书缺失依赖。用户明确同意一次，即授权执行所有已展示的 CLI 命令，并把 [`beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 作为独立 Skill 注册；不能再逐项重复申请。用户拒绝时，保留核心 Skill，并保持飞书输出阻断。
+安装阶段的依赖检查会生成一个审批包，覆盖清单中的全部飞书缺失依赖。用户明确同意一次，即授权执行所有已展示的 CLI 命令、把 [`beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 作为独立 Skill 注册，并通过宿主原生流程启用缺失的 `lark-doc` / `lark-whiteboard` 工作流；不能再逐项重复申请。用户拒绝时，保留核心 Skill，并保持飞书输出阻断。
 
 `3080-brief` 不根据脚本执行目录猜测 Skill 注册目录，因为托管 Agent 可能从一次性临时仓库运行安装脚本。如果宿主没有提供已验证的注册目录，应使用当前 Agent 自带的安装器或导入入口。文件复制成功只会标记为“等待运行时复检”，不会标记为 `PASS`；重新加载 Agent 并在正式运行环境复检通过后才能继续。如果宿主明确提供持久注册目录，可设置 `BRIEF3080_SKILL_INSTALL_ROOT`。
 

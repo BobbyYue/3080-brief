@@ -1,6 +1,6 @@
 # Dependency Gate And Installation Approval
 
-Read this file when a Feishu/Lark output needs `lark-cli`, the pinned whiteboard renderer, or `beautiful-feishu-whiteboard`, or when dependency diagnostics return `BLOCKED`, `SKIP`, or `FAIL`.
+Read this file when a Feishu/Lark output needs `lark-cli`, the pinned whiteboard renderer, `beautiful-feishu-whiteboard`, callable `lark-doc` / `lark-whiteboard` host workflows, or when dependency diagnostics return `BLOCKED`, `SKIP`, or `FAIL`.
 
 ## Status Contract
 
@@ -22,6 +22,8 @@ Before fetching or writing a Feishu/Lark output, run:
 python3 scripts/check_dependencies.py --mode feishu --json
 ```
 
+Add `--host-capability lark-doc` and `--host-capability lark-whiteboard` only after the current Agent confirms those workflows can perform real operations end to end. `BRIEF3080_HOST_CAPABILITIES=lark-doc,lark-whiteboard` is the equivalent automation override. A discovered Skill name, loaded `SKILL.md`, returned specification, or natural-language acknowledgement is not capability evidence.
+
 ## Approval Flow
 
 When `installation_request.required` is true:
@@ -31,10 +33,12 @@ When `installation_request.required` is true:
 3. Ask exactly one explicit question using `approval_bundle.approval_prompt`. Do not request approval separately for each listed dependency.
 4. A single explicit yes authorizes every item in `single_approval_covers`, every displayed `approval_command`, and every displayed host-native registration action. Execute the complete plan, stopping on the first failure.
 5. A decline installs nothing from the dependency bundle: keep `3080-brief` available for non-Feishu output and keep the Feishu path `BLOCKED`.
-6. If `host_registration_required` is true, do not run a local file installer. After approval, use the current host's native registry/import capability to install `host_install_prompt`; if no such capability is callable, present the prompt and keep the task `BLOCKED`.
+6. If `host_registration_required` is true, do not run a local file installer. After approval, use the current host's native registry/import or integration-enable capability to execute `host_install_prompt`; if no such capability is callable, present the prompt and keep the task `BLOCKED`.
 7. Otherwise, after approval, run only the diagnostic-provided `approval_commands`, which include `--user-approved`; do not add this flag without the user's explicit approval.
 8. Treat `FILES INSTALLED AND VERIFIED` only as `PENDING_RUNTIME_RECHECK`, never as dependency `PASS`.
 9. Reload or restart the current agent when required. Then re-run `check_dependencies.py --mode feishu --json` from its normal registered runtime and continue only when every required CLI and skill returns `PASS`.
+
+The two host capabilities remain `BLOCKED` until the Agent can actually execute the `lark-doc` read/create workflow and the `lark-whiteboard` query/update workflow. Never convert “the Skill returned its instructions” into `PASS`.
 
 The bundle excludes Node.js installation when no exact platform command is known, and excludes Feishu/Lark authentication or permission grants. Request those separately with their exact effects; never stretch the bundle approval to cover an undisclosed command or account authorization.
 

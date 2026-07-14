@@ -36,9 +36,11 @@ Send this instruction to an agent that can install skills from GitHub:
 Install the Agent Skill from https://github.com/BobbyYue/3080-brief,
 using the complete subdirectory skills/3080-brief and register it in your Skill registry.
 Then run its Feishu dependency check, show me one complete plan for every missing dependency,
-and ask once whether to install all of them. If I approve, install every listed item without
+and ask once whether to install or enable all of them. If I approve, handle every listed item without
 separate per-item approvals, including registering beautiful-feishu-whiteboard as an independent
-Skill. If I decline, keep 3080-brief installed but leave Feishu output blocked.
+Skill and enabling the host's executable lark-doc and lark-whiteboard workflows when missing.
+Loading or returning a Skill specification does not count as executable readiness. If I decline,
+keep 3080-brief installed but leave Feishu output blocked.
 ```
 
 ### Option 2: install the folder manually
@@ -69,9 +71,13 @@ Confirm that the installed skill root contains `SKILL.md`, then ask:
 
 ```text
 Use $3080-brief to turn this document into a reader-first decision brief.
+Do not stop after loading Skill instructions: return the new document link, or the exact BLOCKED
+runtime capability and its host-native enablement action. Do not ask me again whether to continue.
 ```
 
 If an agent does not natively support Agent Skills, provide the complete skill folder as project context and instruct it to follow `SKILL.md`. Core instructions remain usable, but automatic discovery, conditional resource loading, script execution, and dependency approval depend on the host agent.
+
+For Feishu output, installation is not verified merely because the agent can display `3080-brief` or `lark-doc` instructions. The host must execute a real source-document read and return a new-document link; otherwise it must report the exact missing capability as `BLOCKED`.
 
 ## Try it
 
@@ -80,6 +86,7 @@ Explicit invocation:
 ```text
 Use $3080-brief to turn this document into a reader-first decision brief.
 Keep the source unchanged and create the output in the same format.
+Finish with the generated output link, or report the exact BLOCKED runtime capability.
 ```
 
 Natural-language invocation:
@@ -98,15 +105,16 @@ Core validation is offline and uses Python 3.9+ with no third-party Python packa
 
 Feishu/Lark output additionally requires:
 
+- executable host workflows for `lark-doc` document read/create and `lark-whiteboard` query/update—not only their Skill text;
 - Node.js 20+;
 - `@larksuite/cli` / `lark-cli` 1.0.60+;
 - `@larksuite/whiteboard-cli` exactly 0.2.11 in the isolated 3080 tool cache;
 - [`beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 1.1.1+;
 - Feishu/Lark authentication and the required document permissions.
 
-Missing Feishu dependencies block only the Feishu path. The skill displays the exact source, version, known network/file effects, and either an approval command or a host-native registration request. It does not silently install dependencies.
+Missing Feishu dependencies block only the Feishu path. For package dependencies, the skill displays the exact source, version, known network/file effects, and approval command; for runtime capabilities, it displays the concrete host-native enablement action. It does not silently install or enable dependencies.
 
-The installation-time dependency check produces one approval bundle covering every listed missing Feishu dependency. One explicit yes authorizes all displayed CLI commands and the independent registration of [`beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard); it must not trigger repeated per-item approvals. A decline keeps the core Skill available and Feishu output blocked.
+The installation-time dependency check produces one approval bundle covering every listed missing Feishu dependency. One explicit yes authorizes all displayed CLI commands, the independent registration of [`beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard), and host-native enablement of missing `lark-doc` / `lark-whiteboard` workflows; it must not trigger repeated per-item approvals. A decline keeps the core Skill available and Feishu output blocked.
 
 `3080-brief` never guesses a Skill registry from its execution directory because managed agents may run scripts from a disposable checkout. If the host does not expose a verified registry root, it uses that agent's native installer/import UI. An archive copy remains pending—not `PASS`—until the agent reloads and the dependency check succeeds from its normal runtime. For hosts that explicitly expose a persistent registry, set `BRIEF3080_SKILL_INSTALL_ROOT`.
 

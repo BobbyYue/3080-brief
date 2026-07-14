@@ -83,8 +83,8 @@
     },
     {
       "id": "DEP-01",
-      "requirement": "Feishu dependencies are verified and installations require explicit approval.",
-      "owner": {"file": "config/dependencies.json", "marker": "\"beautiful-feishu-whiteboard\""},
+      "requirement": "Feishu CLI, companion Skill, and executable host workflows are verified; Skill text alone is not readiness; installations and enablement require explicit approval.",
+      "owner": {"file": "config/dependencies.json", "marker": "\"host_capabilities\""},
       "enforced_by": ["scripts/check_dependencies.py", "scripts/install_optional_dependencies.py", "scripts/install_skill_dependency.py", "scripts/run_evals.py"]
     },
     {
@@ -101,7 +101,7 @@
     },
     {
       "id": "DEL-01",
-      "requirement": "Delivery verifies format, language, source integrity, visual state, reviews, replay, and artifact hashes.",
+      "requirement": "Delivery verifies format, language, source integrity, visual state, reviews, replay, artifact hashes, and a real generated-output link/path.",
       "owner": {"file": "SKILL.md", "marker": "## Delivery"},
       "enforced_by": ["scripts/verify_reviewed_artifacts.py", "scripts/run_evals.py"]
     },

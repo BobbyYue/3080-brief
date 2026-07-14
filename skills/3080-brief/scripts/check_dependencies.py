@@ -61,6 +61,17 @@ def configured_skill_install_root():
     return Path(override).expanduser() if override else None
 
 
+def declared_host_capabilities(cli_values):
+    raw_values = list(cli_values or [])
+    environment_value = os.environ.get("BRIEF3080_HOST_CAPABILITIES")
+    if environment_value:
+        raw_values.append(environment_value)
+    capabilities = set()
+    for raw in raw_values:
+        capabilities.update(value for value in re.split(r"[,;\s]+", raw.strip()) if value)
+    return capabilities
+
+
 def tool_prefix(cache_root, tool_id, spec):
     return cache_root / tool_id / spec["install_version"]
 
@@ -255,6 +266,29 @@ def inspect_skill(skill_id, spec, skill_roots, isolated, required):
     }
 
 
+def inspect_host_capability(capability_id, spec, available, required):
+    if capability_id in available:
+        return {
+            "id": capability_id,
+            "kind": "host_capability",
+            "status": "PASS",
+            "reason": "current host declared the end-to-end workflow callable",
+            "path": None,
+            "version": None,
+        }
+    return {
+        "id": capability_id,
+        "kind": "host_capability",
+        "status": "BLOCKED" if required else "SKIP",
+        "reason": (
+            f"host did not declare an executable {capability_id} workflow for: {spec['purpose']}; "
+            "loading or returning Skill instructions alone is not executable readiness"
+        ),
+        "path": None,
+        "version": None,
+    }
+
+
 def inspect_python(config):
     minimum = version_tuple(config["python"]["minimum_version"])
     current = sys.version_info[:3]
@@ -371,9 +405,35 @@ def skill_install_item(skill_id, spec, install_root=None):
     }
 
 
+def host_capability_item(capability_id, spec):
+    return {
+        "type": "host_capability",
+        "capability": capability_id,
+        "purpose": spec["purpose"],
+        "install_root": None,
+        "network_access": False,
+        "creates": [],
+        "host_effects": [
+            "may enable or install a host integration/plugin/Skill",
+            "requires agent reload",
+            "may require separate Feishu/Lark authentication or permission grants",
+        ],
+        "requires_agent_reload": True,
+        "requires_host_registration": True,
+        "registration_status": "HOST_CAPABILITY_REQUIRED",
+        "host_install_prompt": spec["host_enable_prompt"],
+        "command": None,
+        "blocked_by": ["current host's native integration/plugin/Skill enablement flow"],
+    }
+
+
+def dependency_label(item):
+    return item.get("tool") or item.get("skill") or item.get("capability")
+
+
 def approval_bundle(config, installations):
     contract = config["installation_bundle"]
-    covered = [item.get("tool") or item.get("skill") for item in installations]
+    covered = [dependency_label(item) for item in installations]
     return {
         "id": contract["id"],
         "approval_mode": contract["approval_mode"],
@@ -386,7 +446,7 @@ def approval_bundle(config, installations):
     }
 
 
-def build_report(mode, cache_root, isolated, skill_roots, skill_install_root=None):
+def build_report(mode, cache_root, isolated, skill_roots, host_capabilities, skill_install_root=None):
     config = load_config()
     feishu_required = mode == "feishu"
     checks = [inspect_python(config), inspect_node(config, isolated, feishu_required)]
@@ -394,6 +454,8 @@ def build_report(mode, cache_root, isolated, skill_roots, skill_install_root=Non
         checks.append(inspect_tool(tool_id, spec, cache_root, isolated, feishu_required))
     for skill_id, spec in config.get("skills", {}).items():
         checks.append(inspect_skill(skill_id, spec, skill_roots, isolated, feishu_required))
+    for capability_id, spec in config.get("host_capabilities", {}).items():
+        checks.append(inspect_host_capability(capability_id, spec, host_capabilities, feishu_required))
 
     if any(check["status"] == "FAIL" for check in checks):
         overall = "FAIL"
@@ -413,7 +475,15 @@ def build_report(mode, cache_root, isolated, skill_roots, skill_install_root=Non
     install_tools = [install_item(tool_id, config["tools"][tool_id], cache_root, npm_path) for tool_id in missing_tools]
     missing_skills = [check["id"] for check in checks if check["id"] in config.get("skills", {}) and check["status"] != "PASS"]
     install_skills = [skill_install_item(skill_id, config["skills"][skill_id], skill_install_root) for skill_id in missing_skills]
-    installations = install_tools + install_skills
+    missing_capabilities = [
+        check["id"] for check in checks
+        if check["id"] in config.get("host_capabilities", {}) and check["status"] != "PASS"
+    ]
+    install_capabilities = [
+        host_capability_item(capability_id, config["host_capabilities"][capability_id])
+        for capability_id in missing_capabilities
+    ]
+    installations = install_tools + install_skills + install_capabilities
     installation_required = feishu_required and bool(installations)
     approval_commands = []
     if installation_required and install_tools:
@@ -431,9 +501,9 @@ def build_report(mode, cache_root, isolated, skill_roots, skill_install_root=Non
     request = {
         "required": installation_required,
         "requires_user_approval": installation_required,
-        "reason": "Feishu output requires the missing CLI and skill dependencies" if feishu_required else "optional Feishu dependencies are unavailable",
-        "network_access": bool(installations),
-        "host_registration_required": any(item.get("requires_host_registration") for item in install_skills),
+        "reason": "Feishu output requires the missing CLI, Skill, and executable host capabilities" if feishu_required else "optional Feishu dependencies are unavailable",
+        "network_access": any(item.get("network_access", False) for item in installations),
+        "host_registration_required": any(item.get("requires_host_registration") for item in install_skills + install_capabilities),
         "approval_bundle": approval_bundle(config, installations),
         "installations": installations,
         "approval_commands": approval_commands,
@@ -454,10 +524,17 @@ def print_human(report):
         print("Covers: " + ", ".join(bundle["single_approval_covers"]))
         print("INSTALLATION APPROVAL REQUIRED")
         for item in request["installations"]:
-            label = item.get("tool") or item.get("skill")
-            package = item.get("package") or f"{item['source']['repo']}@{item['source']['ref']}"
-            destination = item["install_root"] or "current agent's native Skill registry"
+            label = dependency_label(item)
+            if item.get("package"):
+                package = item["package"]
+            elif item.get("source"):
+                package = f"{item['source']['repo']}@{item['source']['ref']}"
+            else:
+                package = "host-native executable capability"
+            destination = item["install_root"] or "current agent's native integration/Skill registry"
             print(f"- {label}: {package} -> {destination}")
+            if item.get("host_effects"):
+                print("  effects: " + "; ".join(item["host_effects"]))
             if item["command"]:
                 print("  command: " + " ".join(item["command"]))
             elif item.get("host_install_prompt"):
@@ -475,6 +552,12 @@ def main():
     parser.add_argument("--tool-cache", type=Path, default=default_cache_root())
     parser.add_argument("--skill-root", type=Path, action="append", default=[], help="Additional root containing installed skill directories.")
     parser.add_argument("--skill-install-root", type=Path, help="Verified host Agent Skill registry root for approved dependency installation.")
+    parser.add_argument(
+        "--host-capability",
+        action="append",
+        default=[],
+        help="Declare a host workflow callable end to end; repeat for lark-doc and lark-whiteboard only after real tool discovery.",
+    )
     parser.add_argument("--isolated", action="store_true", help="Ignore PATH; use only the configured cache and explicit environment overrides.")
     args = parser.parse_args()
     config = load_config()
@@ -513,7 +596,8 @@ def main():
             exit_code = 0
     else:
         install_root = args.skill_install_root or configured_skill_install_root()
-        report, exit_code = build_report(mode, cache_root, args.isolated, args.skill_root, install_root)
+        host_capabilities = declared_host_capabilities(args.host_capability)
+        report, exit_code = build_report(mode, cache_root, args.isolated, args.skill_root, host_capabilities, install_root)
     print(json.dumps(report, ensure_ascii=False, indent=2) if args.json else "", end="" if args.json else "")
     if not args.json:
         print_human(report)

@@ -205,6 +205,7 @@ def main():
         isolated_env.pop("BEAUTIFUL_FEISHU_WHITEBOARD_SKILL", None)
         isolated_env.pop("BRIEF3080_SKILL_INSTALL_ROOT", None)
         isolated_env.pop("BRIEF3080_SKILL_ROOTS", None)
+        isolated_env.pop("BRIEF3080_HOST_CAPABILITIES", None)
         isolated_env.pop("NODE", None)
         missing = run(
             sys.executable,
@@ -222,9 +223,14 @@ def main():
         request = missing_report.get("installation_request", {})
         if not request.get("required") or not request.get("requires_user_approval"):
             raise SystemExit("missing Feishu dependencies did not produce an installation approval request")
-        requested_dependencies = {item.get("tool") or item.get("skill") for item in request.get("installations", [])}
-        if requested_dependencies != {"lark-cli", "whiteboard-cli", "beautiful-feishu-whiteboard"}:
-            raise SystemExit("installation request does not cover both Feishu CLIs and the whiteboard style skill")
+        requested_dependencies = {
+            item.get("tool") or item.get("skill") or item.get("capability")
+            for item in request.get("installations", [])
+        }
+        if requested_dependencies != {
+            "lark-cli", "whiteboard-cli", "beautiful-feishu-whiteboard", "lark-doc", "lark-whiteboard"
+        }:
+            raise SystemExit("installation request does not cover the Feishu CLIs, style Skill, and executable host workflows")
         bundle = request.get("approval_bundle", {})
         if bundle.get("approval_mode") != "single_explicit_approval":
             raise SystemExit("missing dependencies did not produce one bundled approval")
@@ -244,6 +250,15 @@ def main():
             raise SystemExit("missing host registry did not request native independent-Skill registration")
         if "zarazhangrui/beautiful-feishu-whiteboard" not in requested_skill.get("host_install_prompt", ""):
             raise SystemExit("host registration request omitted the verified whiteboard Skill source")
+        requested_capabilities = {
+            item.get("capability"): item
+            for item in request["installations"]
+            if item.get("capability")
+        }
+        if set(requested_capabilities) != {"lark-doc", "lark-whiteboard"}:
+            raise SystemExit("dependency diagnostic omitted required host capabilities")
+        if any("specification alone does not count" not in item.get("host_install_prompt", "") for item in requested_capabilities.values()):
+            raise SystemExit("host-capability plan did not distinguish Skill text from executable readiness")
         if len(request.get("approval_commands", [])) != 1:
             raise SystemExit("unresolved host Skill registration must not emit a local file-install command")
         human_missing = run(
@@ -469,6 +484,8 @@ def main():
             "--isolated",
             "--tool-cache", str(fake_cache),
             "--skill-root", str(portable_root),
+            "--host-capability", "lark-doc",
+            "--host-capability", "lark-whiteboard",
             env=passing_env,
         )
         if json.loads(registered_dependency.stdout).get("overall_status") != "PASS":
@@ -483,6 +500,24 @@ def main():
         )
         (fake_skill / "CATALOG.md").write_text("# Catalogue\n", encoding="utf-8")
         (fake_skill / "RULES.md").write_text("# Rules\n", encoding="utf-8")
+        runtime_unready = run(
+            sys.executable,
+            str(SCRIPTS / "check_dependencies.py"),
+            "--mode", "feishu",
+            "--json",
+            "--isolated",
+            "--tool-cache", str(fake_cache),
+            "--skill-root", str(fake_skill_root),
+            expect=3,
+            env=passing_env,
+        )
+        runtime_unready_report = json.loads(runtime_unready.stdout)
+        blocked_host_capabilities = {
+            check["id"] for check in runtime_unready_report["checks"]
+            if check.get("kind") == "host_capability" and check["status"] == "BLOCKED"
+        }
+        if blocked_host_capabilities != {"lark-doc", "lark-whiteboard"}:
+            raise SystemExit("installed files were incorrectly treated as executable host readiness")
         passing = run(
             sys.executable,
             str(SCRIPTS / "check_dependencies.py"),
@@ -491,6 +526,8 @@ def main():
             "--isolated",
             "--tool-cache", str(fake_cache),
             "--skill-root", str(fake_skill_root),
+            "--host-capability", "lark-doc",
+            "--host-capability", "lark-whiteboard",
             env=passing_env,
         )
         passing_report = json.loads(passing.stdout)
@@ -508,6 +545,8 @@ def main():
             "--isolated",
             "--tool-cache", str(fake_cache),
             "--skill-root", str(fake_skill_root),
+            "--host-capability", "lark-doc",
+            "--host-capability", "lark-whiteboard",
             expect=3,
             env=passing_env,
         )
@@ -526,6 +565,8 @@ def main():
             "--isolated",
             "--tool-cache", str(fake_cache),
             "--skill-root", str(fake_skill_root),
+            "--host-capability", "lark-doc",
+            "--host-capability", "lark-whiteboard",
             expect=3,
             env=passing_env,
         )
@@ -545,6 +586,10 @@ def main():
     output_coverage = json.loads((SKILL / "evals" / "output_coverage.json").read_text(encoding="utf-8"))
     json.loads((SKILL / "evals" / "review.schema.json").read_text(encoding="utf-8"))
     skill_text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+    if "merely loading or returning their Skill specification does not count" not in skill_text:
+        raise SystemExit("runtime contract does not distinguish Skill text from executable Feishu capability")
+    if "A Feishu run is complete only after a real create operation returns an accessible new-document URL/token" not in skill_text:
+        raise SystemExit("runtime contract does not require a real generated-document delivery result")
     frontmatter = skill_text.split("---", 2)[1].casefold()
     for alias in config["trigger"]["aliases"]:
         if alias.casefold() not in frontmatter:
