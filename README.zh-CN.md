@@ -98,9 +98,16 @@ Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-
 - [`beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 1.1.1+；
 - 飞书账号认证与必要的文档权限。
 
-缺少这些依赖只会阻断飞书路径。skill 会展示准确来源、版本、安装目录、联网/文件影响和命令，并向用户申请明确许可，不会静默安装。
+缺少这些依赖只会阻断飞书路径。skill 会展示准确来源、版本、已知的联网/文件影响，以及审批命令或宿主原生注册请求，并向用户申请明确许可，不会静默安装。
 
-用户同意后，skill 会从 [`zarazhangrui/beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 下载并校验完整目录，默认安装到 `3080-brief` 所在的同一 Skill 根目录，不再依赖 Codex 专用安装器。如果当前 Agent 使用其他目录，可设置 `BRIEF3080_SKILL_INSTALL_ROOT`；安装后重新加载或重启当前 Agent。
+`3080-brief` 不再根据脚本执行目录猜测 Skill 注册目录，因为托管 Agent 可能从一次性临时仓库运行安装脚本。如果宿主没有提供已验证的注册目录，应通过当前 Agent 自带的安装器或导入入口，把 [`zarazhangrui/beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 作为独立 Skill 安装。文件复制成功只会标记为“等待运行时复检”，不会标记为 `PASS`；重新加载 Agent 并在正式运行环境复检通过后才能继续。如果宿主明确提供持久注册目录，可设置 `BRIEF3080_SKILL_INSTALL_ROOT`。
+
+可直接发送给宿主 Agent：
+
+```text
+请将 https://github.com/zarazhangrui/beautiful-feishu-whiteboard 作为独立 Agent Skill 安装，
+注册到当前 Agent 的正式 Skill 目录，并告诉我安装后是否需要重新加载。
+```
 
 ## 开发验证
 

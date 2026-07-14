@@ -56,7 +56,7 @@ Do not preload references. Read a resource only when its condition becomes true.
 
 ### 1. Route And Gate
 
-Determine source type, requested output type, user constraints, and explicit language override. For Feishu/Lark, run the dependency diagnostic before fetching or writing. If `installation_request.required` is true, show every exact source/version, destination, network/file/restart effect, and emitted command; request explicit approval and stop installation for that turn. A document request is not installation or authentication approval. Non-Feishu work never prompts for Feishu dependencies.
+Determine source type, requested output type, user constraints, and explicit language override. For Feishu/Lark, run the dependency diagnostic before fetching or writing. If `installation_request.required` is true, show every known exact source/version, destination, network/file/restart effect, and either the emitted command or `host_install_prompt`; request explicit approval and stop installation for that turn. When `host_registration_required` is true, use the current host's native Skill installer/import flow after approval; if that capability is unavailable, present `host_install_prompt` and keep the task blocked. Never infer a registry root from the script location. A document request is not installation or authentication approval. Non-Feishu work never prompts for Feishu dependencies.
 
 ### 2. Ground The Source
 

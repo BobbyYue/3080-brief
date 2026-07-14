@@ -27,23 +27,26 @@ def archive_url(source):
 
 
 def default_install_root():
-    return dependencies.default_skill_install_root().resolve()
+    configured = dependencies.configured_skill_install_root()
+    return configured.resolve() if configured else None
 
 
 def build_plan(skill_id, spec, install_root, local_archive=None):
     source = spec["source"]
-    destination = install_root / skill_id
-    command = [
-        sys.executable,
-        str(Path(__file__).resolve()),
-        "--skill",
-        skill_id,
-        "--user-approved",
-        "--install-root",
-        str(install_root),
-    ]
-    if local_archive:
-        command.extend(("--archive", str(local_archive)))
+    destination = install_root / skill_id if install_root else None
+    command = None
+    if install_root:
+        command = [
+            sys.executable,
+            str(Path(__file__).resolve()),
+            "--skill",
+            skill_id,
+            "--user-approved",
+            "--install-root",
+            str(install_root),
+        ]
+        if local_archive:
+            command.extend(("--archive", str(local_archive)))
     return {
         "type": "skill",
         "skill": skill_id,
@@ -51,12 +54,18 @@ def build_plan(skill_id, spec, install_root, local_archive=None):
         "source": source,
         "download_url": str(local_archive) if local_archive else archive_url(source),
         "installation_method": "verified GitHub archive",
-        "install_root": str(destination),
+        "install_root": str(destination) if destination else None,
         "network_access": local_archive is None,
-        "creates": [str(destination)],
+        "creates": [str(destination)] if destination else [],
         "requires_agent_reload": True,
+        "requires_host_registration": install_root is None,
+        "registration_status": "PENDING_RUNTIME_RECHECK" if install_root else "HOST_REGISTRATION_REQUIRED",
+        "host_install_prompt": (
+            f"Install {source['url']} as an independent Agent Skill named {skill_id} through the current "
+            "agent's native Skill installer or import UI, then reload the agent."
+        ),
         "command": command,
-        "blocked_by": [],
+        "blocked_by": [] if install_root else ["verified host Agent Skill registry root or native Skill installer"],
     }
 
 
@@ -140,12 +149,19 @@ def main():
     parser.add_argument("--user-approved", action="store_true", help="Assert that the user approved the displayed network/install plan.")
     args = parser.parse_args()
     spec = config["skills"][args.skill]
-    install_root = args.install_root.expanduser().resolve()
+    install_root = args.install_root.expanduser().resolve() if args.install_root else None
     local_archive = args.archive.expanduser().resolve() if args.archive else None
     plan = build_plan(args.skill, spec, install_root, local_archive)
     print(json.dumps({"status": "DRY_RUN" if args.dry_run else "APPROVAL_CHECK", "installation": plan}, ensure_ascii=False, indent=2))
     if args.dry_run:
         return 0
+    if install_root is None:
+        print(
+            "BLOCKED: no verified host Agent Skill registry root was provided. Use the host's native Skill "
+            "installer/import UI, or pass --install-root / set BRIEF3080_SKILL_INSTALL_ROOT explicitly.",
+            file=sys.stderr,
+        )
+        return 3
     if not args.user_approved:
         print("BLOCKED: explicit user approval is required before network or file installation.", file=sys.stderr)
         return 3
@@ -154,8 +170,9 @@ def main():
     except (FileExistsError, OSError, RuntimeError, urllib.error.URLError, zipfile.BadZipFile) as exc:
         print(f"FAIL: skill installation failed for {args.skill}: {exc}", file=sys.stderr)
         return 1
-    print(f"PASS installed and verified {args.skill} {installed['version']} at {installed['path']}")
-    print("RELOAD REQUIRED: reload or restart the current agent so the new skill is registered before continuing the Feishu task.")
+    print(f"FILES INSTALLED AND VERIFIED: {args.skill} {installed['version']} at {installed['path']}")
+    print("REGISTRATION PENDING: reload or restart the current agent, then rerun the dependency check from its normal runtime.")
+    print("Do not treat this dependency as PASS until that runtime check succeeds.")
     return 0
 
 

@@ -37,7 +37,10 @@ def default_cache_root():
 
 
 def default_skill_roots():
-    roots = [default_skill_install_root()]
+    roots = [SKILL_ENTRY_DIR.parent]
+    install_root = configured_skill_install_root()
+    if install_root:
+        roots.append(install_root)
     extra = os.environ.get("BRIEF3080_SKILL_ROOTS")
     if extra:
         roots.extend(Path(value).expanduser() for value in extra.split(os.pathsep) if value)
@@ -53,9 +56,9 @@ def default_skill_roots():
     return unique
 
 
-def default_skill_install_root():
+def configured_skill_install_root():
     override = os.environ.get("BRIEF3080_SKILL_INSTALL_ROOT")
-    return Path(override).expanduser() if override else SKILL_ENTRY_DIR.parent
+    return Path(override).expanduser() if override else None
 
 
 def tool_prefix(cache_root, tool_id, spec):
@@ -319,10 +322,30 @@ def install_item(tool_id, spec, cache_root, npm_path):
     }
 
 
-def skill_install_item(skill_id, spec):
-    destination_root = default_skill_install_root().resolve()
-    destination = destination_root / skill_id
+def skill_install_item(skill_id, spec, install_root=None):
     source = spec["source"]
+    host_prompt = (
+        f"Install {source['url']} as an independent Agent Skill named {skill_id} through the current "
+        "agent's native Skill installer or import UI, then reload the agent."
+    )
+    if install_root is None:
+        return {
+            "type": "skill",
+            "skill": skill_id,
+            "minimum_version": spec["minimum_version"],
+            "source": source,
+            "install_root": None,
+            "network_access": True,
+            "creates": [],
+            "requires_agent_reload": True,
+            "requires_host_registration": True,
+            "registration_status": "HOST_REGISTRATION_REQUIRED",
+            "host_install_prompt": host_prompt,
+            "command": None,
+            "blocked_by": ["verified host Agent Skill registry root or native Skill installer"],
+        }
+    destination_root = Path(install_root).expanduser().resolve()
+    destination = destination_root / skill_id
     return {
         "type": "skill",
         "skill": skill_id,
@@ -332,6 +355,9 @@ def skill_install_item(skill_id, spec):
         "network_access": True,
         "creates": [str(destination)],
         "requires_agent_reload": True,
+        "requires_host_registration": False,
+        "registration_status": "PENDING_RUNTIME_RECHECK",
+        "host_install_prompt": host_prompt,
         "command": [
             sys.executable,
             str(SKILL_DIR / "scripts" / "install_skill_dependency.py"),
@@ -345,7 +371,7 @@ def skill_install_item(skill_id, spec):
     }
 
 
-def build_report(mode, cache_root, isolated, skill_roots):
+def build_report(mode, cache_root, isolated, skill_roots, skill_install_root=None):
     config = load_config()
     feishu_required = mode == "feishu"
     checks = [inspect_python(config), inspect_node(config, isolated, feishu_required)]
@@ -371,7 +397,7 @@ def build_report(mode, cache_root, isolated, skill_roots):
     npm_path = None if isolated else shutil.which("npm")
     install_tools = [install_item(tool_id, config["tools"][tool_id], cache_root, npm_path) for tool_id in missing_tools]
     missing_skills = [check["id"] for check in checks if check["id"] in config.get("skills", {}) and check["status"] != "PASS"]
-    install_skills = [skill_install_item(skill_id, config["skills"][skill_id]) for skill_id in missing_skills]
+    install_skills = [skill_install_item(skill_id, config["skills"][skill_id], skill_install_root) for skill_id in missing_skills]
     installations = install_tools + install_skills
     installation_required = feishu_required and bool(installations)
     approval_commands = []
@@ -386,12 +412,13 @@ def build_report(mode, cache_root, isolated, skill_roots):
             str(cache_root),
         ])
     if installation_required:
-        approval_commands.extend(item["command"] for item in install_skills)
+        approval_commands.extend(item["command"] for item in install_skills if item["command"])
     request = {
         "required": installation_required,
         "requires_user_approval": installation_required,
         "reason": "Feishu output requires the missing CLI and skill dependencies" if feishu_required else "optional Feishu dependencies are unavailable",
         "network_access": bool(installations),
+        "host_registration_required": any(item.get("requires_host_registration") for item in install_skills),
         "installations": installations,
         "approval_commands": approval_commands,
     }
@@ -409,9 +436,12 @@ def print_human(report):
         for item in request["installations"]:
             label = item.get("tool") or item.get("skill")
             package = item.get("package") or f"{item['source']['repo']}@{item['source']['ref']}"
-            print(f"- {label}: {package} -> {item['install_root']}")
+            destination = item["install_root"] or "current agent's native Skill registry"
+            print(f"- {label}: {package} -> {destination}")
             if item["command"]:
                 print("  command: " + " ".join(item["command"]))
+            elif item.get("host_install_prompt"):
+                print("  host action: " + item["host_install_prompt"])
             else:
                 print("  blocked by: " + ", ".join(item["blocked_by"]))
         print("Do not install until the user explicitly approves this plan.")
@@ -424,6 +454,7 @@ def main():
     parser.add_argument("--resolve", choices=("lark-cli", "whiteboard-cli"))
     parser.add_argument("--tool-cache", type=Path, default=default_cache_root())
     parser.add_argument("--skill-root", type=Path, action="append", default=[], help="Additional root containing installed skill directories.")
+    parser.add_argument("--skill-install-root", type=Path, help="Verified host Agent Skill registry root for approved dependency installation.")
     parser.add_argument("--isolated", action="store_true", help="Ignore PATH; use only the configured cache and explicit environment overrides.")
     args = parser.parse_args()
     config = load_config()
@@ -449,6 +480,7 @@ def main():
                 "requires_user_approval": False,
                 "reason": "Feishu adapters are outside the core offline validation surface",
                 "network_access": False,
+                "host_registration_required": False,
                 "installations": [],
                 "approval_commands": [],
             },
@@ -459,7 +491,8 @@ def main():
         else:
             exit_code = 0
     else:
-        report, exit_code = build_report(mode, cache_root, args.isolated, args.skill_root)
+        install_root = args.skill_install_root or configured_skill_install_root()
+        report, exit_code = build_report(mode, cache_root, args.isolated, args.skill_root, install_root)
     print(json.dumps(report, ensure_ascii=False, indent=2) if args.json else "", end="" if args.json else "")
     if not args.json:
         print_human(report)

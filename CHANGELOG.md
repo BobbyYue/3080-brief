@@ -7,7 +7,8 @@ All notable changes to this project are documented here. The project follows [Se
 ### Changed
 
 - Replaced the Codex-only installation flow with agent-agnostic GitHub, manual-folder, and upload instructions for Agent Skills-compatible clients.
-- Replaced the Codex-only `beautiful-feishu-whiteboard` dependency installer with a verified GitHub archive installer that targets the active agent's skill root.
+- Replaced the Codex-only `beautiful-feishu-whiteboard` dependency installer with a verified GitHub archive installer for hosts that explicitly expose a persistent Skill registry.
+- Stopped inferring a host Skill registry from the script path; managed agents now request native registration unless a persistent registry root is explicitly provided, and file installation remains pending until a runtime recheck passes.
 - Made the English README fully English, including its language link and natural-language trigger example.
 
 ### Removed

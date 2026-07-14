@@ -99,9 +99,16 @@ Feishu/Lark output additionally requires:
 - [`beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 1.1.1+;
 - Feishu/Lark authentication and the required document permissions.
 
-Missing Feishu dependencies block only the Feishu path. The skill displays the exact source, version, destination, network/file effects, and command, then asks for explicit installation approval. It does not silently install dependencies.
+Missing Feishu dependencies block only the Feishu path. The skill displays the exact source, version, known network/file effects, and either an approval command or a host-native registration request. It does not silently install dependencies.
 
-After approval, `beautiful-feishu-whiteboard` is downloaded from [`zarazhangrui/beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard), verified, and installed beside `3080-brief` so the flow works across Agent Skills-compatible clients without a Codex-only installer. Set `BRIEF3080_SKILL_INSTALL_ROOT` only when your agent uses a different skills directory, then reload or restart that agent.
+`3080-brief` never guesses a Skill registry from its execution directory because managed agents may run scripts from a disposable checkout. If the host does not expose a verified registry root, install [`zarazhangrui/beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) as an independent Skill through that agent's native installer/import UI. An archive copy is reported as pending—not `PASS`—until the agent reloads and the dependency check succeeds from its normal runtime. For hosts that explicitly expose a persistent registry, set `BRIEF3080_SKILL_INSTALL_ROOT`.
+
+Host-native installation request:
+
+```text
+Install https://github.com/zarazhangrui/beautiful-feishu-whiteboard as an independent Agent Skill,
+register it in this agent's normal Skill registry, then tell me whether a reload is required.
+```
 
 ## Development verification
 

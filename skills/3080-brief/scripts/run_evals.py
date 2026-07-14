@@ -221,11 +221,36 @@ def main():
         if requested_dependencies != {"lark-cli", "whiteboard-cli", "beautiful-feishu-whiteboard"}:
             raise SystemExit("installation request does not cover both Feishu CLIs and the whiteboard style skill")
         requested_skill = next(item for item in request["installations"] if item.get("skill") == "beautiful-feishu-whiteboard")
-        expected_default_root = (SKILL.parent / "beautiful-feishu-whiteboard").resolve()
-        if requested_skill.get("install_root") != str(expected_default_root):
-            raise SystemExit("dependency diagnostic did not default to the active agent skill root")
-        if len(request.get("approval_commands", [])) != 2:
-            raise SystemExit("mixed CLI/skill dependency request must emit separate approval-gated commands")
+        if requested_skill.get("install_root") is not None or requested_skill.get("command") is not None:
+            raise SystemExit("dependency diagnostic guessed a Skill registry without an explicit host root")
+        if not requested_skill.get("requires_host_registration") or not request.get("host_registration_required"):
+            raise SystemExit("missing host registry did not request native independent-Skill registration")
+        if "zarazhangrui/beautiful-feishu-whiteboard" not in requested_skill.get("host_install_prompt", ""):
+            raise SystemExit("host registration request omitted the verified whiteboard Skill source")
+        if len(request.get("approval_commands", [])) != 1:
+            raise SystemExit("unresolved host Skill registration must not emit a local file-install command")
+
+        explicit_root = tmp_path / "explicit-host-registry"
+        explicit_env = isolated_env.copy()
+        explicit_env["BRIEF3080_SKILL_INSTALL_ROOT"] = str(explicit_root)
+        explicit_missing = run(
+            sys.executable,
+            str(SCRIPTS / "check_dependencies.py"),
+            "--mode", "feishu",
+            "--json",
+            "--isolated",
+            "--tool-cache", str(empty_cache),
+            expect=3,
+            env=explicit_env,
+        )
+        explicit_request = json.loads(explicit_missing.stdout)["installation_request"]
+        explicit_skill = next(item for item in explicit_request["installations"] if item.get("skill") == "beautiful-feishu-whiteboard")
+        if explicit_skill.get("install_root") != str((explicit_root / "beautiful-feishu-whiteboard").resolve()):
+            raise SystemExit("explicit host Skill registry root was not honored")
+        if explicit_skill.get("requires_host_registration") or not explicit_skill.get("command"):
+            raise SystemExit("explicit host Skill registry did not enable the approval-gated file installer")
+        if len(explicit_request.get("approval_commands", [])) != 2:
+            raise SystemExit("explicit CLI/Skill install plan must emit both approval-gated commands")
 
         optional = run(
             sys.executable,
@@ -246,6 +271,7 @@ def main():
             "--tool", "whiteboard-cli",
             "--tool-cache", str(empty_cache),
             expect=3,
+            env=isolated_env,
         )
         if "explicit user approval" not in refusal.stderr:
             raise SystemExit("installer did not refuse execution without explicit user approval")
@@ -255,13 +281,35 @@ def main():
             "--tool", "whiteboard-cli",
             "--tool-cache", str(empty_cache),
             "--dry-run",
+            env=isolated_env,
         )
+        no_registry = run(
+            sys.executable,
+            str(SCRIPTS / "install_skill_dependency.py"),
+            "--skill", "beautiful-feishu-whiteboard",
+            "--user-approved",
+            expect=3,
+            env=isolated_env,
+        )
+        if "no verified host Agent Skill registry root" not in no_registry.stderr:
+            raise SystemExit("skill installer did not block an unregistered execution directory")
+        host_dry_run = run(
+            sys.executable,
+            str(SCRIPTS / "install_skill_dependency.py"),
+            "--skill", "beautiful-feishu-whiteboard",
+            "--dry-run",
+            env=isolated_env,
+        )
+        host_plan = json.loads(host_dry_run.stdout)["installation"]
+        if not host_plan.get("requires_host_registration") or host_plan.get("command") is not None:
+            raise SystemExit("installer dry-run guessed a host registry from its execution path")
         skill_refusal = run(
             sys.executable,
             str(SCRIPTS / "install_skill_dependency.py"),
             "--skill", "beautiful-feishu-whiteboard",
             "--install-root", str(tmp_path / "refused-skills"),
             expect=3,
+            env=isolated_env,
         )
         if "explicit user approval" not in skill_refusal.stderr:
             raise SystemExit("skill installer did not refuse execution without explicit user approval")
@@ -271,6 +319,7 @@ def main():
             "--skill", "beautiful-feishu-whiteboard",
             "--install-root", str(tmp_path / "portable-skills"),
             "--dry-run",
+            env=isolated_env,
         )
         skill_plan = json.loads(skill_dry_run.stdout)["installation"]
         if skill_plan["source"]["repo"] != "zarazhangrui/beautiful-feishu-whiteboard":
@@ -301,9 +350,12 @@ def main():
             "--install-root", str(portable_root),
             "--archive", str(local_archive),
             "--user-approved",
+            env=isolated_env,
         )
-        if "RELOAD REQUIRED" not in portable_install.stdout:
-            raise SystemExit("portable skill installer omitted the current-agent reload instruction")
+        if "REGISTRATION PENDING" not in portable_install.stdout or "Do not treat this dependency as PASS" not in portable_install.stdout:
+            raise SystemExit("file installer falsely reported host registration success")
+        if portable_install.stdout.startswith("PASS") or "\nPASS " in portable_install.stdout:
+            raise SystemExit("file installer conflated file verification with dependency PASS")
         installed_skill = portable_root / "beautiful-feishu-whiteboard"
         if not (installed_skill / "SKILL.md").is_file() or not (installed_skill / "templates").is_dir():
             raise SystemExit("portable skill installer did not preserve the complete skill folder")
@@ -315,6 +367,7 @@ def main():
             "--archive", str(local_archive),
             "--user-approved",
             expect=1,
+            env=isolated_env,
         )
         if "will not be overwritten" not in no_overwrite.stderr:
             raise SystemExit("portable skill installer did not protect an existing destination")
@@ -330,6 +383,7 @@ def main():
             "--archive", str(unsafe_archive),
             "--user-approved",
             expect=1,
+            env=isolated_env,
         )
         if "unsafe archive member" not in unsafe_install.stderr:
             raise SystemExit("portable skill installer did not reject archive path traversal")
@@ -356,6 +410,43 @@ def main():
             (shim_dir / spec["command"]).symlink_to(Path("..") / Path(spec["package"]) / "bin" / "cli")
         passing_env = isolated_env.copy()
         passing_env["NODE"] = str(fake_node)
+        registered_runtime_root = tmp_path / "registered-runtime-skills"
+        registered_main_skill = registered_runtime_root / "3080-brief"
+        registered_main_skill.mkdir(parents=True)
+        (registered_main_skill / "SKILL.md").write_text(
+            "---\nname: 3080-brief\ndescription: fixture\n---\n",
+            encoding="utf-8",
+        )
+        staged_only = run(
+            sys.executable,
+            str(SCRIPTS / "check_dependencies.py"),
+            "--mode", "feishu",
+            "--json",
+            "--isolated",
+            "--tool-cache", str(fake_cache),
+            "--skill-root", str(registered_runtime_root),
+            expect=3,
+            env=passing_env,
+        )
+        staged_skill_check = next(
+            check for check in json.loads(staged_only.stdout)["checks"] if check["id"] == "beautiful-feishu-whiteboard"
+        )
+        if staged_skill_check["status"] != "BLOCKED":
+            raise SystemExit("a dependency copied outside the registered runtime root was incorrectly accepted")
+
+        registered_dependency = run(
+            sys.executable,
+            str(SCRIPTS / "check_dependencies.py"),
+            "--mode", "feishu",
+            "--json",
+            "--isolated",
+            "--tool-cache", str(fake_cache),
+            "--skill-root", str(portable_root),
+            env=passing_env,
+        )
+        if json.loads(registered_dependency.stdout).get("overall_status") != "PASS":
+            raise SystemExit("dependency installed in the declared runtime registry did not pass recheck")
+
         fake_skill_root = tmp_path / "fake-skills"
         fake_skill = fake_skill_root / "beautiful-feishu-whiteboard"
         (fake_skill / "templates").mkdir(parents=True)
