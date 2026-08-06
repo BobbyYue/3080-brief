@@ -6,7 +6,11 @@ All notable changes to this project are documented here. The project follows [Se
 
 ### Changed
 
-- Reworked the runtime into an action-first, lower-freedom flow for more reliable execution on GPT-5.4-class models: tool action first, review-draft creation immediately after deterministic preflight, native Feishu format enforcement, and a disclosed role-separated review fallback when independent reviewers are unavailable.
+- Reworked the runtime into a resumable, fail-closed state machine: source grounding, preflight, review-draft creation, review, and final delivery are ordered checkpoints, and success requires a machine-generated PASS delivery receipt.
+- Added source-before/source-after hash verification, live Feishu document and whiteboard evidence, native-whiteboard enforcement, and automatic invalidation when frozen artifacts change.
+- Added distinct reviewer execution IDs; Standard/Strict reject three reports from one execution context, while explicitly selected Fast retains three structured role-separated self-checks.
+- Added source-relation, evidence-ceiling, thin-source, and contextual expression checks without introducing blanket style bans.
+- Added a simulated end-to-end state-machine test covering native whiteboard delivery, plus failure cases for image substitution and non-independent review.
 - Added executable host-capability gates for `lark-doc` and `lark-whiteboard`; loading Skill specifications no longer counts as Feishu runtime readiness, and a run cannot complete without a real new-document link.
 - Replaced the Codex-only installation flow with agent-agnostic GitHub, manual-folder, and upload instructions for Agent Skills-compatible clients.
 - Replaced the Codex-only `beautiful-feishu-whiteboard` dependency installer with a verified GitHub archive installer for hosts that explicitly expose a persistent Skill registry.
