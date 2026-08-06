@@ -70,6 +70,7 @@ Use `marker-end` or `marker-start` on a line or connector. Do not draw a separat
 ## Stable Layout Rules
 
 - Use a logical SVG width around 1600-1700; let content determine height.
+- Keep `viewBox` width/height at or below the configured preview aspect-ratio ceiling; wide canvases can be height-fitted and clipped by preview renderers.
 - Prefer left-to-right then top-to-bottom unless the selected pattern calls for another explicit path.
 - Use font size at least 16px for load-bearing text.
 - Avoid important small light text on dark fills because exported text color can differ from the live board.

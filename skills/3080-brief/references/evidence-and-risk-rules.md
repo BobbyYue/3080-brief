@@ -10,7 +10,7 @@ Use this reference before writing claims, data interpretations, risks, or recomm
 - If the source does not provide a value or threshold, write "原文未提供" / "not provided in the source".
 - Do not calculate new business results unless the user explicitly asks and the source provides enough data.
 - Do not turn a directional observation into a proven conclusion.
-- Assign every valuable non-appendix claim a stable claim ID and P0/P1/P2 priority in `claim_ledger.json`; preserve its source location and inference state through the board, body, and reviewer packet.
+- Assign every valuable non-appendix claim a stable claim ID and P0/P1/P2 priority in `claim_ledger.json`; preserve its source location and inference state through the board, body, and reviewer packet. For P0/P1 claims, also follow `source-faithful-expression.md` to record source identity, evidence ceiling, output assertion, and protected relations.
 
 ## Claim Hierarchy
 

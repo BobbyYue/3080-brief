@@ -6,6 +6,8 @@ Keep this compact. It is the source-of-truth working object for drafting, visual
 
 - Title:
 - Link / path:
+- Run directory containing `run_state.json`:
+- Raw source-before snapshot path:
 - Type:
 - Source language: use a primary BCP 47 tag such as `en`, `zh-CN`, or `ja`
 - Output language: match source language unless the user explicitly requests another language
@@ -13,6 +15,8 @@ Keep this compact. It is the source-of-truth working object for drafting, visual
 - Explicit language override evidence: `none` or the user's exact instruction requesting another output language
 - Requested audience / scene:
 - User constraints:
+- Material sufficiency: `sufficient / proceed`, `thin / shorten`, `thin / clarify`, or `blocked / clarify`
+- Sufficiency rationale:
 
 The language used in the user's message, conversation, interface, locale, or surrounding context is not an output-language override. If source language is unclear or multiple languages compete for primacy, ask before drafting.
 
@@ -20,6 +24,8 @@ The language used in the user's message, conversation, interface, locale, or sur
 
 - Included non-appendix sections:
 - Excluded appendix / 附录 / Appendix sections:
+- Normalized non-appendix snapshot path: `source_non_appendix.md`
+- Grounding freeze status: record only after `scripts/run_3080.py ground` passes
 - Embedded objects inspected:
 - Embedded objects not inspected and why:
 
@@ -42,11 +48,19 @@ Priority rules:
 
 Give every claim a stable ID and map it to the board and body. Source appendix claims use `appendix: true` and are excluded from the denominator unless explicitly requested.
 
+For every non-appendix P0/P1 claim, also record:
+
+- `source_identity`: `source_fact`, `source_author_claim`, `source_self_report`, `agent_inference`, or `unknown`.
+- `evidence_ceiling` and `output_assertion` on the ordered scale in `source-faithful-expression.md`; output must not exceed evidence.
+- `protected_relations`: subject, predicate, object, scope, time/status, qualifiers, and exact values attached to their objects.
+
+If the source is thin, shorten or clarify; never pad it with external facts, invented specificity, personal experience, or emotion.
+
 ## Evidence Inventory
 
-| Claim ID | Priority | Claim / Fact | Source location | Metric / value | Semantic direction | Period | Denominator / sample | Scope / filter | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| C01 | P0 |  |  |  | favorable / unfavorable / warning / neutral / unknown |  |  |  |  |
+| Claim ID | Priority | Claim / Fact | Source identity | Evidence → output strength | Protected relation | Source location | Metric / value | Scope / time / qualifier |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| C01 | P0 |  | source_fact / source_author_claim / source_self_report / agent_inference / unknown | observed → observed | subject → predicate → object |  |  |  |
 
 ## Chartable Data
 

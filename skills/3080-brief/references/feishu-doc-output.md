@@ -28,8 +28,6 @@ Before creating/updating docs, read the relevant lark references:
 ## New Doc Contract
 
 - Create a new doc unless the user explicitly asks to update an already generated summary doc.
-- After deterministic preflight passes, create the complete review draft immediately, store its URL/token, and apply later review fixes to that generated document.
-- For a Feishu/Lark source, create a native Feishu/Lark doc; never substitute or upload `.docx` unless the user explicitly requests Word output.
 - Never edit the source doc.
 - Do not include source appendix / 附录 / Appendix content in the generated summary unless the user explicitly requests it.
 - Use XML by default.
@@ -37,7 +35,7 @@ Before creating/updating docs, read the relevant lark references:
 - Put `<h1>TLDR</h1>` first by default, or a short source-language equivalent only when the user explicitly prefers localized wording.
 - Put `<callout>` immediately after that heading for the one-sentence summary; it must let readers get the source document's core value within 30 seconds.
 - Put `<whiteboard type="svg">...</whiteboard>` immediately after the first callout; it must cover at least 80% of value-weighted non-appendix claims in one visual.
-- Build `claim_ledger.json` and `visual_spec.json` first. Every board block must map to claim IDs; run `scripts/check_coverage.py` before insertion.
+- Build `claim_ledger.json` and `visual_spec.json` first. Every board block must map to claim IDs; pass `scripts/run_3080.py preflight` before insertion.
 - Put one compact key-question table immediately after the whiteboard. Use output-language headers (`问题 / 结论 / 为什么` for Chinese; `Question / Conclusion / Why` for English); make dense rows taller, split them, or move detail into the body.
 - Add the source link near the top as compact, low-emphasis citation metadata.
 - Choose body-level prose, bullets, callouts, tables, charts, timelines, examples, or short stories when they improve comprehension beyond the opening whiteboard.
@@ -94,7 +92,7 @@ Use visual expression in the document body when it helps readers understand fast
 
 Generate body headings from the source narrative instead of using a fixed heading list.
 
-Validate the generated document with `scripts/preflight_check.py DRAFT --source-inventory source_inventory.md`; exact restrictions and the Language Gate live in config/preflight.
+Validate through `scripts/run_3080.py preflight`; it binds the draft to the frozen source artifacts and runs the structure, language, evidence, expression, coverage, visual, and Feishu whiteboard checks.
 
 ## Whiteboard Insert Workflow
 
@@ -115,6 +113,9 @@ Validate the generated document with `scripts/preflight_check.py DRAFT --source-
    lark-cli whiteboard +query --whiteboard-token TOKEN --output_as image --output output/live_preview --overwrite --as user
    ```
 8. Inspect the live preview and preserve its hash in the reviewer artifact set.
+9. Save the raw generated-document fetch response and whiteboard query response, then run `scripts/run_3080.py record-output`. A normal image/media block cannot satisfy this checkpoint.
+
+After review, re-fetch the source and generated document and run `scripts/run_3080.py finalize`. Delivery requires the original whiteboard block ID in the live document, the recorded whiteboard token in the query response, a non-empty current preview, and an unchanged source hash.
 
 ## Updating Generated Docs
 

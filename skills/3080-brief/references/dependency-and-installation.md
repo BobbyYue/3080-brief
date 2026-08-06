@@ -40,6 +40,8 @@ When `installation_request.required` is true:
 
 The two host capabilities remain `BLOCKED` until the Agent can actually execute the `lark-doc` read/create workflow and the `lark-whiteboard` query/update workflow. Never convert “the Skill returned its instructions” into `PASS`.
 
+Dependency `PASS` is only the entry gate. The production run must still prove the capabilities on the actual task through `scripts/run_3080.py record-output`: save the raw generated-document fetch response, native whiteboard block ID, raw whiteboard query response, whiteboard token, and non-empty live preview. If the host cannot produce this evidence, keep the run blocked even when every package and Skill file is installed.
+
 The bundle excludes Node.js installation when no exact platform command is known, and excludes Feishu/Lark authentication or permission grants. Request those separately with their exact effects; never stretch the bundle approval to cover an undisclosed command or account authorization.
 
 The installer uses an isolated user cache (`$BRIEF3080_TOOL_CACHE` or `${XDG_CACHE_HOME:-~/.cache}/3080-brief/tools`) and exact npm package versions. It must not add `node_modules` to the skill or repository.

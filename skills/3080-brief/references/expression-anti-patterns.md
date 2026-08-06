@@ -1,6 +1,6 @@
 # Expression Anti-Patterns
 
-Read this reference only when drafting starts to look templated or vague, Novice Reverse Review finds comprehension friction, preflight emits expression warnings, or a reviewer fails narrative/readability/visual-expression gates. Exact prohibited headings, meta-statements, placeholders, audience labels, and discouraged phrases live in `config/3080-brief.json`; do not duplicate those lists here.
+Read this symptom catalogue only after `source-faithful-expression.md`, and only when the draft looks templated or vague, Novice Reverse Review finds comprehension friction, the expression check emits a warning, or a reviewer fails narrative/readability/visual-expression gates. Exact prohibited headings, meta-statements, placeholders, audience labels, and cluster-warning patterns live in `config/3080-brief.json`; do not duplicate those lists here. A single phrase match is not a reason to rewrite clear professional prose.
 
 ## Contents
 
