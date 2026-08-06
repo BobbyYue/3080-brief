@@ -13,7 +13,7 @@ Create a new reader-first decision brief from a source document. Match the sourc
 
 Use `scripts/run_3080.py` for every production run. It is the only execution entrypoint: it freezes source evidence, runs deterministic checks, records the generated review draft, enforces review isolation, verifies the live output, and emits `delivery_receipt.json`.
 
-Start execution in the same turn. Do not end with an acknowledgement, plan, status recap, or promise to continue. Never report success unless `run_state.json` has `delivery_allowed: true` and `delivery_receipt.json` has `verdict: PASS`. If the current host cannot execute the runner or a required document/whiteboard workflow, return `BLOCKED` with the exact missing capability; do not silently use a shorter manual flow.
+Start execution in the same turn. Treat the recorded run state, not the conversation narrative, as execution truth. Do not end with an acknowledgement, plan, status recap, or promise to continue. Never report success unless `run_state.json` has `delivery_allowed: true` and `delivery_receipt.json` has `verdict: PASS`. If the current host cannot execute the runner or a required document/whiteboard workflow, return `BLOCKED` with the exact missing capability; do not silently use a shorter manual flow.
 
 Use `standard` by default. Use `fast` only when the user explicitly prioritizes speed or skips independent review; it retains every deterministic gate and requires three role-separated structured self-checks. Use `strict` when explicitly requested or when conclusions affect material resources, policy/rules, causality, risk, or broad rollout; replay every non-appendix P0/P1 relation before normal independent review.
 
