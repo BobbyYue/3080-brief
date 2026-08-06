@@ -41,13 +41,6 @@ def add_pattern_errors(text, config, errors):
             errors.append((line, "unresolved placeholder", placeholder))
 
 
-def add_expression_warnings(text, config, warnings):
-    for phrase in config.get("discouraged_phrases", []):
-        for match in re.finditer(re.escape(phrase), text, re.I):
-            line = text.count("\n", 0, match.start()) + 1
-            warnings.append((line, f"discouraged vague phrase; verify source-specific meaning: {phrase}"))
-
-
 def inventory_value(text, *labels):
     for label in labels:
         match = re.search(rf"(?im)^\s*-\s*{re.escape(label)}\s*:\s*(.+?)\s*$", text)
@@ -180,6 +173,15 @@ def add_opening_unit_errors(opening_lines, line, config, errors):
             f"opening unit must contain {primary_count} primary judgment and {minimum}-{maximum} support lines",
             f"found {len(opening_lines)} total lines",
         ))
+    prefixes = contract.get("fixed_label_prefixes", [])
+    failure_count = contract.get("fixed_label_failure_count", 2)
+    labeled_support = []
+    for support_line in opening_lines[primary_count:]:
+        cleaned = re.sub(r"^[\s*_`]+", "", support_line)
+        if any(re.match(rf"^{re.escape(prefix)}\s*[:：]", cleaned, re.I) for prefix in prefixes):
+            labeled_support.append(support_line)
+    if len(labeled_support) >= failure_count:
+        errors.append((line, "opening support lines use a fixed label template", " | ".join(labeled_support)))
 
 
 def check_markdown(text, config, errors, warnings):
@@ -396,6 +398,31 @@ def check_xml(text, config, errors, warnings):
                 errors.append((1, "forbidden or audience-labeled heading", heading))
 
 
+def add_output_type_checks(text, file_format, output_type, errors):
+    if output_type != "feishu":
+        return
+    if file_format != "xml":
+        errors.append((1, "Feishu output must be preflighted as native Feishu XML", "ordinary Markdown images are not editable whiteboards"))
+        return
+    nodes, parse_error = xml_children(text)
+    if parse_error or not nodes:
+        return
+    whiteboards = [node for node in nodes if node.tag == "whiteboard"]
+    if len(whiteboards) != 1:
+        errors.append((1, "Feishu output must contain exactly one native whiteboard block", str(len(whiteboards))))
+        return
+    whiteboard = whiteboards[0]
+    if normalize(whiteboard.attrib.get("type", "")) != "svg":
+        errors.append((1, "Feishu whiteboard must use type=svg", whiteboard.attrib.get("type", "<missing>")))
+    local_tags = {str(node.tag).split("}")[-1].casefold() for node in whiteboard.iter()}
+    if "svg" not in local_tags:
+        errors.append((1, "Feishu whiteboard block does not contain editable SVG content", ""))
+    if not local_tags.intersection({"rect", "text", "path", "line", "polyline", "polygon", "circle", "ellipse"}):
+        errors.append((1, "Feishu whiteboard has no native editable shape content", ""))
+    if any(node.tag in {"img", "image"} for node in nodes):
+        errors.append((1, "Feishu TLDR cannot substitute an image/media block for the required whiteboard", ""))
+
+
 def main():
     parser = argparse.ArgumentParser(description="Structured preflight checks for 3080-brief drafts.")
     parser.add_argument("draft", help="Draft Markdown or Feishu XML file")
@@ -403,6 +430,7 @@ def main():
     parser.add_argument("--config", default=str(DEFAULT_CONFIG))
     parser.add_argument("--claim-ledger", default="", help="Optional claim ledger for deterministic semantic-color checks")
     parser.add_argument("--source-inventory", required=True, help="Source inventory containing the language decision record")
+    parser.add_argument("--output-type", choices=["auto", "feishu", "docx", "markdown"], default="auto")
     args = parser.parse_args()
 
     path = Path(args.draft)
@@ -413,8 +441,6 @@ def main():
     errors = []
     warnings = []
     add_pattern_errors(text, config, errors)
-    add_expression_warnings(text, config, warnings)
-
     file_format = args.format
     if file_format == "auto":
         file_format = "xml" if re.search(r"<(title|h1|callout|whiteboard|table)\b", text) else "markdown"
@@ -422,6 +448,7 @@ def main():
         check_xml(text, config, errors, warnings)
     else:
         check_markdown(text, config, errors, warnings)
+    add_output_type_checks(text, file_format, args.output_type, errors)
     add_language_checks(text, inventory_text, config, errors)
     add_semantic_encoding_checks(text, file_format, config, ledger, errors, warnings)
 

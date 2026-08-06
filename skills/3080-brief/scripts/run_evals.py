@@ -27,38 +27,46 @@ def main():
     for script in SCRIPTS.glob("*.py"):
         py_compile.compile(str(script), doraise=True)
     config = json.loads((SKILL / "config" / "3080-brief.json").read_text(encoding="utf-8"))
-    expected_execution = {
-        "first_action": "dependency_diagnostic_if_needed_else_source_fetch",
-        "forbidden_terminal_before_output": [
-            "acknowledgement",
-            "plan",
-            "status_recap",
-            "capability_description",
-            "promise_to_continue",
-        ],
-        "create_after": "deterministic_preflight_pass",
-        "create_before": "independent_review",
-        "review_fallback": "role_separated_self_review",
-        "feishu_output_type": "native_feishu_doc",
-    }
-    if config.get("execution") != expected_execution:
-        raise SystemExit("action-first execution contract is missing or inconsistent")
+    execution = config.get("execution", {})
+    if execution.get("required_entrypoint") != "scripts/run_3080.py":
+        raise SystemExit("stateful runtime entrypoint is missing")
+    if execution.get("required_stages") != ["grounded", "preflight", "review_draft", "review", "finalized"]:
+        raise SystemExit("stateful runtime stage contract is incomplete")
     dependency_config = json.loads((SKILL / "config" / "dependencies.json").read_text(encoding="utf-8"))
     bundle_contract = dependency_config.get("installation_bundle", {})
     if bundle_contract.get("approval_mode") != "single_explicit_approval":
         raise SystemExit("dependency config must require one explicit bundled approval")
-    if bundle_contract.get("approval_scope") != "all_missing_feishu_dependencies":
-        raise SystemExit("dependency config approval scope must cover all missing Feishu dependencies")
     json.loads((SKILL / "references" / "claim-ledger.schema.json").read_text(encoding="utf-8"))
     json.loads((SKILL / "references" / "visual-spec.schema.json").read_text(encoding="utf-8"))
+    json.loads((SKILL / "evals" / "agent_acceptance.json").read_text(encoding="utf-8"))
+    expression_suite = json.loads((SKILL / "evals" / "expression_cases.json").read_text(encoding="utf-8"))
     inventory_zh = FIXTURES / "inventory-zh-source.md"
 
     run(sys.executable, str(SCRIPTS / "validate_skill.py"), str(SKILL))
     run(sys.executable, str(SCRIPTS / "check_context_budget.py"), str(SKILL))
     run(sys.executable, str(SCRIPTS / "check_dependencies.py"), "--mode", "core")
+    run(sys.executable, str(SCRIPTS / "validate_claim_ledger.py"), str(FIXTURES / "claim-ledger.json"))
 
     run(sys.executable, str(SCRIPTS / "preflight_check.py"), str(FIXTURES / "valid-brief.md"), "--source-inventory", str(inventory_zh))
     run(sys.executable, str(SCRIPTS / "preflight_check.py"), str(FIXTURES / "valid-brief.xml"), "--format", "xml", "--source-inventory", str(inventory_zh))
+    run(
+        sys.executable,
+        str(SCRIPTS / "preflight_check.py"),
+        str(FIXTURES / "valid-brief.xml"),
+        "--format", "xml",
+        "--output-type", "feishu",
+        "--source-inventory", str(inventory_zh),
+    )
+    image_substitution = run(
+        sys.executable,
+        str(SCRIPTS / "preflight_check.py"),
+        str(FIXTURES / "valid-brief.md"),
+        "--output-type", "feishu",
+        "--source-inventory", str(inventory_zh),
+        expect=1,
+    )
+    if "ordinary Markdown images are not editable whiteboards" not in image_substitution.stdout:
+        raise SystemExit("Feishu preflight accepted a normal image as the required editable whiteboard")
     run(
         sys.executable,
         str(SCRIPTS / "preflight_check.py"),
@@ -96,10 +104,72 @@ def main():
     )
     if "1-3 support lines" not in no_xml_support.stdout:
         raise SystemExit("preflight did not reject an XML opening with no support line")
+    fixed_labels = run(
+        sys.executable,
+        str(SCRIPTS / "preflight_check.py"),
+        str(FIXTURES / "invalid-opening-fixed-labels.md"),
+        "--source-inventory", str(inventory_zh),
+        expect=1,
+    )
+    if "fixed label template" not in fixed_labels.stdout:
+        raise SystemExit("preflight did not reject a fixed conclusion/evidence/action opening template")
     run(sys.executable, str(SCRIPTS / "preflight_check.py"), str(FIXTURES / "invalid-audience-heading.md"), "--source-inventory", str(inventory_zh), expect=1)
-    warning_result = run(sys.executable, str(SCRIPTS / "preflight_check.py"), str(FIXTURES / "warning-vague-brief.md"), "--source-inventory", str(inventory_zh))
-    if "discouraged vague phrase" not in warning_result.stdout:
-        raise SystemExit("preflight did not warn on configured discouraged phrase")
+    expression_cases = expression_suite.get("cases", [])
+    if {case.get("class") for case in expression_cases} != {"should_fix", "should_not_fix", "relation_preservation", "thin_source"}:
+        raise SystemExit("expression evaluation must cover should_fix, should_not_fix, relation_preservation, and thin_source")
+    case_ids = [case.get("id") for case in expression_cases]
+    if len(case_ids) != len(set(case_ids)) or any(not case_id for case_id in case_ids):
+        raise SystemExit("expression case IDs must be present and unique")
+    for case in expression_cases:
+        fixture = SKILL / "evals" / case["fixture"]
+        if case["class"] in {"should_fix", "should_not_fix"}:
+            result = run(
+                sys.executable,
+                str(SCRIPTS / "check_expression_quality.py"),
+                str(fixture),
+                "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
+                "--language", case["language"],
+                "--json",
+            )
+            report = json.loads(result.stdout)
+            warning_ids = {warning["id"] for warning in report.get("warnings", [])}
+            expected_warning_ids = set(case.get("expected_warning_ids", []))
+            if warning_ids != expected_warning_ids:
+                raise SystemExit(
+                    f"expression case {case['id']} warnings differ: expected {sorted(expected_warning_ids)}, got {sorted(warning_ids)}"
+                )
+        elif case["class"] == "relation_preservation":
+            result = run(
+                sys.executable,
+                str(SCRIPTS / "validate_claim_ledger.py"),
+                str(fixture),
+                expect=1,
+            )
+            if case["expected_error"] not in result.stdout:
+                raise SystemExit(f"relation-preservation case {case['id']} did not expose the expected error")
+            integrated = run(
+                sys.executable,
+                str(SCRIPTS / "check_expression_quality.py"),
+                str(FIXTURES / "expression-should-not-fix-zh.md"),
+                "--claim-ledger", str(fixture),
+                "--language", "zh",
+                expect=1,
+            )
+            if case["expected_error"] not in integrated.stdout:
+                raise SystemExit(f"expression gate did not propagate relation failure for {case['id']}")
+        else:
+            expected_code = 0 if case["should_pass"] else 1
+            result = run(
+                sys.executable,
+                str(SCRIPTS / "check_expression_quality.py"),
+                str(fixture),
+                "--claim-ledger", str(SKILL / "evals" / case["claim_ledger"]),
+                "--non-appendix-source", str(SKILL / "evals" / case["source_fixture"]),
+                "--language", "en",
+                expect=expected_code,
+            )
+            if not case["should_pass"] and case["expected_error"] not in result.stdout:
+                raise SystemExit(f"thin-source case {case['id']} did not expose the expected expansion error")
 
     run(
         sys.executable,
@@ -143,6 +213,14 @@ def main():
             if semantic_color not in svg_text:
                 raise SystemExit(f"rendered visual omitted semantic color {semantic_color}")
         run(sys.executable, str(SCRIPTS / "validate_whiteboard_svg.py"), str(svg))
+        wide_svg = run(
+            sys.executable,
+            str(SCRIPTS / "validate_whiteboard_svg.py"),
+            str(FIXTURES / "invalid-wide-whiteboard.svg"),
+            expect=1,
+        )
+        if "too wide for reliable preview" not in wide_svg.stdout:
+            raise SystemExit("whiteboard validation did not reject a clipping-prone wide canvas")
 
         invalid_semantic_xml = tmp_path / "invalid-semantic.xml"
         valid_xml = (FIXTURES / "valid-brief.xml").read_text(encoding="utf-8")
@@ -167,6 +245,7 @@ def main():
             sys.executable,
             str(SCRIPTS / "build_review_packet.py"),
             "--role", "all",
+            "--source-snapshot", str(FIXTURES / "source-data-analysis.md"),
             "--inventory", str(SKILL / "references" / "source-inventory-template.md"),
             "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
             "--tldr", str(FIXTURES / "valid-brief.md"),
@@ -187,6 +266,8 @@ def main():
             review_path = tmp_path / f"{role}.json"
             review_path.write_text(json.dumps({
                 "reviewer_role": role,
+                "review_mode": "independent",
+                "reviewer_run_id": f"dynamic-{role}-run",
                 "artifact_set_id": artifact_set_id,
                 "review_round": 1,
                 "verdict": "PASS",
@@ -203,6 +284,7 @@ def main():
             sys.executable,
             str(SCRIPTS / "verify_reviewed_artifacts.py"),
             "--review-result", str(review_result),
+            "--source-snapshot", str(FIXTURES / "source-data-analysis.md"),
             "--inventory", str(SKILL / "references" / "source-inventory-template.md"),
             "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
             "--tldr", str(FIXTURES / "valid-brief.md"),
@@ -210,6 +292,184 @@ def main():
             "--draft", str(FIXTURES / "valid-brief.md"),
             "--visual-spec", str(FIXTURES / "visual-spec.json"),
             "--whiteboard-preview", str(svg),
+        )
+
+        duplicate_id_reviews = []
+        for role in ("reader", "source", "visual"):
+            review_path = tmp_path / f"duplicate-{role}.json"
+            review_path.write_text(json.dumps({
+                "reviewer_role": role,
+                "review_mode": "independent",
+                "reviewer_run_id": "same-reviewer-run",
+                "artifact_set_id": artifact_set_id,
+                "review_round": 1,
+                "verdict": "PASS",
+                "checks": [{"name": f"{role} gates", "result": "PASS", "reason": "fixture"}],
+                "blocking_issues": [],
+                "unsupported_claims": [],
+                "missing_coverage": [],
+                "required_fixes": [],
+            }), encoding="utf-8")
+            duplicate_id_reviews.append(review_path)
+        duplicate_ids = run(
+            sys.executable,
+            str(SCRIPTS / "aggregate_reviews.py"),
+            *(str(item) for item in duplicate_id_reviews),
+            "--mode", "independent",
+            expect=1,
+        )
+        if "three distinct reviewer_run_id" not in duplicate_ids.stdout:
+            raise SystemExit("review aggregation accepted three reviews from one execution context")
+
+        run_dir = tmp_path / "stateful-run"
+        run(
+            sys.executable,
+            str(SCRIPTS / "run_3080.py"),
+            "init", str(run_dir),
+            "--source-ref", "https://example.invalid/source",
+            "--source-type", "feishu",
+            "--output-type", "feishu",
+            "--profile", "standard",
+        )
+        run(
+            sys.executable,
+            str(SCRIPTS / "run_3080.py"),
+            "ground", str(run_dir),
+            "--source-before", str(FIXTURES / "source-data-analysis.md"),
+            "--source-snapshot", str(FIXTURES / "source-data-analysis.md"),
+            "--inventory", str(inventory_zh),
+            "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
+        )
+        run(
+            sys.executable,
+            str(SCRIPTS / "run_3080.py"),
+            "preflight", str(run_dir),
+            "--draft", str(FIXTURES / "valid-brief.xml"),
+            "--visual-spec", str(FIXTURES / "visual-spec.json"),
+            "--whiteboard-svg", str(svg),
+        )
+        live_document = tmp_path / "live-document.json"
+        live_document.write_text(json.dumps({
+            "document_token": "doc-output-1",
+            "blocks": [{"block_type": "whiteboard", "block_id": "wb-block-1"}],
+        }), encoding="utf-8")
+        whiteboard_query = tmp_path / "whiteboard-query.json"
+        whiteboard_query.write_text(json.dumps({
+            "whiteboard_token": "wb-token-1",
+            "status": "PASS",
+        }), encoding="utf-8")
+        run(
+            sys.executable,
+            str(SCRIPTS / "run_3080.py"),
+            "record-output", str(run_dir),
+            "--output-ref", "https://example.invalid/generated-doc",
+            "--document-snapshot", str(live_document),
+            "--whiteboard-query", str(whiteboard_query),
+            "--whiteboard-preview", str(svg),
+            "--whiteboard-token", "wb-token-1",
+            "--whiteboard-block-id", "wb-block-1",
+        )
+        run(
+            sys.executable,
+            str(SCRIPTS / "run_3080.py"),
+            "prepare-review", str(run_dir),
+            "--document-preview", str(svg),
+        )
+        run_state = json.loads((run_dir / "run_state.json").read_text(encoding="utf-8"))
+        state_artifact_id = run_state["review_preparation"]["artifact_set_id"]
+        stateful_reviews = []
+        for role in ("reader", "source", "visual"):
+            review_path = tmp_path / f"stateful-{role}.json"
+            review_path.write_text(json.dumps({
+                "reviewer_role": role,
+                "review_mode": "independent",
+                "reviewer_run_id": f"stateful-{role}-run",
+                "artifact_set_id": state_artifact_id,
+                "review_round": 1,
+                "verdict": "PASS",
+                "checks": [{"name": f"{role} gates", "result": "PASS", "reason": "fixture"}],
+                "blocking_issues": [],
+                "unsupported_claims": [],
+                "missing_coverage": [],
+                "required_fixes": [],
+            }), encoding="utf-8")
+            stateful_reviews.append(review_path)
+        blind_reader = tmp_path / "blind-reader.json"
+        blind_reader.write_text(json.dumps({
+            "reader_role": "primary",
+            "artifact_set_id": state_artifact_id,
+            "questions": [
+                {"question": "核心判断是什么？", "answer": "需要分层判断。", "inference_or_uncertainty": "none"},
+                {"question": "为什么？", "answer": "汇总会掩盖差异。", "inference_or_uncertainty": "none"},
+                {"question": "下一步是什么？", "answer": "先验证稳定性。", "inference_or_uncertainty": "none"}
+            ]
+        }), encoding="utf-8")
+        run(
+            sys.executable,
+            str(SCRIPTS / "run_3080.py"),
+            "record-review", str(run_dir),
+            "--reader-review", str(stateful_reviews[0]),
+            "--source-review", str(stateful_reviews[1]),
+            "--visual-review", str(stateful_reviews[2]),
+            "--blind-reader-result", str(blind_reader),
+        )
+        changed_source = tmp_path / "source-after-changed.md"
+        changed_source.write_text(
+            (FIXTURES / "source-data-analysis.md").read_text(encoding="utf-8") + "\nChanged after generation.\n",
+            encoding="utf-8",
+        )
+        source_change = run(
+            sys.executable,
+            str(SCRIPTS / "run_3080.py"),
+            "finalize", str(run_dir),
+            "--source-after", str(changed_source),
+            "--final-document-snapshot", str(live_document),
+            "--whiteboard-query", str(whiteboard_query),
+            "--whiteboard-preview", str(svg),
+            expect=3,
+        )
+        if "source changed during generation" not in source_change.stderr:
+            raise SystemExit("stateful runtime did not block a changed source")
+        run(
+            sys.executable,
+            str(SCRIPTS / "run_3080.py"),
+            "finalize", str(run_dir),
+            "--source-after", str(FIXTURES / "source-data-analysis.md"),
+            "--final-document-snapshot", str(live_document),
+            "--whiteboard-query", str(whiteboard_query),
+            "--whiteboard-preview", str(svg),
+        )
+        delivery = json.loads((run_dir / "delivery_receipt.json").read_text(encoding="utf-8"))
+        if delivery.get("verdict") != "PASS" or delivery.get("checks", {}).get("native_editable_whiteboard") != "PASS":
+            raise SystemExit("stateful runtime did not issue a complete Feishu delivery receipt")
+        thin_receipt = tmp_path / "thin-delivery-receipt.json"
+        thin_delivery = dict(delivery)
+        thin_delivery["run_id"] = "synthetic-thin-run"
+        thin_receipt.write_text(json.dumps(thin_delivery), encoding="utf-8")
+        markdown_receipt = tmp_path / "markdown-delivery-receipt.json"
+        markdown_delivery = dict(delivery)
+        markdown_delivery["run_id"] = "synthetic-markdown-run"
+        markdown_delivery["output_type"] = "markdown"
+        markdown_delivery["generated_output"] = str(FIXTURES / "valid-brief.md")
+        markdown_delivery["checks"] = dict(delivery["checks"])
+        markdown_delivery["checks"]["native_editable_whiteboard"] = "NOT_APPLICABLE"
+        markdown_receipt.write_text(json.dumps(markdown_delivery), encoding="utf-8")
+        acceptance_result = tmp_path / "agent-acceptance-result.json"
+        acceptance_result.write_text(json.dumps({
+            "host": "synthetic-host",
+            "agent_version": "test-only",
+            "model": "test-only",
+            "executed_at": "2026-01-01T00:00:00Z",
+            "cases": [
+                {"id": "data-analysis-feishu", "status": "PASS", "delivery_receipt": str(run_dir / "delivery_receipt.json")},
+                {"id": "thin-source-feishu", "status": "PASS", "delivery_receipt": str(thin_receipt)},
+                {"id": "format-following-markdown", "status": "PASS", "delivery_receipt": str(markdown_receipt)}
+            ]
+        }), encoding="utf-8")
+        run(
+            sys.executable,
+            str(SCRIPTS / "validate_agent_acceptance.py"),
+            str(acceptance_result),
         )
 
     with tempfile.TemporaryDirectory(prefix="3080-brief-dependencies-") as tmp:
@@ -602,22 +862,6 @@ def main():
     output_coverage = json.loads((SKILL / "evals" / "output_coverage.json").read_text(encoding="utf-8"))
     json.loads((SKILL / "evals" / "review.schema.json").read_text(encoding="utf-8"))
     skill_text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
-    for required_execution_marker in (
-        "## Action-First Contract",
-        "The first externally observable action must be the required dependency diagnostic",
-        "Immediately after deterministic preflight passes, create the new output",
-        "never silently substitute `.docx`",
-        "review_status=LIMITED",
-    ):
-        if required_execution_marker not in skill_text:
-            raise SystemExit(f"action-first runtime marker missing: {required_execution_marker}")
-    openai_yaml = (SKILL / "agents" / "openai.yaml").read_text(encoding="utf-8")
-    if "Use $3080-brief now: start with the required tool action" not in openai_yaml:
-        raise SystemExit("default prompt does not reinforce action-first execution")
-    if "A Skill specification, plan, or acknowledgement is not a read result" not in skill_text:
-        raise SystemExit("runtime contract does not distinguish Skill text from executable Feishu capability")
-    if "A run is complete only when the new URL/path is accessible and distinct from the source" not in skill_text:
-        raise SystemExit("runtime contract does not require a real generated-document delivery result")
     frontmatter = skill_text.split("---", 2)[1].casefold()
     for alias in config["trigger"]["aliases"]:
         if alias.casefold() not in frontmatter:
@@ -701,6 +945,8 @@ def main():
         "support_lines_min": 1,
         "support_lines_max": 3,
         "allowed_support_roles": ["evidence", "action", "boundary"],
+        "fixed_label_prefixes": ["结论", "证据", "行动", "下一步", "边界", "Conclusion", "Evidence", "Action", "Next step", "Boundary"],
+        "fixed_label_failure_count": 2,
     }:
         raise SystemExit("TLDR opening-unit contract is missing or inconsistent")
     if {"default_summary_lines_min", "default_summary_lines_max"} & set(config.get("tldr", {})):
@@ -712,10 +958,41 @@ def main():
         raise SystemExit("language policy override must require an explicit user request")
     if "conversation_language" not in language_policy.get("forbidden_inference_bases", []):
         raise SystemExit("language policy must reject conversation language as override evidence")
+    expression = config.get("expression_quality", {})
+    if expression.get("required_relation_priorities") != ["P0", "P1"]:
+        raise SystemExit("expression contract must protect P0 and P1 relations")
+    if expression.get("claim_strength_order") != [
+        "unknown", "reported", "observed", "suggestive", "supported", "demonstrated", "causal"
+    ]:
+        raise SystemExit("expression claim-strength order is missing or inconsistent")
+    thin_guardrail = expression.get("thin_source_guardrail", {})
+    if thin_guardrail.get("source_snapshot_required") is not True:
+        raise SystemExit("thin-source guardrail must require a non-appendix source snapshot")
+    if (
+        thin_guardrail.get("max_expansion_ratio") != 4.0
+        or thin_guardrail.get("minimum_output_unit_ceiling") != 240
+        or thin_guardrail.get("max_body_sections") != 2
+    ):
+        raise SystemExit("thin-source expansion ceiling is missing or inconsistent")
+    profiles = expression.get("runtime_profiles", {})
+    if set(profiles) != {"fast", "standard", "strict"}:
+        raise SystemExit("expression runtime profiles must define fast, standard, and strict")
+    if any(profile.get("hard_gates") != "all" for profile in profiles.values()):
+        raise SystemExit("every runtime profile must retain all deterministic hard gates")
+    if profiles["fast"].get("selection") != "explicit_user_request_only" or profiles["fast"].get("review") != "self_check_only":
+        raise SystemExit("fast profile must be explicit and cannot claim independent review")
+    if profiles["fast"].get("audit_sequence_terminal") != "after_self_check":
+        raise SystemExit("fast profile must stop the audit sequence after self-check")
+    if profiles["standard"].get("selection") != "default" or profiles["standard"].get("review") != "three_independent_reviewers":
+        raise SystemExit("standard profile must remain the independently reviewed default")
+    if profiles["strict"].get("relation_replay") != "all_non_appendix_p0_p1":
+        raise SystemExit("strict profile must replay every non-appendix P0/P1 relation")
+    if len(expression.get("style_warning_groups", [])) < 6:
+        raise SystemExit("expression warning groups do not cover both Chinese and English")
     replay_path = SKILL / "references" / "blind-reader-replay.md"
     if not replay_path.is_file() or "Run Blind Reader Replay only after" not in replay_path.read_text(encoding="utf-8"):
         raise SystemExit("blind-reader replay reference is missing")
-    if "### 4. Review Without Stalling" not in skill_text or "references/blind-reader-replay.md" not in skill_text:
+    if "run_3080.py record-review" not in skill_text or "references/blind-reader-replay.md" not in skill_text:
         raise SystemExit("blind-reader replay is not connected to the runtime workflow")
     print("3080-brief evals PASS")
 

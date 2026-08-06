@@ -12,6 +12,7 @@ ROLE_GATES = {
     "reader": [
         "The opening produces a useful judgment within 30 seconds without a fixed phrase template.",
         "The full rendered draft is readable, source-fit, and follows a coherent reasoning path.",
+        "Expression edits are minimal and contextual; legitimate technical terms, uncertainty, passive voice, neutral tone, and punctuation are not penalized in isolation.",
         "The title, TLDR, table, body, and visual use the declared output language; conversation language is not treated as an override.",
         "A capable newcomer can restate the problem, solution, memorable example, and next action when source-backed.",
         "The TLDR table answers real reader questions and does not become a terminology dump.",
@@ -19,9 +20,12 @@ ROLE_GATES = {
     ],
     "source": [
         "Every P0/P1 conclusion, metric, risk, and action is traceable to the supplied source outline or excerpt.",
+        "Every non-appendix P0/P1 protected relation preserves subject, predicate, object, scope, time/status, qualifiers, and numeric attachment.",
+        "Each output assertion stays at or below its evidence ceiling; source facts, author claims, self-reports, inferences, and unknowns remain distinct.",
         "The declared output language matches the source primary language unless the packet contains an explicit user instruction requesting another language.",
         "The claim ledger covers valuable non-appendix source information and excludes appendix material.",
         "No causal, quantitative, or recommendation claim is stronger than its evidence.",
+        "Thin or blocked material is shortened or clarified rather than padded with external facts, invented specificity, experience, or emotion.",
         "Missing denominators, periods, samples, conflicts, or inferences are visible and handled safely.",
     ],
     "visual": [
@@ -55,6 +59,7 @@ def digest(path):
 
 def packet_for(role, args):
     hashes = {
+        "source_snapshot": digest(args.source_snapshot),
         "inventory": digest(args.inventory),
         "claim_ledger": digest(args.claim_ledger),
         "tldr": digest(args.tldr),
@@ -75,6 +80,7 @@ def packet_for(role, args):
 - Role key: `{role}`
 - Reviewer role: {ROLE_NAMES[role]}
 - Review round: {args.round}
+- Review mode: {args.review_mode}
 - Artifact set ID: `{artifact_set_id}`
 - Isolation: do not request, infer, or reference another reviewer's opinion.
 
@@ -157,6 +163,8 @@ Return JSON only:
 ```json
 {{
   "reviewer_role": "{role}",
+  "review_mode": "{args.review_mode}",
+  "reviewer_run_id": "unique ID for this reviewer execution",
   "artifact_set_id": "{artifact_set_id}",
   "review_round": {args.round},
   "verdict": "PASS or FAIL",
@@ -176,6 +184,7 @@ Return `FAIL` when required evidence is absent or a gate cannot be verified. Do 
 def main():
     parser = argparse.ArgumentParser(description="Build role-specific, hash-locked 3080 reviewer packets.")
     parser.add_argument("--role", choices=["reader", "source", "visual", "all"], default="all")
+    parser.add_argument("--source-snapshot", default="", help="Normalized non-appendix source snapshot")
     parser.add_argument("--inventory", required=True)
     parser.add_argument("--claim-ledger", required=True)
     parser.add_argument("--tldr", required=True)
@@ -189,6 +198,7 @@ def main():
     parser.add_argument("--whiteboard-preview", default="")
     parser.add_argument("--document-preview", default="")
     parser.add_argument("--round", type=int, default=1)
+    parser.add_argument("--review-mode", choices=["independent", "self_check"], default="independent")
     parser.add_argument("--output", required=True, help="Output file for one role, or directory for --role all")
     args = parser.parse_args()
 

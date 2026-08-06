@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -9,6 +10,8 @@ from pathlib import Path
 ALLOWED = {"svg", "g", "defs", "marker", "rect", "circle", "ellipse", "line", "polyline", "text", "tspan", "path"}
 FORBIDDEN_ATTRIBUTES = {"opacity", "fill-opacity", "stroke-opacity", "font-family", "style"}
 SIMPLE_MARKER_PATH = re.compile(r"^[MmLlHhVvZz0-9.,+\-\s]+$")
+SKILL_DIR = Path(__file__).resolve().parents[1]
+DEFAULT_CONFIG = SKILL_DIR / "config" / "3080-brief.json"
 
 
 def local_name(tag):
@@ -18,6 +21,7 @@ def local_name(tag):
 def main():
     parser = argparse.ArgumentParser(description="Validate editable Feishu whiteboard SVG constraints.")
     parser.add_argument("svg")
+    parser.add_argument("--config", default=str(DEFAULT_CONFIG))
     args = parser.parse_args()
     path = Path(args.svg)
     errors = []
@@ -29,6 +33,12 @@ def main():
         return 1
     if local_name(root.tag) != "svg":
         errors.append("root element must be <svg>")
+
+    try:
+        config = json.loads(Path(args.config).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"whiteboard config is unavailable or invalid: {exc}")
+        config = {}
 
     parent = {child: node for node in root.iter() for child in node}
     marker_ids = {node.attrib.get("id") for node in root.iter() if local_name(node.tag) == "marker" and node.attrib.get("id")}
@@ -70,6 +80,20 @@ def main():
 
     if "viewBox" not in root.attrib:
         warnings.append("SVG has no viewBox")
+    else:
+        try:
+            _, _, view_width, view_height = [float(value) for value in re.split(r"[\s,]+", root.attrib["viewBox"].strip())]
+            if view_width <= 0 or view_height <= 0:
+                raise ValueError("non-positive dimension")
+        except (ValueError, TypeError):
+            errors.append(f"invalid SVG viewBox: {root.attrib.get('viewBox', '')}")
+        else:
+            maximum = float(config.get("whiteboard_render", {}).get("max_viewbox_aspect_ratio", 1.7))
+            aspect_ratio = view_width / view_height
+            if aspect_ratio > maximum:
+                errors.append(
+                    f"SVG viewBox is too wide for reliable preview: aspect {aspect_ratio:.2f} > {maximum:.2f}; increase height or reflow content"
+                )
     if not list(root):
         errors.append("SVG is empty")
 

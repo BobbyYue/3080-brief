@@ -16,6 +16,7 @@ def digest(path):
 def main():
     parser = argparse.ArgumentParser(description="Verify final 3080 artifacts match the reviewer-approved artifact set.")
     parser.add_argument("--review-result", required=True)
+    parser.add_argument("--source-snapshot", default="")
     parser.add_argument("--inventory", required=True)
     parser.add_argument("--claim-ledger", required=True)
     parser.add_argument("--tldr", required=True)
@@ -28,6 +29,7 @@ def main():
 
     reviewed = json.loads(Path(args.review_result).read_text(encoding="utf-8"))
     hashes = {
+        "source_snapshot": digest(args.source_snapshot),
         "inventory": digest(args.inventory),
         "claim_ledger": digest(args.claim_ledger),
         "tldr": digest(args.tldr),

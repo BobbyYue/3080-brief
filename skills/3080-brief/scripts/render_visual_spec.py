@@ -155,7 +155,9 @@ def main():
     blocks = spec.get("blocks", [])
     width = 1600
     heights = [block_height(block) for block in blocks]
-    height = 170 + sum(heights) + max(0, len(blocks) - 1) * 28 + 60
+    content_height = 170 + sum(heights) + max(0, len(blocks) - 1) * 28 + 60
+    max_aspect = float(config.get("whiteboard_render", {}).get("max_viewbox_aspect_ratio", 1.7))
+    height = max(content_height, math.ceil(width / max_aspect))
     output = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0 0 L10 4 L0 8 z"/></marker></defs>',
