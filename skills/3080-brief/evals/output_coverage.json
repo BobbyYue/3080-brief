@@ -14,6 +14,16 @@
     "appendix contamination",
     "embedded chart not inspected",
     "chartable metrics rendered as boxes and prose",
-    "source/output language mismatch inferred from conversation language"
+    "wide SVG canvas clipped by height-fitted preview rendering",
+    "source/output language mismatch inferred from conversation language",
+    "subject action scope or completion-state drift during expression revision",
+    "output assertion stronger than source evidence",
+    "thin source padded with invented specificity",
+    "legitimate professional language rewritten because of an isolated style pattern",
+    "mandatory preflight or grounding artifacts skipped",
+    "normal image substituted for a native editable Feishu whiteboard",
+    "three review files produced by one execution context",
+    "source changed during brief generation",
+    "delivery claimed without a machine-generated PASS receipt"
   ]
 }

@@ -1,0 +1,39 @@
+{
+  "source": {
+    "title": "Invalid sufficiency fixture",
+    "location": "eval fixture",
+    "language": "zh-CN",
+    "output_language": "zh-CN",
+    "output_language_basis": "source_primary_language",
+    "material_sufficiency": {
+      "status": "thin",
+      "handling": "proceed",
+      "rationale": "Only a conclusion is available; evidence and scope are missing."
+    }
+  },
+  "claims": [
+    {
+      "id": "C01",
+      "claim": "原文声称方案有效",
+      "priority": "P0",
+      "source_location": "Opening",
+      "source_identity": "source_author_claim",
+      "evidence_ceiling": "reported",
+      "output_assertion": "reported",
+      "protected_relations": [
+        {
+          "subject": "原文作者",
+          "predicate": "声称",
+          "object": "方案有效",
+          "scope": "原文未提供",
+          "time_status": "原文未提供",
+          "qualifiers": "缺少证据、样本和边界",
+          "values": []
+        }
+      ],
+      "board_status": "covered",
+      "appendix": false,
+      "inference": false
+    }
+  ]
+}

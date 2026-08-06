@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "should-fix-zh-clusters",
+      "class": "should_fix",
+      "fixture": "fixtures/expression-should-fix-zh.md",
+      "language": "zh",
+      "expected_warning_ids": ["vague_abstraction_zh", "mechanical_sequence_zh", "binary_reframe_zh"]
+    },
+    {
+      "id": "should-not-fix-zh-professional",
+      "class": "should_not_fix",
+      "fixture": "fixtures/expression-should-not-fix-zh.md",
+      "language": "zh",
+      "expected_warning_ids": []
+    },
+    {
+      "id": "should-not-fix-en-professional",
+      "class": "should_not_fix",
+      "fixture": "fixtures/expression-should-not-fix-en.md",
+      "language": "en",
+      "expected_warning_ids": []
+    },
+    {
+      "id": "relation-missing-object",
+      "class": "relation_preservation",
+      "fixture": "fixtures/claim-ledger-invalid-relation.json",
+      "expected_error": "protected_relations[1].object"
+    },
+    {
+      "id": "assertion-exceeds-evidence",
+      "class": "relation_preservation",
+      "fixture": "fixtures/claim-ledger-invalid-strength.json",
+      "expected_error": "exceeds evidence ceiling"
+    },
+    {
+      "id": "thin-source-cannot-proceed",
+      "class": "relation_preservation",
+      "fixture": "fixtures/claim-ledger-invalid-sufficiency.json",
+      "expected_error": "cannot use handling"
+    },
+    {
+      "id": "thin-source-compact-output",
+      "class": "thin_source",
+      "fixture": "fixtures/thin-draft-compact.md",
+      "claim_ledger": "fixtures/claim-ledger-thin-valid.json",
+      "source_fixture": "fixtures/thin-source-non-appendix.md",
+      "should_pass": true
+    },
+    {
+      "id": "thin-source-expanded-output",
+      "class": "thin_source",
+      "fixture": "fixtures/thin-draft-expanded.md",
+      "claim_ledger": "fixtures/claim-ledger-thin-valid.json",
+      "source_fixture": "fixtures/thin-source-non-appendix.md",
+      "should_pass": false,
+      "expected_error": "thin-source output exceeds compact ceiling"
+    }
+  ]
+}

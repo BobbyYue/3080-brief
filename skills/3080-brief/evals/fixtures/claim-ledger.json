@@ -5,7 +5,12 @@
     "language": "zh-CN",
     "output_language": "zh-CN",
     "output_language_basis": "source_primary_language",
-    "explicit_language_override_evidence": "none"
+    "explicit_language_override_evidence": "none",
+    "material_sufficiency": {
+      "status": "sufficient",
+      "handling": "proceed",
+      "rationale": "The fixture contains the conclusion, evidence, boundary, and next action required by the brief."
+    }
   },
   "claims": [
     {
@@ -14,6 +19,20 @@
       "priority": "P0",
       "kind": "conclusion",
       "source_location": "Section 1",
+      "source_identity": "source_fact",
+      "evidence_ceiling": "observed",
+      "output_assertion": "observed",
+      "protected_relations": [
+        {
+          "subject": "汇总指标",
+          "predicate": "掩盖",
+          "object": "分层差异",
+          "scope": "Synthetic Evaluation Source 的汇总样本",
+          "time_status": "当前分析；已观察",
+          "qualifiers": "描述性差异，不声明因果",
+          "values": ["42"]
+        }
+      ],
       "board_status": "covered",
       "board_block": "B01",
       "body_section": "汇总指标掩盖了真正差异",
@@ -28,6 +47,20 @@
       "priority": "P0",
       "kind": "evidence",
       "source_location": "Section 2",
+      "source_identity": "source_fact",
+      "evidence_ceiling": "supported",
+      "output_assertion": "supported",
+      "protected_relations": [
+        {
+          "subject": "分层比较",
+          "predicate": "保留",
+          "object": "高价值信号",
+          "scope": "Synthetic Evaluation Source 的分层样本",
+          "time_status": "当前分析；已观察",
+          "qualifiers": "支持差异判断，不证明机制",
+          "values": ["+26pp"]
+        }
+      ],
       "board_status": "covered",
       "board_block": "B01",
       "body_section": "汇总指标掩盖了真正差异",
@@ -42,6 +75,20 @@
       "priority": "P1",
       "kind": "boundary",
       "source_location": "Section 3",
+      "source_identity": "source_author_claim",
+      "evidence_ceiling": "reported",
+      "output_assertion": "reported",
+      "protected_relations": [
+        {
+          "subject": "机制解释",
+          "predicate": "仍需验证",
+          "object": "因果机制",
+          "scope": "Synthetic Evaluation Source 的观察结果",
+          "time_status": "当前未验证",
+          "qualifiers": "不得写成已证明的机制",
+          "values": ["68"]
+        }
+      ],
       "board_status": "partial",
       "board_block": "B02",
       "body_section": "分层验证决定能否扩大使用",
@@ -56,6 +103,20 @@
       "priority": "P1",
       "kind": "action",
       "source_location": "Section 4",
+      "source_identity": "source_author_claim",
+      "evidence_ceiling": "reported",
+      "output_assertion": "reported",
+      "protected_relations": [
+        {
+          "subject": "执行团队",
+          "predicate": "先验证再扩大",
+          "object": "策略使用范围",
+          "scope": "Synthetic Evaluation Source 的后续建议",
+          "time_status": "下一阶段；计划",
+          "qualifiers": "扩大范围以稳定性验证为前提",
+          "values": []
+        }
+      ],
       "board_status": "covered",
       "board_block": "B02",
       "body_section": "分层验证决定能否扩大使用",

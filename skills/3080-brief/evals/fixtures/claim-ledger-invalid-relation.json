@@ -1,0 +1,39 @@
+{
+  "source": {
+    "title": "Invalid relation fixture",
+    "location": "eval fixture",
+    "language": "zh-CN",
+    "output_language": "zh-CN",
+    "output_language_basis": "source_primary_language",
+    "material_sufficiency": {
+      "status": "sufficient",
+      "handling": "proceed",
+      "rationale": "Synthetic fixture"
+    }
+  },
+  "claims": [
+    {
+      "id": "C01",
+      "claim": "分层差异已被观察",
+      "priority": "P0",
+      "source_location": "Section 1",
+      "source_identity": "source_fact",
+      "evidence_ceiling": "observed",
+      "output_assertion": "observed",
+      "protected_relations": [
+        {
+          "subject": "分层样本",
+          "predicate": "呈现",
+          "object": "",
+          "scope": "测试样本",
+          "time_status": "当前分析；已观察",
+          "qualifiers": "不声明因果",
+          "values": ["+12pp"]
+        }
+      ],
+      "board_status": "covered",
+      "appendix": false,
+      "inference": false
+    }
+  ]
+}

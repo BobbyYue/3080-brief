@@ -1,0 +1,39 @@
+{
+  "source": {
+    "title": "Invalid strength fixture",
+    "location": "eval fixture",
+    "language": "en",
+    "output_language": "en",
+    "output_language_basis": "source_primary_language",
+    "material_sufficiency": {
+      "status": "sufficient",
+      "handling": "proceed",
+      "rationale": "Synthetic fixture"
+    }
+  },
+  "claims": [
+    {
+      "id": "C01",
+      "claim": "The strategy caused the observed change",
+      "priority": "P0",
+      "source_location": "Section 1",
+      "source_identity": "source_fact",
+      "evidence_ceiling": "observed",
+      "output_assertion": "causal",
+      "protected_relations": [
+        {
+          "subject": "segment A",
+          "predicate": "was associated with",
+          "object": "a higher observed rate",
+          "scope": "observational sample",
+          "time_status": "current analysis; observed",
+          "qualifiers": "causality not established",
+          "values": ["12%"]
+        }
+      ],
+      "board_status": "covered",
+      "appendix": false,
+      "inference": false
+    }
+  ]
+}

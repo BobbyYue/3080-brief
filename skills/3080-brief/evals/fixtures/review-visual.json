@@ -1,5 +1,7 @@
 {
   "reviewer_role": "visual",
+  "review_mode": "independent",
+  "reviewer_run_id": "fixture-visual-run",
   "artifact_set_id": "fixture-artifact-set",
   "review_round": 1,
   "verdict": "PASS",

@@ -1,0 +1,39 @@
+{
+  "source": {
+    "title": "Ranking proposal",
+    "location": "eval fixture",
+    "language": "en",
+    "output_language": "en",
+    "output_language_basis": "source_primary_language",
+    "material_sufficiency": {
+      "status": "thin",
+      "handling": "shorten",
+      "rationale": "The source provides a proposal and claimed benefits but no evidence or rollout boundary."
+    }
+  },
+  "claims": [
+    {
+      "id": "C01",
+      "claim": "The team recommends a broad launch next month.",
+      "priority": "P0",
+      "source_location": "Paragraph 1",
+      "source_identity": "source_author_claim",
+      "evidence_ceiling": "reported",
+      "output_assertion": "reported",
+      "protected_relations": [
+        {
+          "subject": "the team",
+          "predicate": "recommends",
+          "object": "a broad launch",
+          "scope": "not provided",
+          "time_status": "next month; proposed",
+          "qualifiers": "metrics and rollout boundaries are not provided",
+          "values": ["next month"]
+        }
+      ],
+      "board_status": "covered",
+      "appendix": false,
+      "inference": false
+    }
+  ]
+}
