@@ -1,4 +1,4 @@
-name: CI
+name: Validate skill package
 
 on:
   push:
@@ -8,7 +8,8 @@ permissions:
   contents: read
 
 jobs:
-  offline-validation:
+  skill-validation:
+    name: Validate on Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
