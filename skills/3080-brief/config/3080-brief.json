@@ -1,18 +1,18 @@
 {
-  "version": 7,
+  "version": 8,
   "execution": {
-    "first_action": "dependency_diagnostic_if_needed_else_source_fetch",
-    "forbidden_terminal_before_output": [
-      "acknowledgement",
-      "plan",
-      "status_recap",
-      "capability_description",
-      "promise_to_continue"
+    "required_entrypoint": "scripts/run_3080.py",
+    "state_file": "run_state.json",
+    "delivery_receipt": "delivery_receipt.json",
+    "required_stages": ["grounded", "preflight", "review_draft", "review", "finalized"],
+    "delivery_allowed_when": "run_state.delivery_allowed=true",
+    "source_freeze": "sha256_before_equals_after",
+    "feishu_native_whiteboard_evidence": [
+      "whiteboard_block_id_in_live_document",
+      "whiteboard_token_in_live_query",
+      "nonempty_live_preview"
     ],
-    "create_after": "deterministic_preflight_pass",
-    "create_before": "independent_review",
-    "review_fallback": "role_separated_self_review",
-    "feishu_output_type": "native_feishu_doc"
+    "standard_review_mode": "independent"
   },
   "language_policy": {
     "default_output_basis": "source_primary_language",
@@ -62,15 +62,20 @@
       "svg_tint": "#EFF0F1"
     }
   },
+  "whiteboard_render": {
+    "max_viewbox_aspect_ratio": 1.7
+  },
   "tldr": {
     "default_title": "TLDR",
     "default_table_headers": ["问题", "结论", "为什么"],
     "english_table_headers": ["Question", "Conclusion", "Why"],
-    "opening_unit": {
-      "primary_judgment_count": 1,
-      "support_lines_min": 1,
-      "support_lines_max": 3,
-      "allowed_support_roles": ["evidence", "action", "boundary"]
+      "opening_unit": {
+        "primary_judgment_count": 1,
+        "support_lines_min": 1,
+        "support_lines_max": 3,
+        "allowed_support_roles": ["evidence", "action", "boundary"],
+        "fixed_label_prefixes": ["结论", "证据", "行动", "下一步", "边界", "Conclusion", "Evidence", "Action", "Next step", "Boundary"],
+        "fixed_label_failure_count": 2
     },
     "questions_min": 3,
     "questions_max": 5
@@ -137,16 +142,107 @@
     "...svg...",
     "实际输出必须插入可编辑白板"
   ],
-  "discouraged_phrases": [
-    "有差异",
-    "有变化",
-    "有价值",
-    "值得关注",
-    "整体有效",
-    "整体不错",
-    "优化提升",
-    "继续观察"
-  ],
+  "expression_quality": {
+    "required_relation_priorities": ["P0", "P1"],
+    "claim_strength_order": [
+      "unknown",
+      "reported",
+      "observed",
+      "suggestive",
+      "supported",
+      "demonstrated",
+      "causal"
+    ],
+    "thin_source_guardrail": {
+      "source_snapshot_required": true,
+      "max_expansion_ratio": 4.0,
+      "minimum_output_unit_ceiling": 240,
+      "max_body_sections": 2
+    },
+    "runtime_profiles": {
+      "fast": {
+        "selection": "explicit_user_request_only",
+        "hard_gates": "all",
+        "expression_scan": true,
+        "review": "self_check_only",
+        "blind_reader_replay": "skip_and_disclose",
+        "audit_sequence_terminal": "after_self_check"
+      },
+      "standard": {
+        "selection": "default",
+        "hard_gates": "all",
+        "expression_scan": true,
+        "review": "three_independent_reviewers",
+        "blind_reader_replay": "primary_then_configured_escalation"
+      },
+      "strict": {
+        "selection": "explicit_or_material_resource_policy_causal_risk_rollout",
+        "hard_gates": "all",
+        "expression_scan": true,
+        "relation_replay": "all_non_appendix_p0_p1",
+        "review": "three_independent_reviewers",
+        "blind_reader_replay": "primary_then_configured_escalation"
+      }
+    },
+    "style_warning_groups": [
+      {
+        "id": "vague_abstraction_zh",
+        "languages": ["zh"],
+        "minimum_hits": 2,
+        "patterns": ["有价值", "值得关注", "整体有效", "整体不错", "优化提升", "继续观察", "带来提升"],
+        "message": "multiple vague value claims appear without source-specific meaning"
+      },
+      {
+        "id": "mechanical_sequence_zh",
+        "languages": ["zh"],
+        "minimum_hits": 3,
+        "patterns": ["首先", "其次", "再次", "最后", "综上所述"],
+        "message": "mechanical sequencing may be substituting for a reader-fit reasoning path"
+      },
+      {
+        "id": "binary_reframe_zh",
+        "languages": ["zh"],
+        "minimum_hits": 2,
+        "patterns": ["不是.{0,28}?而是", "并非.{0,28}?而是"],
+        "message": "repeated binary reframing may sound formulaic; keep only distinctions that change meaning"
+      },
+      {
+        "id": "inflated_certainty_zh",
+        "languages": ["zh"],
+        "minimum_hits": 2,
+        "patterns": ["彻底解决", "完全证明", "毫无风险", "必然导致", "颠覆性", "革命性"],
+        "message": "repeated absolute wording may exceed the source evidence ceiling"
+      },
+      {
+        "id": "vague_abstraction_en",
+        "languages": ["en"],
+        "minimum_hits": 2,
+        "patterns": ["\\bvaluable\\b", "\\bworth noting\\b", "\\bmeaningful improvement\\b", "\\boverall effective\\b", "\\bworth watching\\b"],
+        "message": "multiple vague value claims appear without source-specific meaning"
+      },
+      {
+        "id": "mechanical_sequence_en",
+        "languages": ["en"],
+        "minimum_hits": 3,
+        "patterns": ["\\bfirst(?:ly)?\\b", "\\bsecond(?:ly)?\\b", "\\bthird(?:ly)?\\b", "\\bfinally\\b", "\\bin conclusion\\b"],
+        "message": "mechanical sequencing may be substituting for a reader-fit reasoning path"
+      },
+      {
+        "id": "binary_reframe_en",
+        "languages": ["en"],
+        "minimum_hits": 2,
+        "patterns": ["\\bnot (?:just|merely).{0,80}?\\bbut\\b", "\\bnot about.{0,80}?\\babout\\b"],
+        "message": "repeated binary reframing may sound formulaic; keep only distinctions that change meaning"
+      },
+      {
+        "id": "inflated_certainty_en",
+        "languages": ["en"],
+        "minimum_hits": 2,
+        "patterns": ["\\bfully solved\\b", "\\bproves conclusively\\b", "\\bno risk\\b", "\\binevitably\\b", "\\brevolutionary\\b", "\\bgame-changing\\b"],
+        "message": "repeated absolute wording may exceed the source evidence ceiling"
+      }
+    ]
+  },
   "review_roles": {
     "reader": "Reader Comprehension Reviewer",
     "source": "Source Coverage And Grounding Reviewer",
