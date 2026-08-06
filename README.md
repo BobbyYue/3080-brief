@@ -26,7 +26,7 @@ Source-grounded decision briefs that help readers understand the conclusion quic
 
 ## Install
 
-`3080-brief` follows the open [Agent Skills](https://agentskills.io/) folder format. It can be used by any agent that supports this format; the install command, skills directory, and reload behavior vary by client. See the official [client showcase](https://agentskills.io/clients) for client-specific documentation.
+`3080-brief` follows the open [Agent Skills](https://agentskills.io/) folder format. It can be installed by any agent that supports this format; the install command, skills directory, and reload behavior vary by client. Installation compatibility does not guarantee identical execution: verified production runs also require bundled Python-script execution and the target document/whiteboard workflows. See the official [client showcase](https://agentskills.io/clients) for client-specific documentation.
 
 ### Option 1: ask your agent
 
@@ -71,15 +71,31 @@ Confirm that the installed skill root contains `SKILL.md`, then ask:
 
 ```text
 Use $3080-brief to turn this document into a reader-first decision brief.
-Do not stop after loading Skill instructions: return the new document link, or the exact BLOCKED
-runtime capability and its host-native enablement action. Do not ask me again whether to continue.
+Start the bundled resumable run and do not skip checkpoints. Return the new document link with a
+PASS delivery receipt, or the exact BLOCKED runtime capability and its host-native enablement action.
 ```
 
-If an agent does not natively support Agent Skills, provide the complete skill folder as project context and instruct it to follow `SKILL.md`. Core instructions remain usable, but automatic discovery, conditional resource loading, script execution, and dependency approval depend on the host agent.
+If an agent does not natively support Agent Skills, provide the complete skill folder as project context and instruct it to follow `SKILL.md`. The writing guidance remains usable, but the production quality contract is not verified when the host cannot execute the bundled state machine and validation scripts.
 
-For Feishu output, installation is not verified merely because the agent can display `3080-brief` or `lark-doc` instructions. The host must execute a real source-document read and return a new-document link; otherwise it must report the exact missing capability as `BLOCKED`.
+For Feishu output, installation is not verified merely because the agent can display `3080-brief` or `lark-doc` instructions. The host must execute a real source-document read/create, record a native whiteboard block ID and token, query its live preview, and pass final verification; otherwise it must report the exact missing capability as `BLOCKED`.
 
-Runtime order is fixed for more consistent execution across models: dependency diagnostic or source fetch first, deterministic preflight second, complete review-draft creation third, then review/update and final verification. Acknowledgements and plans are never terminal responses. If independent reviewers are unavailable, the skill performs role-separated self-review, discloses `review_status=LIMITED`, and still completes the document unless independent review was explicitly required.
+Runtime order is fixed for more consistent execution across models: initialize the run → freeze source evidence → deterministic preflight → create and record the complete review draft → review the recorded artifact → re-fetch source/output and finalize. Acknowledgements and plans are never terminal responses. Standard and Strict require three independent review executions; only an explicitly requested Fast run may use three role-separated self-checks.
+
+## Execution assurance
+
+- One resumable entrypoint records every required checkpoint in `run_state.json`.
+- Source evidence is hash-frozen before drafting and re-fetched after generation.
+- Feishu rejects normal image/media substitution for the required editable whiteboard.
+- Standard/Strict review requires three distinct reviewer execution IDs for one artifact set.
+- Delivery is allowed only after `delivery_receipt.json` reports `PASS`.
+
+| Host status | Meaning |
+| --- | --- |
+| Installable | The agent can discover the complete Skill folder. No output-quality claim yet. |
+| Core verified | The agent can execute the state machine and offline gates for local Markdown/docx work. |
+| Feishu verified | The current run proves document read/create, native whiteboard insert/query, live preview, and PASS finalization. |
+
+A host should claim only the highest level it has actually demonstrated.
 
 ## Try it
 
@@ -103,7 +119,7 @@ It should not trigger for source editing in place, generic summaries without the
 
 ## Requirements
 
-Core validation is offline and uses Python 3.9+ with no third-party Python packages.
+Core validation is offline and uses Python 3.9+ with no third-party Python packages. The host must allow the bundled scripts to run; otherwise it can use the writing guidance but cannot claim a verified 3080 production run.
 
 Feishu/Lark output additionally requires:
 
@@ -124,7 +140,7 @@ Node.js installation without a known platform command, plus Feishu/Lark login an
 
 ## Development verification
 
-Run the complete offline test suite:
+Run the complete offline test suite, including a simulated source-to-Feishu state-machine run and failure cases for image substitution, review isolation, and source integrity:
 
 ```bash
 bash skills/3080-brief/scripts/self_test.sh
@@ -140,6 +156,12 @@ Check the current Feishu dependency state without installing anything:
 
 ```bash
 python3 skills/3080-brief/scripts/check_dependencies.py --mode feishu --json
+```
+
+Before claiming a specific host is Feishu verified, run the real-agent cases in `evals/agent_acceptance.json` and validate their actual delivery receipts:
+
+```bash
+python3 skills/3080-brief/scripts/validate_agent_acceptance.py acceptance-result.json
 ```
 
 ## Repository layout

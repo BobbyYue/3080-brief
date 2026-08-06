@@ -26,7 +26,7 @@
 
 ## 安装
 
-`3080-brief` 遵循开放的 [Agent Skills](https://agentskills.io/) 文件夹格式，可用于任何支持该格式的 Agent。不同 Agent 的安装命令、Skill 目录和重新加载方式并不相同；具体产品说明可查看官方 [Client Showcase](https://agentskills.io/clients)。
+`3080-brief` 遵循开放的 [Agent Skills](https://agentskills.io/) 文件夹格式，可安装到任何支持该格式的 Agent。不同 Agent 的安装命令、Skill 目录和重新加载方式并不相同；但“可以安装”不代表“执行效果一致”，完整生产流程还要求宿主能运行随附的 Python 程序以及目标文档、白板工作流。具体产品说明可查看官方 [Client Showcase](https://agentskills.io/clients)。
 
 ### 方式一：直接让 Agent 安装
 
@@ -69,15 +69,31 @@ Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-
 
 ```text
 请使用 $3080-brief，把这份文档新建为读者视角决策简报。
-不要在加载 Skill 说明后停止：请返回新文档链接，或明确报告具体的 BLOCKED 运行时能力
-及宿主原生启用动作；不要再次询问我是否继续。
+请启动随附的可恢复运行流程，不要跳过检查点；请返回带 PASS 交付凭证的新文档链接，
+或明确报告具体的 BLOCKED 运行时能力及宿主原生启用动作。
 ```
 
-如果某个 Agent 尚未原生支持 Agent Skills，可以把完整 Skill 目录作为项目上下文提供给它，并要求其遵循 `SKILL.md`。核心指令仍可使用，但自动发现、按需加载资源、执行脚本和依赖审批能力取决于宿主 Agent。
+如果某个 Agent 尚未原生支持 Agent Skills，可以把完整 Skill 目录作为项目上下文提供给它，并要求其遵循 `SKILL.md`。写作指导仍可使用；但宿主不能执行随附的状态流程和校验程序时，不能宣称完成了经过验证的生产运行。
 
-对于飞书输出，Agent 能展示 `3080-brief` 或 `lark-doc` 的说明并不代表安装验证通过。宿主必须真正读取源文档并返回新文档链接，否则应把缺失的可执行能力明确报告为 `BLOCKED`。
+对于飞书输出，Agent 能展示 `3080-brief` 或 `lark-doc` 的说明并不代表安装验证通过。宿主必须真实读写文档、记录原生白板块 ID 和 token、查询线上预览并通过最终验收，否则应把缺失的可执行能力明确报告为 `BLOCKED`。
 
-为减少不同模型的执行差异，运行顺序固定为：依赖检查或读取源文档 → 确定性预检 → 创建完整审阅稿 → 审阅并更新 → 最终校验。确认收到、执行计划或状态说明都不能作为任务终点。宿主无法运行独立审阅时，skill 会执行角色分离的自检、披露 `review_status=LIMITED`，并继续完成文档；只有用户明确要求独立审阅时才因此阻断。
+为减少不同模型的执行差异，运行顺序固定为：初始化运行 → 冻结来源证据 → 确定性预检 → 创建并登记完整审阅稿 → 审阅已创建的产物 → 重新读取源文档和产物后验收。确认收到、执行计划或状态说明都不能作为任务终点。Standard 和 Strict 必须来自三个独立审阅执行；只有用户明确选择 Fast 时，才允许改为三份角色分离的自检。
+
+## 执行保障
+
+- 一个可恢复入口把所有必需检查点记录在 `run_state.json`。
+- 起草前冻结来源证据，交付前重新读取源文档并比对哈希。
+- 飞书流程拒绝用普通图片或媒体块替代可编辑白板。
+- Standard/Strict 要求同一产物对应三个不同的审阅执行 ID。
+- 只有 `delivery_receipt.json` 返回 `PASS` 后才允许交付。
+
+| 宿主状态 | 含义 |
+| --- | --- |
+| 可安装 | Agent 能发现完整 Skill 目录，尚不能说明产出质量。 |
+| 核心流程已验证 | Agent 能执行状态流程和本地 Markdown/docx 离线门槛。 |
+| 飞书流程已验证 | 当前运行真实完成文档读写、原生白板插入与查询、线上预览和最终 PASS。 |
+
+宿主只能声明自己真实完成过的最高级别。
 
 ## 触发样例
 
@@ -100,7 +116,7 @@ Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-
 
 ## 依赖
 
-核心离线校验只依赖 Python 3.9+，不需要第三方 Python 包。
+核心离线校验只依赖 Python 3.9+，不需要第三方 Python 包。宿主必须允许运行随附程序；否则只能参考写作指导，不能宣称完成了经过验证的 3080 生产运行。
 
 飞书输出额外要求：
 
@@ -121,7 +137,7 @@ Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-
 
 ## 开发验证
 
-运行完整离线测试：
+运行完整离线测试，其中包含模拟的“来源到飞书”状态流程，以及图片替代白板、审阅不独立、源文被修改等失败场景：
 
 ```bash
 bash skills/3080-brief/scripts/self_test.sh
@@ -137,6 +153,12 @@ python3 skills/3080-brief/scripts/check_context_budget.py skills/3080-brief --js
 
 ```bash
 python3 skills/3080-brief/scripts/check_dependencies.py --mode feishu --json
+```
+
+对外声明某个宿主“飞书流程已验证”之前，应实际运行 `evals/agent_acceptance.json` 中的验收场景，并校验真实交付凭证：
+
+```bash
+python3 skills/3080-brief/scripts/validate_agent_acceptance.py acceptance-result.json
 ```
 
 ## 隐私与边界
