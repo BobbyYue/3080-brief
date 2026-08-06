@@ -5,6 +5,8 @@ Runtime reviewers return JSON, not prose reports. Each role evaluates one artifa
 ```json
 {
   "reviewer_role": "source",
+  "review_mode": "independent",
+  "reviewer_run_id": "unique-source-review-execution",
   "artifact_set_id": "same-hash-derived-id-for-all-three-reviewers",
   "review_round": 1,
   "verdict": "FAIL",
