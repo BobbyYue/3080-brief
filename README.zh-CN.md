@@ -4,172 +4,168 @@
 
 [![CI](https://github.com/BobbyYue/3080-brief/actions/workflows/ci.yml/badge.svg)](https://github.com/BobbyYue/3080-brief/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Agent Skill](https://img.shields.io/badge/Agent_Skill-open_format-0B7A55.svg)](https://agentskills.io/)
 
-把源文档重建为“30 秒形成判断、一张图理解主线”的可追溯决策简报。
+[English](README.md) · [快速开始](#快速开始) · [完整案例](docs/examples/claude-code-session-value.md) · [最新版本](https://github.com/BobbyYue/3080-brief/releases/latest)
 
-[English](README.md)
+一个开源 **AI Agent Skill**：把源文档重建为读者视角的决策简报，包括 30 秒判断、一张可追溯的主线图、一个关键问题表和一条清晰故事线。它不修改源文档；宿主支持时，可新建飞书/Lark、Markdown 或 Word/docx 格式的简报。
 
-`3080-brief` 不修改源文档，而是新建一份读者视角简报。产出围绕四个读者价值单元组织：
+<p align="center"><strong>① 左侧是原文章 → ② 右侧是 3080 Brief 产出</strong></p>
 
-1. 一句话：首句只承载一个核心判断，其下可用 1–3 行补充证据、下一步或适用边界；
-2. 一张图：覆盖至少 80% 的价值加权、非附录主张；
-3. 一个表：回答读者阅读时最想追问的关键问题；
-4. 一条线：清晰呈现故事线，帮你理清原文逻辑。
+[![Claude 原文章与 3080 Brief 产出的对照](docs/assets/claude-code-comparison.png)](docs/examples/claude-code-session-value.md)
 
-## 为什么使用
+> **真实产出案例：** [Anthropic 的 5 分钟文章](https://claude.com/blog/maximizing-the-value-of-your-claude-code-sessions)把 token 定价、提示缓存、上下文增长、会话长度和子代理分散在多个章节中。3080 Brief 在保留原文作为事实来源的前提下，把它整理成一个操作判断、一套五步流程和一份明确的排查优先级。由于源文章为英文，案例按源语言输出。 [查看完整案例 →](docs/examples/claude-code-session-value.md)
 
-- 读者视角：围绕读者需要理解、信任、判断和行动的信息重建叙事。
-- 提炼核心价值：从背景噪音和实现细节中提取关键结论、证据、风险与下一步。
-- 理清故事线：把零散、专业或技术化的原文逻辑组织成一条连贯、扫读即可理解的论证主线。
-- 快速形成理解：用 30 秒判断、一张主线图和关键问题表，帮助读者迅速抓住重点。
-- 可靠交付：来源可追溯、源文不改、格式跟随，并通过确定性校验与审阅门禁保证质量。
+## 你会得到什么
 
-## 安装
+| 读者的问题 | 3080 Brief 的产出 |
+| --- | --- |
+| 最重要的判断是什么？ | **一句话**：一个核心判断，加 1–3 行证据、行动或边界 |
+| 信息之间是什么关系？ | **一张图**：覆盖至少 80% 的价值加权、非附录主张 |
+| 读完最可能追问什么？ | **一个表**：回答关键问题 |
+| 原文逻辑到底是什么？ | **一条线**：按读者视角重新组织原文故事线 |
 
-`3080-brief` 遵循开放的 [Agent Skills](https://agentskills.io/) 文件夹格式，可安装到任何支持该格式的 Agent。不同 Agent 的安装命令、Skill 目录和重新加载方式并不相同；但“可以安装”不代表“执行效果一致”，完整生产流程还要求宿主能运行随附的 Python 程序以及目标文档、白板工作流。具体产品说明可查看官方 [Client Showcase](https://agentskills.io/clients)。
+源文档保持不变，Skill 会另外创建一份新简报。
 
-### 方式一：直接让 Agent 安装
+## 快速开始
 
-如果你的 Agent 支持从 GitHub 安装 Skill，可以向它发送：
+### 1. 安装完整 Skill 目录
+
+把下面这段话发给任何支持 Agent Skills 的 Agent：
 
 ```text
 请安装 https://github.com/BobbyYue/3080-brief 中的 Agent Skill，
 使用完整子目录 skills/3080-brief，并注册到你的正式 Skill 目录。
-随后运行飞书依赖检查，向我一次性展示全部缺失依赖及安装影响，并只询问一次是否全部安装或启用。
-如果我同意，请处理清单中的所有项目，不要逐项重复申请；其中 beautiful-feishu-whiteboard
-必须作为独立 Skill 注册；缺少时还要启用宿主可实际执行的 lark-doc 和 lark-whiteboard 工作流。
-仅加载或返回 Skill 规范不算能力可用。如果我拒绝，保留 3080-brief，但保持飞书输出为阻断状态。
+随后检查我目标输出所需的依赖；如有缺失，请一次性展示完整清单和影响，并只询问一次是否安装。
 ```
 
-### 方式二：手动安装完整目录
+也可以手动安装：
 
 ```bash
 git clone --depth 1 https://github.com/BobbyYue/3080-brief.git
 cp -R ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-brief"
 ```
 
-Windows PowerShell：
+必须复制完整目录，不能只复制 `SKILL.md`。如果 Agent 文档有要求，安装后重新加载或重启。
+
+### 2. 提供源文档和明确要求
+
+```text
+请使用 $3080-brief，把这份文档新建为读者视角决策简报。
+保持源文档不变，输出格式跟随输入格式。
+最终返回生成结果链接或文件，并说明验收状态。
+```
+
+也可以自然语言触发：
+
+```text
+请基于这份方案新建一份简报：30 秒看懂结论，
+一张图覆盖核心逻辑，再用一个表回答读者最关心的问题。
+```
+
+## 为什么使用
+
+- **读者视角：** 围绕读者需要理解、信任、判断和行动的信息重建内容。
+- **提炼核心价值：** 从背景噪音中抽出关键结论、证据、风险和下一步。
+- **理清故事线：** 把零散或技术化的原文组织成一条连贯论证。
+- **用图表达关系：** 一张图用于呈现核心逻辑，而不是装饰页面。
+- **可靠交付：** 保持源文不变、重要主张可追溯、格式跟随，并验收最终产物。
+
+## 安装方式
+
+<details>
+<summary><strong>让 Agent 安装并检查依赖</strong></summary>
+
+如果 Agent 支持从 GitHub 安装 Skill，可以发送完整指令：
+
+```text
+请安装 https://github.com/BobbyYue/3080-brief 中的 Agent Skill，
+使用完整子目录 skills/3080-brief，并注册到你的正式 Skill 目录。
+随后检查我目标输出所需的依赖，向我一次性展示全部缺失项、来源、版本和安装影响，
+并只询问一次是否全部安装或启用。如果我同意，请处理清单中的所有项目，不要逐项重复申请。
+飞书输出还需要把 beautiful-feishu-whiteboard 作为独立 Skill 注册，并启用宿主可实际执行的
+lark-doc 和 lark-whiteboard 工作流。仅加载 Skill 说明不代表能力可用。
+如果我拒绝，保留 3080-brief，但保持对应输出路径为阻断状态。
+```
+
+</details>
+
+<details>
+<summary><strong>Windows PowerShell</strong></summary>
 
 ```powershell
 git clone --depth 1 https://github.com/BobbyYue/3080-brief.git
 Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-brief"
 ```
 
-将 `<YOUR_AGENT_SKILLS_DIR>` 替换成该 Agent 文档规定的用户级或项目级 Skill 目录。必须复制完整的 `skills/3080-brief`，不能只复制 `SKILL.md`，因为运行还需要 `scripts/`、`references/`、`config/` 和 `evals/`。如果产品文档要求，安装后重新加载或重启 Agent。
+</details>
 
-### 方式三：在 Web 或桌面客户端上传
+<details>
+<summary><strong>Web 或桌面客户端导入</strong></summary>
 
-下载[最新 Release](https://github.com/BobbyYue/3080-brief/releases/latest)并解压，通过客户端的 Skill 导入入口上传 `skills/3080-brief`。除非客户端明确支持仓库子路径，否则不要直接上传整个仓库根目录。
+下载[最新版本](https://github.com/BobbyYue/3080-brief/releases/latest)并解压，通过客户端的 Skill 导入入口上传 `skills/3080-brief`。除非客户端明确支持仓库子路径，否则不要上传仓库根目录。
 
-无论使用哪种安装方式，Agent 都应在宣告飞书能力可用前运行依赖检查，并通过一次捆绑审批处理全部缺失依赖。
+</details>
 
-### 验证安装
+`3080-brief` 遵循开放的 [Agent Skills](https://agentskills.io/) 文件夹格式。不同宿主的安装命令、注册目录、重新加载方式、程序执行和文档能力不同；可参考官方 [Client Showcase](https://agentskills.io/clients)。
 
-确认安装后的 Skill 根目录包含 `SKILL.md`，然后发送：
+## 兼容性与执行保障
 
-```text
-请使用 $3080-brief，把这份文档新建为读者视角决策简报。
-请启动随附的可恢复运行流程，不要跳过检查点；请返回带 PASS 交付凭证的新文档链接，
-或明确报告具体的 BLOCKED 运行时能力及宿主原生启用动作。
-```
-
-如果某个 Agent 尚未原生支持 Agent Skills，可以把完整 Skill 目录作为项目上下文提供给它，并要求其遵循 `SKILL.md`。写作指导仍可使用；但宿主不能执行随附的状态流程和校验程序时，不能宣称完成了经过验证的生产运行。
-
-对于飞书输出，Agent 能展示 `3080-brief` 或 `lark-doc` 的说明并不代表安装验证通过。宿主必须真实读写文档、记录原生白板块 ID 和 token、查询线上预览并通过最终验收，否则应把缺失的可执行能力明确报告为 `BLOCKED`。
-
-为减少不同模型的执行差异，运行顺序固定为：初始化运行 → 冻结来源证据 → 确定性预检 → 创建并登记完整审阅稿 → 审阅已创建的产物 → 重新读取源文档和产物后验收。确认收到、执行计划或状态说明都不能作为任务终点。Standard 和 Strict 必须来自三个独立审阅执行；只有用户明确选择 Fast 时，才允许改为三份角色分离的自检。
-
-## 执行保障
-
-- 一个可恢复入口把所有必需检查点记录在 `run_state.json`。
-- 起草前冻结来源证据，交付前重新读取源文档并比对哈希。
-- 飞书流程拒绝用普通图片或媒体块替代可编辑白板。
-- Standard/Strict 要求同一产物对应三个不同的审阅执行 ID。
-- 只有 `delivery_receipt.json` 返回 `PASS` 后才允许交付。
-
-| 宿主状态 | 含义 |
+| 宿主状态 | 能说明什么 |
 | --- | --- |
 | 可安装 | Agent 能发现完整 Skill 目录，尚不能说明产出质量。 |
-| 核心流程已验证 | Agent 能执行状态流程和本地 Markdown/docx 离线门槛。 |
-| 飞书流程已验证 | 当前运行真实完成文档读写、原生白板插入与查询、线上预览和最终 PASS。 |
+| 核心流程已验证 | Agent 能运行可恢复流程和 Markdown/docx 离线检查。 |
+| 飞书流程已验证 | 当前运行真实完成文档读写、原生可编辑白板插入与查询、线上预览和最终验收。 |
 
-宿主只能声明自己真实完成过的最高级别。
+固定生产流程为：初始化 → 冻结来源证据 → 预检 → 创建完整初稿 → 审阅已登记产物 → 重新读取源文档和产物 → 验收。确认收到或执行计划不算最终交付。
 
-## 触发样例
+Standard 和 Strict 需要三个独立审阅执行；只有用户明确要求 Fast 时，才允许改为三份角色分离的自检。
 
-显式调用：
+<details>
+<summary><strong>飞书/Lark 依赖与安装行为</strong></summary>
 
-```text
-请使用 $3080-brief，把这份文档新建为读者视角决策简报。
-保持源文档不变，输出格式跟随输入格式。
-最终必须返回生成结果链接，或明确报告具体的 BLOCKED 运行时能力。
-```
+核心离线校验只需要 Python 3.9+，不依赖第三方 Python 包。飞书/Lark 输出额外需要：
 
-自然语言调用：
-
-```text
-请基于这份方案新建一份读者视角总结：30 秒看懂结论，
-一张图覆盖核心信息，再用一个表回答读者最关心的问题。
-```
-
-仅要求原地修改源文档、普通摘要、或只做画板美化时不应触发。
-
-## 依赖
-
-核心离线校验只依赖 Python 3.9+，不需要第三方 Python 包。宿主必须允许运行随附程序；否则只能参考写作指导，不能宣称完成了经过验证的 3080 生产运行。
-
-飞书输出额外要求：
-
-- 宿主可实际执行 `lark-doc` 文档读取/创建和 `lark-whiteboard` 查询/更新工作流，而不只是加载它们的 Skill 文本；
+- 可实际执行的 `lark-doc` 读写和 `lark-whiteboard` 查询/更新工作流；
 - Node.js 20+；
 - `@larksuite/cli` / `lark-cli` 1.0.60+；
-- 隔离工具缓存中的 `@larksuite/whiteboard-cli` 必须为 0.2.11；
+- 隔离工具缓存中的 `@larksuite/whiteboard-cli` 0.2.11；
 - [`beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 1.1.1+；
-- 飞书账号认证与必要的文档权限。
+- 飞书/Lark 登录和必要的文档权限。
 
-缺少这些依赖只会阻断飞书路径。对于软件包依赖，skill 会展示准确来源、版本、已知的联网/文件影响及审批命令；对于运行时能力，则展示明确的宿主原生启用动作。它会先申请用户许可，不会静默安装或启用。
+缺失飞书依赖只阻断该输出路径。Skill 会先展示来源、版本、已知影响和拟执行动作，再申请用户许可；不会静默安装软件或授予账号权限。
 
-安装阶段的依赖检查会生成一个审批包，覆盖清单中的全部飞书缺失依赖。用户明确同意一次，即授权执行所有已展示的 CLI 命令、把 [`beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 作为独立 Skill 注册，并通过宿主原生流程启用缺失的 `lark-doc` / `lark-whiteboard` 工作流；不能再逐项重复申请。用户拒绝时，保留核心 Skill，并保持飞书输出阻断。
-
-`3080-brief` 不根据脚本执行目录猜测 Skill 注册目录，因为托管 Agent 可能从一次性临时仓库运行安装脚本。如果宿主没有提供已验证的注册目录，应使用当前 Agent 自带的安装器或导入入口。文件复制成功只会标记为“等待运行时复检”，不会标记为 `PASS`；重新加载 Agent 并在正式运行环境复检通过后才能继续。如果宿主明确提供持久注册目录，可设置 `BRIEF3080_SKILL_INSTALL_ROOT`。
-
-如果缺少 Node.js 且没有已知的平台安装命令，或需要进行飞书登录、权限授权，仍须单独确认；一次捆绑审批不能覆盖未展示的系统命令或账号授权影响。
+</details>
 
 ## 开发验证
 
-运行完整离线测试，其中包含模拟的“来源到飞书”状态流程，以及图片替代白板、审阅不独立、源文被修改等失败场景：
+运行完整离线测试：
 
 ```bash
 bash skills/3080-brief/scripts/self_test.sh
 ```
 
-单独检查能力唯一归属与运行上下文预算：
+单独检查运行上下文和飞书依赖：
 
 ```bash
 python3 skills/3080-brief/scripts/check_context_budget.py skills/3080-brief --json
-```
-
-只检查飞书依赖状态，不执行安装：
-
-```bash
 python3 skills/3080-brief/scripts/check_dependencies.py --mode feishu --json
 ```
 
-对外声明某个宿主“飞书流程已验证”之前，应实际运行 `evals/agent_acceptance.json` 中的验收场景，并校验真实交付凭证：
+仓库结构：
 
-```bash
-python3 skills/3080-brief/scripts/validate_agent_acceptance.py acceptance-result.json
+```text
+skills/3080-brief/   可安装的 Agent Skill
+docs/examples/       带源链接的真实案例
+docs/assets/         README 和社交预览图
+.github/workflows/   离线 CI
 ```
 
 ## 隐私与边界
 
-- 不要在 Issue、示例或截图中提交文档 token、租户标识、凭据或真实内部指标。
-- 依赖安装许可不等于飞书认证许可。
-- 只有真正运行了独立审阅和盲读复述时，才会对外声明其完成。
-- 本项目不包含 with-skill / without-skill 基准宣传。
+- 不要在 Issue 或案例中公开文档 token、租户标识、凭据或内部指标。
+- 只有真正运行了独立审阅或盲读复述时，才会对外声明其完成。
+- 带来源的案例只代表其标注获取日期时可验证的产品行为与证据。
+- 本项目不使用 with-skill/without-skill 基准宣传。
 
-贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)，安全问题请按 [SECURITY.md](SECURITY.md) 私下报告。
-
-## 许可证
-
-[MIT](LICENSE)
+贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)，安全问题见 [SECURITY.md](SECURITY.md)，许可证为 [MIT](LICENSE)。

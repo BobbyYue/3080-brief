@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-18
+
+### Added
+
+- Added a source-linked Claude Code article example with a 30-second judgment, one-picture summary, key-question table, storyline, and evidence boundary.
+- Added an explicit original-article versus 3080-output comparison built from a real webpage screenshot.
+
 ### Changed
 
 - Reworked the runtime into a resumable, fail-closed state machine: source grounding, preflight, review-draft creation, review, and final delivery are ordered checkpoints, and success requires a machine-generated PASS delivery receipt.
@@ -17,6 +24,8 @@ All notable changes to this project are documented here. The project follows [Se
 - Stopped inferring a host Skill registry from the script path; managed agents now request native registration unless a persistent registry root is explicitly provided, and file installation remains pending until a runtime recheck passes.
 - Added an installation-time approval bundle so one explicit user approval covers every displayed missing Feishu dependency and companion-Skill registration action, without repeated per-item prompts.
 - Made the English README fully English, including its language link and natural-language trigger example.
+- Reorganized both READMEs around value, real output, and a two-step quick start; moved detailed installation and dependency guidance into expandable sections.
+- Expanded repository wording for discovery through AI Agent Skill, executive summary, decision brief, visual summary, one-pager, and document summarization use cases.
 
 ### Removed
 

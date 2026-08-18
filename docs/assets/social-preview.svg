@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">3080 Brief: from long-form source to 30-second judgment</title>
+  <desc id="desc">A comparison between the original Claude Code article and a separate decision-ready 3080 Brief.</desc>
+  <rect width="1280" height="640" fill="#F4F1ED"/>
+  <text x="54" y="66" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="800" fill="#18211E">From source material to a decision-ready brief</text>
+  <rect x="54" y="96" width="412" height="484" rx="8" fill="#FBFAF8" stroke="#BDC9C3"/>
+  <rect x="54" y="96" width="412" height="76" rx="8" fill="#2C3330"/>
+  <rect x="54" y="164" width="412" height="8" fill="#2C3330"/>
+  <text x="76" y="130" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800" fill="#FFFFFF">① ORIGINAL ARTICLE</text>
+  <text x="76" y="153" font-family="Inter, Arial, sans-serif" font-size="12" fill="#D5DDDA">Evidence and reasoning remain the source of truth</text>
+  <text x="80" y="226" font-family="Georgia, serif" font-size="25" font-weight="700" fill="#18211E">Maximizing the value of</text>
+  <text x="80" y="258" font-family="Georgia, serif" font-size="25" font-weight="700" fill="#18211E">your Claude Code sessions</text>
+  <text x="80" y="298" font-family="Inter, Arial, sans-serif" font-size="13" fill="#52615B">5 min · pricing · caching · context · sessions</text>
+  <g stroke="#C9D2CD" stroke-width="8">
+    <line x1="80" y1="346" x2="430" y2="346"/><line x1="80" y1="376" x2="408" y2="376"/><line x1="80" y1="406" x2="424" y2="406"/><line x1="80" y1="436" x2="388" y2="436"/><line x1="80" y1="466" x2="414" y2="466"/><line x1="80" y1="496" x2="360" y2="496"/>
+  </g>
+  <text x="490" y="296" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800" fill="#087A58">3080 BRIEF</text>
+  <text x="500" y="329" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700" fill="#36423D">5 MIN → 30 SEC</text>
+  <line x1="492" y1="350" x2="574" y2="350" stroke="#087A58" stroke-width="3"/>
+  <path d="M574 350 L563 343 L563 357 Z" fill="#087A58"/>
+  <rect x="600" y="96" width="626" height="484" rx="8" fill="#FBFAF8" stroke="#BDC9C3"/>
+  <rect x="600" y="96" width="626" height="76" rx="8" fill="#087A58"/>
+  <rect x="600" y="164" width="626" height="8" fill="#087A58"/>
+  <text x="624" y="130" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800" fill="#FFFFFF">② 3080 BRIEF OUTPUT</text>
+  <text x="624" y="153" font-family="Inter, Arial, sans-serif" font-size="12" fill="#D7F1E8">Judgment, logic, and next action first</text>
+  <text x="624" y="215" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="800" fill="#087A58">30-SECOND JUDGMENT</text>
+  <text x="624" y="257" font-family="Georgia, serif" font-size="27" font-weight="700" fill="#18211E">Treat every session as a context budget.</text>
+  <text x="624" y="290" font-family="Inter, Arial, sans-serif" font-size="14" fill="#52615B">Keep tasks separate, start deliberately, and isolate noisy work.</text>
+  <line x1="624" y1="324" x2="1200" y2="324" stroke="#C9D2CD"/>
+  <text x="624" y="357" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800" fill="#18211E">One-picture routine</text>
+  <g font-family="Inter, Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle">
+    <circle cx="676" cy="402" r="18" fill="#E1EEE9"/><text x="676" y="406" fill="#087A58">1</text><text x="676" y="438" fill="#18211E">Set model</text>
+    <circle cx="794" cy="402" r="18" fill="#E1EEE9"/><text x="794" y="406" fill="#087A58">2</text><text x="794" y="438" fill="#18211E">Inspect</text>
+    <circle cx="912" cy="402" r="18" fill="#E1EEE9"/><text x="912" y="406" fill="#087A58">3</text><text x="912" y="438" fill="#18211E">Attach less</text>
+    <circle cx="1030" cy="402" r="18" fill="#E1EEE9"/><text x="1030" y="406" fill="#087A58">4</text><text x="1030" y="438" fill="#18211E">Offload</text>
+    <circle cx="1148" cy="402" r="18" fill="#E1EEE9"/><text x="1148" y="406" fill="#087A58">5</text><text x="1148" y="438" fill="#18211E">Reset</text>
+  </g>
+  <line x1="624" y1="474" x2="1200" y2="474" stroke="#C9D2CD"/>
+  <text x="624" y="510" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800" fill="#18211E">Check first: long sessions → excess context → model → cache</text>
+  <text x="624" y="544" font-family="Inter, Arial, sans-serif" font-size="12" fill="#69736E">Qualitative priority; source date and evidence boundaries remain visible.</text>
+</svg>

@@ -4,186 +4,169 @@
 
 [![CI](https://github.com/BobbyYue/3080-brief/actions/workflows/ci.yml/badge.svg)](https://github.com/BobbyYue/3080-brief/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Agent Skill](https://img.shields.io/badge/Agent_Skill-open_format-0B7A55.svg)](https://agentskills.io/)
 
-Source-grounded decision briefs that help readers understand the conclusion quickly and see the argument as one auditable visual.
+[Chinese (Simplified)](README.zh-CN.md) · [Quick start](#quick-start) · [Worked example](docs/examples/claude-code-session-value.md) · [Latest release](https://github.com/BobbyYue/3080-brief/releases/latest)
 
-[Chinese (Simplified)](README.zh-CN.md)
+An open-source **AI Agent Skill** that turns source documents into reader-first decision briefs: a 30-second executive summary, one auditable visual, a key-question table, and a clear storyline. It preserves the source and can create a new brief in Feishu/Lark, Markdown, or Word/docx when the host supports that format.
 
-`3080-brief` turns a source document into a new, reader-first brief without modifying the source. The result is organized around four reader-facing elements:
+<p align="center"><strong>① Original article on the left → ② 3080 Brief output on the right</strong></p>
 
-1. one primary judgment sentence followed by 1–3 short evidence, action, or boundary support lines;
-2. one auditable visual covering at least 80% of value-weighted, non-appendix claims;
-3. one key-question table answering what readers are most likely to ask;
-4. one storyline that helps readers untangle the source's logic.
+[![The original Claude article compared with the 3080 Brief output](docs/assets/claude-code-comparison.png)](docs/examples/claude-code-session-value.md)
 
-## Why use it
+> **Real output example:** [Anthropic's five-minute article](https://claude.com/blog/maximizing-the-value-of-your-claude-code-sessions) explains token pricing, prompt caching, context growth, session length, and subagents across multiple sections. The 3080 Brief turns it into one operating judgment, one five-step routine, and a clear order for what to check first, while keeping the original as the source of truth. [Open the complete example →](docs/examples/claude-code-session-value.md)
 
-- Reader-first: reorganizes the source around what readers need to understand, trust, decide, or do.
-- Core-value extraction: separates decision-critical conclusions, evidence, risks, and actions from background noise and implementation detail.
-- Clear storyline: turns fragmented or technical source logic into a coherent argument whose headings make the reasoning easy to scan.
-- Fast understanding: combines a 30-second judgment, one-picture summary, and key-question table so readers can grasp the main line quickly.
-- Reliable delivery: keeps claims traceable, preserves the source, matches the output format, and applies deterministic review gates.
+## What you get
 
-## Install
+| Reader need | 3080 Brief output |
+| --- | --- |
+| What matters? | **One sentence** with the primary judgment and 1–3 evidence, action, or boundary lines |
+| How does it fit together? | **One picture** covering at least 80% of value-weighted, non-appendix claims |
+| What will readers ask next? | **One table** answering the key questions |
+| What is the source really saying? | **One storyline** that reorganizes the original logic for the reader |
 
-`3080-brief` follows the open [Agent Skills](https://agentskills.io/) folder format. It can be installed by any agent that supports this format; the install command, skills directory, and reload behavior vary by client. Installation compatibility does not guarantee identical execution: verified production runs also require bundled Python-script execution and the target document/whiteboard workflows. See the official [client showcase](https://agentskills.io/clients) for client-specific documentation.
+The source remains unchanged; the skill creates a separate brief.
 
-### Option 1: ask your agent
+## Quick start
 
-Send this instruction to an agent that can install skills from GitHub:
+### 1. Install the complete Skill folder
+
+Ask any Agent Skills-compatible agent:
 
 ```text
 Install the Agent Skill from https://github.com/BobbyYue/3080-brief,
-using the complete subdirectory skills/3080-brief and register it in your Skill registry.
-Then run its Feishu dependency check, show me one complete plan for every missing dependency,
-and ask once whether to install or enable all of them. If I approve, handle every listed item without
-separate per-item approvals, including registering beautiful-feishu-whiteboard as an independent
-Skill and enabling the host's executable lark-doc and lark-whiteboard workflows when missing.
-Loading or returning a Skill specification does not count as executable readiness. If I decline,
-keep 3080-brief installed but leave Feishu output blocked.
+using the complete subdirectory skills/3080-brief. Register it in your normal Skill directory,
+then check the dependencies required for my target output and ask once before installing anything missing.
 ```
 
-### Option 2: install the folder manually
+Or install it manually:
 
 ```bash
 git clone --depth 1 https://github.com/BobbyYue/3080-brief.git
 cp -R ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-brief"
 ```
 
-Windows PowerShell:
+Copy the entire folder—not only `SKILL.md`—and reload the agent if its documentation requires it.
+
+### 2. Give it a source and a concrete request
+
+```text
+Use $3080-brief to turn this document into a new reader-first decision brief.
+Keep the source unchanged and create the result in the same format.
+Return the generated output link or file, plus the final verification status.
+```
+
+Natural language works too:
+
+```text
+Create a new brief from this proposal: make the conclusion clear in 30 seconds,
+cover the core logic in one picture, and answer the reader's key questions in one table.
+```
+
+## Why use it
+
+- **Reader-first:** reorganizes material around what readers need to understand, trust, decide, or do.
+- **Core-value extraction:** separates decision-critical conclusions, evidence, risks, and actions from background noise.
+- **Clear storyline:** turns fragmented or technical source logic into a coherent argument.
+- **Visual reasoning:** uses one auditable picture to reveal the dominant relationships rather than decorate the page.
+- **Reliable delivery:** preserves the source, traces important claims, matches the output format, and verifies the final artifact.
+
+## Installation options
+
+<details>
+<summary><strong>Ask your agent to install and verify dependencies</strong></summary>
+
+Send this complete instruction to an agent that can install Skills from GitHub:
+
+```text
+Install the Agent Skill from https://github.com/BobbyYue/3080-brief,
+using the complete subdirectory skills/3080-brief and register it in your Skill registry.
+Then run the dependency check for my target output, show one complete plan for every missing dependency,
+and ask once whether to install or enable all of them. If I approve, handle every listed item without
+separate per-item approvals. For Feishu output, register beautiful-feishu-whiteboard as an independent
+Skill and enable executable lark-doc and lark-whiteboard workflows when missing. Loading a Skill
+specification does not count as executable readiness. If I decline, keep 3080-brief installed but leave
+the affected output path blocked.
+```
+
+</details>
+
+<details>
+<summary><strong>Windows PowerShell</strong></summary>
 
 ```powershell
 git clone --depth 1 https://github.com/BobbyYue/3080-brief.git
 Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-brief"
 ```
 
-Replace `<YOUR_AGENT_SKILLS_DIR>` with the user-level or project-level skills directory documented by your agent. Copy the **entire** `skills/3080-brief` folder—not only `SKILL.md`—because the skill also uses its `scripts/`, `references/`, `config/`, and `evals/` resources. Reload or restart the agent if its documentation requires it.
+</details>
 
-### Option 3: upload in a web or desktop client
+<details>
+<summary><strong>Web or desktop client import</strong></summary>
 
-Download the [latest release](https://github.com/BobbyYue/3080-brief/releases/latest), extract it, and upload `skills/3080-brief` through the client's Skill import UI. Do not upload the repository root unless the client explicitly supports repository subpaths.
+Download the [latest release](https://github.com/BobbyYue/3080-brief/releases/latest), extract it, and import `skills/3080-brief` through the client's Skill UI. Do not upload the repository root unless the client explicitly supports repository subpaths.
 
-After any installation method, the agent should run the dependency check and use one bundled approval before declaring Feishu output ready.
+</details>
 
-### Verify the installation
+`3080-brief` follows the open [Agent Skills](https://agentskills.io/) folder format. Client commands, registry paths, reload behavior, script execution, and document integrations vary by host; see the official [client showcase](https://agentskills.io/clients).
 
-Confirm that the installed skill root contains `SKILL.md`, then ask:
+## Compatibility and assurance
 
-```text
-Use $3080-brief to turn this document into a reader-first decision brief.
-Start the bundled resumable run and do not skip checkpoints. Return the new document link with a
-PASS delivery receipt, or the exact BLOCKED runtime capability and its host-native enablement action.
-```
-
-If an agent does not natively support Agent Skills, provide the complete skill folder as project context and instruct it to follow `SKILL.md`. The writing guidance remains usable, but the production quality contract is not verified when the host cannot execute the bundled state machine and validation scripts.
-
-For Feishu output, installation is not verified merely because the agent can display `3080-brief` or `lark-doc` instructions. The host must execute a real source-document read/create, record a native whiteboard block ID and token, query its live preview, and pass final verification; otherwise it must report the exact missing capability as `BLOCKED`.
-
-Runtime order is fixed for more consistent execution across models: initialize the run → freeze source evidence → deterministic preflight → create and record the complete review draft → review the recorded artifact → re-fetch source/output and finalize. Acknowledgements and plans are never terminal responses. Standard and Strict require three independent review executions; only an explicitly requested Fast run may use three role-separated self-checks.
-
-## Execution assurance
-
-- One resumable entrypoint records every required checkpoint in `run_state.json`.
-- Source evidence is hash-frozen before drafting and re-fetched after generation.
-- Feishu rejects normal image/media substitution for the required editable whiteboard.
-- Standard/Strict review requires three distinct reviewer execution IDs for one artifact set.
-- Delivery is allowed only after `delivery_receipt.json` reports `PASS`.
-
-| Host status | Meaning |
+| Host status | What it proves |
 | --- | --- |
 | Installable | The agent can discover the complete Skill folder. No output-quality claim yet. |
-| Core verified | The agent can execute the state machine and offline gates for local Markdown/docx work. |
-| Feishu verified | The current run proves document read/create, native whiteboard insert/query, live preview, and PASS finalization. |
+| Core verified | The agent can run the resumable workflow and offline checks for local Markdown/docx work. |
+| Feishu verified | The current run proves document read/create, native editable whiteboard insert/query, live preview, and final verification. |
 
-A host should claim only the highest level it has actually demonstrated.
+The fixed production path is: initialize → freeze source evidence → preflight → create the full draft → review the recorded artifact → re-fetch source and output → finalize. A plan or acknowledgement is never the final deliverable.
 
-## Try it
+Standard and Strict require three independent review executions. Fast may use three role-separated self-checks only when the user explicitly requests Fast.
 
-Explicit invocation:
+<details>
+<summary><strong>Feishu/Lark requirements and dependency behavior</strong></summary>
 
-```text
-Use $3080-brief to turn this document into a reader-first decision brief.
-Keep the source unchanged and create the output in the same format.
-Finish with the generated output link, or report the exact BLOCKED runtime capability.
-```
+Core offline validation requires Python 3.9+ and no third-party Python packages. Feishu/Lark output additionally requires:
 
-Natural-language invocation:
-
-```text
-Create a new reader-first brief from this proposal: make the conclusion clear
-in 30 seconds, cover the core information in one picture, and use one table
-to answer readers' most important questions.
-```
-
-It should not trigger for source editing in place, generic summaries without the reader/visual contract, or standalone whiteboard styling.
-
-## Requirements
-
-Core validation is offline and uses Python 3.9+ with no third-party Python packages. The host must allow the bundled scripts to run; otherwise it can use the writing guidance but cannot claim a verified 3080 production run.
-
-Feishu/Lark output additionally requires:
-
-- executable host workflows for `lark-doc` document read/create and `lark-whiteboard` query/update—not only their Skill text;
+- executable `lark-doc` read/create and `lark-whiteboard` query/update workflows;
 - Node.js 20+;
 - `@larksuite/cli` / `lark-cli` 1.0.60+;
-- `@larksuite/whiteboard-cli` exactly 0.2.11 in the isolated 3080 tool cache;
+- `@larksuite/whiteboard-cli` exactly 0.2.11 in the isolated tool cache;
 - [`beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard) 1.1.1+;
 - Feishu/Lark authentication and the required document permissions.
 
-Missing Feishu dependencies block only the Feishu path. For package dependencies, the skill displays the exact source, version, known network/file effects, and approval command; for runtime capabilities, it displays the concrete host-native enablement action. It does not silently install or enable dependencies.
+Missing Feishu dependencies block only that output path. The skill shows the source, version, known effects, and proposed action before requesting approval. It does not silently install software or grant account permissions.
 
-The installation-time dependency check produces one approval bundle covering every listed missing Feishu dependency. One explicit yes authorizes all displayed CLI commands, the independent registration of [`beautiful-feishu-whiteboard`](https://github.com/zarazhangrui/beautiful-feishu-whiteboard), and host-native enablement of missing `lark-doc` / `lark-whiteboard` workflows; it must not trigger repeated per-item approvals. A decline keeps the core Skill available and Feishu output blocked.
-
-`3080-brief` never guesses a Skill registry from its execution directory because managed agents may run scripts from a disposable checkout. If the host does not expose a verified registry root, it uses that agent's native installer/import UI. An archive copy remains pending—not `PASS`—until the agent reloads and the dependency check succeeds from its normal runtime. For hosts that explicitly expose a persistent registry, set `BRIEF3080_SKILL_INSTALL_ROOT`.
-
-Node.js installation without a known platform command, plus Feishu/Lark login and permission grants, remain separate because their undisclosed system or account effects cannot be covered safely by the bundle approval.
+</details>
 
 ## Development verification
 
-Run the complete offline test suite, including a simulated source-to-Feishu state-machine run and failure cases for image substitution, review isolation, and source integrity:
+Run the complete offline suite:
 
 ```bash
 bash skills/3080-brief/scripts/self_test.sh
 ```
 
-Check the single-owner capability ledger and runtime context budget directly:
+Useful focused checks:
 
 ```bash
 python3 skills/3080-brief/scripts/check_context_budget.py skills/3080-brief --json
-```
-
-Check the current Feishu dependency state without installing anything:
-
-```bash
 python3 skills/3080-brief/scripts/check_dependencies.py --mode feishu --json
 ```
 
-Before claiming a specific host is Feishu verified, run the real-agent cases in `evals/agent_acceptance.json` and validate their actual delivery receipts:
-
-```bash
-python3 skills/3080-brief/scripts/validate_agent_acceptance.py acceptance-result.json
-```
-
-## Repository layout
+Repository layout:
 
 ```text
 skills/3080-brief/   installable Agent Skill
+docs/examples/       source-linked worked examples
+docs/assets/         README and social-preview visuals
 .github/workflows/   offline CI
 ```
 
-User-facing project documentation stays at the repository root; runtime instructions stay inside the installable skill.
-
 ## Privacy and limitations
 
-- Never publish source document tokens, tenant identifiers, credentials, or real internal metrics in issues or examples.
-- Feishu installation approval is separate from Feishu authentication approval.
-- Independent reviewer and blind-reader claims are made only when those capabilities actually ran.
-- The repository does not include with-skill/without-skill benchmark claims.
+- Never publish source document tokens, tenant identifiers, credentials, or internal metrics in issues or examples.
+- Independent review and blind-reader claims are made only when those capabilities actually ran.
+- Source-linked examples reflect the product behavior and evidence available on their stated retrieval date.
+- This repository does not use with-skill/without-skill benchmark claims.
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). Please report security-sensitive findings through the private process in [SECURITY.md](SECURITY.md).
-
-## License
-
-[MIT](LICENSE)
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Licensed under [MIT](LICENSE).
