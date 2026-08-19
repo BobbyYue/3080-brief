@@ -57,9 +57,9 @@
     },
     {
       "id": "LANG-01",
-      "requirement": "Use source primary language unless the user explicitly names another output language.",
+      "requirement": "Verify primary language from the normalized source itself, then use it unless the user explicitly names another output language.",
       "owner": {"file": "config/3080-brief.json", "marker": "\"language_policy\""},
-      "enforced_by": ["scripts/preflight_check.py", "evals/fixtures/inventory-en-invalid-context-zh.md", "scripts/run_evals.py"]
+      "enforced_by": ["scripts/preflight_check.py", "evals/fixtures/inventory-en-falsely-declared-zh.md", "evals/fixtures/inventory-en-invalid-context-zh.md", "scripts/run_evals.py"]
     },
     {
       "id": "EVD-01",

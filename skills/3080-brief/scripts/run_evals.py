@@ -168,6 +168,15 @@ def main():
         str(FIXTURES / "valid-brief-en.md"),
         "--source-inventory", str(FIXTURES / "inventory-en-source.md"),
     )
+    false_source_language = run(
+        sys.executable,
+        str(SCRIPTS / "preflight_check.py"),
+        str(FIXTURES / "valid-brief.md"),
+        "--source-inventory", str(FIXTURES / "inventory-en-falsely-declared-zh.md"),
+        expect=1,
+    )
+    if "declared source language conflicts with normalized source content" not in false_source_language.stdout:
+        raise SystemExit("preflight trusted a false Chinese declaration for an English source snapshot")
     invalid_context = run(
         sys.executable,
         str(SCRIPTS / "preflight_check.py"),
@@ -237,6 +246,22 @@ def main():
             str(html_output),
             "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
         )
+        wrong_lang_output = tmp_path / "synthetic-brief-wrong-lang.html"
+        wrong_lang_output.write_text(
+            html_output.read_text(encoding="utf-8").replace('<html lang="zh-CN"', '<html lang="en"', 1),
+            encoding="utf-8",
+        )
+        wrong_html_language = run(
+            sys.executable,
+            str(SCRIPTS / "preflight_check.py"),
+            str(wrong_lang_output),
+            "--format", "html",
+            "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
+            "--source-inventory", str(inventory_zh),
+            expect=1,
+        )
+        if "HTML lang attribute conflicts with declared output language" not in wrong_html_language.stdout:
+            raise SystemExit("preflight did not reject an HTML language attribute that conflicts with the output")
         html_text = html_output.read_text(encoding="utf-8")
         for expected in ("@media print", "@media (max-width", "class=\"one-picture\"", "data-priority=\"P2\"", "data-theme=\"avocado-press\""):
             if expected not in html_text:

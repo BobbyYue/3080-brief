@@ -69,22 +69,92 @@ def canonical_language(value):
     return cleaned.split("-", 1)[0] if cleaned else ""
 
 
-def detect_primary_language(text):
-    visible = re.sub(r"```.*?```", " ", text, flags=re.S)
-    visible = re.sub(r"https?://\S+|<[^>]+>|\]\([^)]+\)", " ", visible)
-    cjk = len(re.findall(r"[\u3400-\u4dbf\u4e00-\u9fff]", visible))
-    latin = len(re.findall(r"[A-Za-z]", visible))
-    total = cjk + latin
-    if total < 120:
-        return ""
-    if cjk >= 60 and cjk / total >= 0.20:
-        return "zh"
-    if latin >= 180 and latin / total >= 0.75:
-        return "en"
+def language_script(value):
+    language = canonical_language(value)
+    families = {
+        "zh": "han",
+        "ja": "japanese",
+        "ko": "hangul",
+        "ru": "cyrillic",
+        "uk": "cyrillic",
+        "bg": "cyrillic",
+        "mk": "cyrillic",
+        "ar": "arabic",
+        "fa": "arabic",
+        "ur": "arabic",
+        "he": "hebrew",
+        "yi": "hebrew",
+        "hi": "devanagari",
+        "mr": "devanagari",
+        "ne": "devanagari",
+        "el": "greek",
+        "th": "thai",
+    }
+    if language in families:
+        return families[language]
+    if language in {
+        "en", "fr", "de", "es", "pt", "it", "nl", "sv", "da", "no", "fi",
+        "pl", "cs", "sk", "hu", "ro", "tr", "id", "ms", "vi",
+    }:
+        return "latin"
     return ""
 
 
-def add_language_checks(text, inventory_text, config, errors):
+def detect_primary_script(text, policy=None):
+    policy = policy or {}
+    visible = re.sub(r"```.*?```", " ", text, flags=re.S)
+    visible = re.sub(r"`[^`]+`", " ", visible)
+    visible = re.sub(r"https?://\S+|<[^>]+>|\]\([^)]+\)", " ", visible)
+    counts = {
+        "han": len(re.findall(r"[\u3400-\u4dbf\u4e00-\u9fff]", visible)),
+        "kana": len(re.findall(r"[\u3040-\u30ff\u31f0-\u31ff]", visible)),
+        "hangul": len(re.findall(r"[\u1100-\u11ff\u3130-\u318f\uac00-\ud7af]", visible)),
+        "cyrillic": len(re.findall(r"[\u0400-\u052f]", visible)),
+        "arabic": len(re.findall(r"[\u0600-\u06ff\u0750-\u077f]", visible)),
+        "hebrew": len(re.findall(r"[\u0590-\u05ff]", visible)),
+        "devanagari": len(re.findall(r"[\u0900-\u097f]", visible)),
+        "greek": len(re.findall(r"[\u0370-\u03ff]", visible)),
+        "thai": len(re.findall(r"[\u0e00-\u0e7f]", visible)),
+        "latin": len(re.findall(r"[A-Za-z\u00c0-\u024f]", visible)),
+    }
+    total = sum(counts.values())
+    minimum = int(policy.get("source_language_minimum_script_characters", 60))
+    if total < minimum:
+        return ""
+
+    if counts["kana"] >= max(12, int(total * 0.03)):
+        return "japanese"
+    if counts["hangul"] >= max(20, int(total * 0.20)):
+        return "hangul"
+
+    ranked = {
+        "han": counts["han"],
+        "cyrillic": counts["cyrillic"],
+        "arabic": counts["arabic"],
+        "hebrew": counts["hebrew"],
+        "devanagari": counts["devanagari"],
+        "greek": counts["greek"],
+        "thai": counts["thai"],
+        "latin": counts["latin"],
+    }
+    script, count = max(ranked.items(), key=lambda item: item[1])
+    required_share = float(policy.get("source_language_dominant_script_share", 0.60))
+    if script == "han":
+        required_share = min(required_share, 0.35)
+    return script if count / total >= required_share else ""
+
+
+def normalized_source_path(inventory_text, inventory_path):
+    raw = inventory_value(inventory_text, "Normalized non-appendix snapshot path")
+    if not raw:
+        return None
+    code_path = re.search(r"`([^`]+)`", raw)
+    value = (code_path.group(1) if code_path else raw).strip().strip("'\"")
+    path = Path(value).expanduser()
+    return path if path.is_absolute() else inventory_path.parent / path
+
+
+def add_language_checks(text, inventory_text, inventory_path, raw_text, file_format, config, errors):
     policy = config.get("language_policy", {})
     source_raw = inventory_value(inventory_text, "Source language", "Language")
     output_raw = inventory_value(inventory_text, "Output language")
@@ -101,6 +171,8 @@ def add_language_checks(text, inventory_text, config, errors):
 
     source_language = canonical_language(source_raw)
     output_language = canonical_language(output_raw)
+    source_script = language_script(source_raw)
+    output_script = language_script(output_raw)
     source_basis = normalize(policy.get("default_output_basis", "source_primary_language"))
     override_basis = normalize(policy.get("allowed_override_basis", "explicit_user_request"))
     if basis and basis not in {source_basis, override_basis}:
@@ -113,9 +185,43 @@ def add_language_checks(text, inventory_text, config, errors):
     elif source_language and output_language and source_language != output_language:
         errors.append((1, "language change requires explicit_user_request basis", f"{source_raw} -> {output_raw}"))
 
-    detected = detect_primary_language(text)
-    if detected and output_language in {"en", "zh"} and detected != output_language:
-        errors.append((1, "draft language conflicts with declared output language", f"declared {output_raw}, detected {detected}"))
+    source_path = normalized_source_path(inventory_text, inventory_path)
+    if policy.get("source_snapshot_verification_required", True):
+        if source_path is None:
+            errors.append((1, "source inventory is missing normalized non-appendix snapshot path", ""))
+        elif not source_path.is_file():
+            errors.append((1, "normalized non-appendix source snapshot is unavailable", str(source_path)))
+        else:
+            source_text = source_path.read_text(encoding="utf-8")
+            detected_source_script = detect_primary_script(source_text, policy)
+            if not detected_source_script:
+                errors.append((1, "source primary language is ambiguous; clarify before drafting", str(source_path)))
+            elif not source_script:
+                errors.append((1, "declared source language cannot be deterministically verified", source_raw))
+            elif detected_source_script != source_script:
+                errors.append(
+                    (
+                        1,
+                        "declared source language conflicts with normalized source content",
+                        f"declared {source_raw} ({source_script}), detected script {detected_source_script}",
+                    )
+                )
+
+    detected_output_script = detect_primary_script(text, policy)
+    if detected_output_script and output_script and detected_output_script != output_script:
+        errors.append(
+            (
+                1,
+                "draft language conflicts with declared output language",
+                f"declared {output_raw} ({output_script}), detected script {detected_output_script}",
+            )
+        )
+    if file_format == "html":
+        html_language = re.search(r"<html\b[^>]*\blang=[\"']([^\"']+)[\"']", raw_text, re.I)
+        if not html_language:
+            errors.append((1, "HTML output is missing a lang attribute", ""))
+        elif output_language and canonical_language(html_language.group(1)) != output_language:
+            errors.append((1, "HTML lang attribute conflicts with declared output language", f"{html_language.group(1)} -> {output_raw}"))
 
 
 def markdown_table_info(lines):
@@ -528,7 +634,15 @@ def main():
     else:
         check_markdown(text, config, errors, warnings)
     language_text = html_visible_text(text) if file_format == "html" else text
-    add_language_checks(language_text, inventory_text, config, errors)
+    add_language_checks(
+        language_text,
+        inventory_text,
+        Path(args.source_inventory),
+        text,
+        file_format,
+        config,
+        errors,
+    )
     add_semantic_encoding_checks(text, file_format, config, ledger, errors, warnings)
 
     if re.search(r"(?im)^#{1,6}\s*(附录|Appendix)\b|<h[1-6]>\s*(附录|Appendix)\b", text):

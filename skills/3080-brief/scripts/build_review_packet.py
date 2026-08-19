@@ -25,7 +25,7 @@ ROLE_GATES = {
         "Every P0/P1 conclusion, metric, risk, and action is traceable to the supplied source outline or excerpt.",
         "Every non-appendix P0/P1 protected relation preserves subject, predicate, object, scope, time/status, qualifiers, and numeric attachment.",
         "Each output assertion stays at or below its evidence ceiling; source facts, author claims, self-reports, inferences, and unknowns remain distinct.",
-        "The declared output language matches the source primary language unless the packet contains an explicit user instruction requesting another language.",
+        "The declared source primary language is independently verified from the normalized non-appendix source, and output matches it unless the packet contains the user's exact explicit instruction requesting another language.",
         "The claim ledger covers valuable non-appendix source information and excludes appendix material.",
         "No causal, quantitative, or recommendation claim is stronger than its evidence.",
         "Thin or blocked material is shortened or clarified rather than padded with external facts, invented specificity, experience, or emotion.",

@@ -5,8 +5,8 @@
 - Title: Synthetic English Source
 - Link / path: https://example.invalid/source-en
 - Type: Web article
-- Source language: en
-- Output language: en
+- Source language: zh-CN
+- Output language: zh-CN
 - Output-language basis: source_primary_language
 - Explicit language override evidence: none
 - Normalized non-appendix snapshot path: `source-data-analysis.md`

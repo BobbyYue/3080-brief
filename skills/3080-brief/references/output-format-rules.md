@@ -26,10 +26,10 @@ If the user asks for a different output format, honor the explicit request when 
 Use this precedence independently from document-format routing:
 
 1. An explicit user instruction naming the desired output language.
-2. Otherwise, the source document's primary language.
+2. Otherwise, the primary language verified from the normalized non-appendix source snapshot.
 3. If source-language primacy is ambiguous, ask before drafting.
 
-Do not infer output language from the language used to ask the question, prior conversation language, interface locale, user locale, or a phrase such as “Chinese context.” Record source language, output language, routing basis, and exact override evidence in `source_inventory.md`. Apply the resulting language to the title, TLDR, key-question table, body, and visual; retain source-native proper nouns and necessary terms when helpful.
+Do not infer output language from the language used to ask the question, prior conversation language, interface locale, user locale, or a phrase such as “Chinese context.” Keep the normalized source in its original language, record its path plus the source/output language, routing basis, and exact override evidence in `source_inventory.md`, and fail preflight when the declaration conflicts with the source content. Apply the resulting language to the title, TLDR, key-question table, body, visual, and format metadata such as HTML `lang`; retain source-native proper nouns and necessary terms when helpful.
 
 ## First-Screen Contract By Output Type
 

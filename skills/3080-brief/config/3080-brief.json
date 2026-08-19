@@ -1,8 +1,12 @@
 {
-  "version": 10,
+  "version": 11,
   "language_policy": {
     "default_output_basis": "source_primary_language",
     "allowed_override_basis": "explicit_user_request",
+    "source_snapshot_verification_required": true,
+    "source_language_minimum_script_characters": 60,
+    "source_language_dominant_script_share": 0.6,
+    "ambiguous_source_action": "clarify",
     "forbidden_inference_bases": [
       "conversation_language",
       "request_language",

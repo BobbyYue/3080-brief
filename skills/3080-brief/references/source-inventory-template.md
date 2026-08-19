@@ -7,7 +7,7 @@ Keep this compact. It is the source-of-truth working object for drafting, visual
 - Title:
 - Link / path:
 - Type:
-- Source language: use a primary BCP 47 tag such as `en`, `zh-CN`, or `ja`
+- Source language: inspect the normalized non-appendix source itself and use a primary BCP 47 tag such as `en`, `zh-CN`, or `ja`
 - Output language: match source language unless the user explicitly requests another language
 - Output-language basis: `source_primary_language` or `explicit_user_request`
 - Explicit language override evidence: `none` or the user's exact instruction requesting another output language
@@ -16,7 +16,7 @@ Keep this compact. It is the source-of-truth working object for drafting, visual
 - Material sufficiency: `sufficient / proceed`, `thin / shorten`, `thin / clarify`, or `blocked / clarify`
 - Sufficiency rationale:
 
-The language used in the user's message, conversation, interface, locale, or surrounding context is not an output-language override. If source language is unclear or multiple languages compete for primacy, ask before drafting.
+The normalized snapshot must preserve the source language; do not translate it. Preflight verifies the declared source language against this file before it checks the output. The language used in the user's message, conversation, interface, locale, or surrounding context is not an output-language override. If source language is unclear or multiple languages compete for primacy, ask before drafting.
 
 ## Scope
 

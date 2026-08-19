@@ -128,6 +128,8 @@ def validate_document(document, visual_spec=None, config=None):
         errors.append("body cannot contain consecutive tables without explanatory prose")
 
     if visual_spec:
+        if str(document.get("language", "")).casefold() != str(visual_spec.get("language", "")).casefold():
+            errors.append("brief language must match visual spec language")
         known_blocks = {block.get("id") for block in visual_spec.get("blocks", [])}
         body_visuals = []
         for section in document.get("body") or []:

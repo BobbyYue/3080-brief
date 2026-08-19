@@ -65,7 +65,7 @@ Determine source type, output type, constraints, and explicit language override.
 
 ### 2. Ground The Source
 
-Fetch with the matching tool and inventory embedded sheets, Bases, images, charts, and whiteboards. Inspect objects carrying P0/P1 evidence or chartable data. Build `source_inventory.md`, normalized `source_non_appendix.md`, and `claim_ledger.json`; record language basis/override, excluded appendix, sufficiency, stable claim/source identity, evidence ceiling/assertion, chartable data, risks/actions, mappings, and omissions. For each non-appendix P0/P1 claim, protect a subject-predicate-object relation plus scope, time/status, qualifiers, and exact value attachment. Reopen the source only to resolve a missing fact or dispute.
+Fetch with the matching tool; inventory embedded sheets, Bases, images, charts, and boards, inspecting P0/P1/chartable evidence. Build `source_inventory.md`, untranslated `source_non_appendix.md`, and `claim_ledger.json`. Use snapshot language, never request/conversation language. Record language basis/override, excluded appendix, sufficiency, stable claim/source identity, evidence ceiling/assertion, chartable data, risks/actions, mappings, and omissions. For each non-appendix P0/P1 claim, protect a subject-predicate-object relation plus scope, time/status, qualifiers, and exact value attachment. Reopen the source only to resolve a missing fact or dispute.
 
 ### 3. Clarify Blocking Ambiguity
 
