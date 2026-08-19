@@ -18,6 +18,18 @@ QUANTITATIVE_TYPES = {
     "threshold", "range", "distribution", "heatmap", "funnel",
 }
 ALLOWED_TARGETS = {"feishu", "html", "word", "markdown", "portable"}
+ALLOWED_COMPOSITIONS = {"vertical_story", "stage_story", "anchor_support", "comparison_grid"}
+
+
+def has_visible_payload(block):
+    block_type = block.get("type")
+    if block_type == "annotation":
+        return bool(str(block.get("note", "")).strip() or block.get("items") or block.get("cells"))
+    if block_type in {"matrix", "heatmap"}:
+        return bool(block.get("rows") and block.get("columns") and block.get("cells"))
+    if block_type == "threshold":
+        return all(isinstance(block.get(field), (int, float)) for field in ("minimum", "maximum", "threshold", "value"))
+    return bool(block.get("items"))
 
 
 def main():
@@ -37,7 +49,7 @@ def main():
         if not all(mapping.get(key) for key in ("body", "svg", "svg_tint")):
             errors.append(f"semantic color {direction} is missing body/svg/svg_tint mapping")
 
-    for field in ("title", "language", "style", "style_rationale", "reading_path", "blocks"):
+    for field in ("title", "language", "style", "style_rationale", "reading_path", "composition", "blocks"):
         if not spec.get(field):
             errors.append(f"visual spec missing required field: {field}")
     if spec.get("style_rationale") and len(str(spec["style_rationale"]).strip()) < 8:
@@ -50,6 +62,9 @@ def main():
             errors.append("HTML visual spec requires conclusion-bearing alt_text")
         if float(spec.get("coverage_percent", 0)) < float(config.get("coverage", {}).get("minimum_percent", 80)):
             errors.append("HTML one-picture visual must declare configured minimum coverage_percent")
+    composition = spec.get("composition")
+    if composition and composition not in ALLOWED_COMPOSITIONS:
+        errors.append(f"visual spec uses unsupported composition: {composition}")
     expected_language = ledger.get("source", {}).get("output_language")
     if expected_language and str(spec.get("language", "")).casefold() != str(expected_language).casefold():
         errors.append(f"visual spec language {spec.get('language', '<missing>')} does not match output language {expected_language}")
@@ -74,6 +89,8 @@ def main():
         block_type = block.get("type")
         if block_type and block_type not in ALLOWED_TYPES:
             errors.append(f"{block_id}: unsupported visual type {block_type}")
+        if block_type in ALLOWED_TYPES and not has_visible_payload(block):
+            errors.append(f"{block_id}: block has a title but no visible payload")
         if block.get("visual_role"):
             explicit_roles.append((block_id, block.get("visual_role")))
         block_target = block.get("render_target", render_target)
@@ -90,6 +107,16 @@ def main():
             for index, item in enumerate(block.get("items") or [], 1):
                 if not isinstance(item.get("x"), (int, float)) or not isinstance(item.get("y"), (int, float)):
                     errors.append(f"{block_id}: scatter item {index} requires source-backed numeric x and y")
+        if block_type in {"flow", "sequence", "timeline", "hierarchy", "network"}:
+            for index, item in enumerate(block.get("items") or [], 1):
+                if not str(item.get("label", "")).strip():
+                    errors.append(f"{block_id}: sequence item {index} requires a visible label")
+        if block_type == "annotation":
+            for index, item in enumerate(block.get("items") or [], 1):
+                if not str(item.get("label", "")).strip():
+                    errors.append(f"{block_id}: annotation item {index} requires a visible label")
+                if item.get("display") in (None, "") and item.get("value") is None:
+                    errors.append(f"{block_id}: annotation item {index} requires a visible value")
         if block_type == "heatmap":
             rows = set(block.get("rows") or [])
             columns = set(block.get("columns") or [])
@@ -120,6 +147,14 @@ def main():
 
     if explicit_roles and sum(role == "anchor" for _, role in explicit_roles) != 1:
         errors.append("visual spec with explicit roles must contain exactly one anchor block")
+    if render_target == "html" and sum(role == "anchor" for _, role in explicit_roles) != 1:
+        errors.append("HTML one-picture visual must declare exactly one anchor block")
+    if render_target == "html" and len(explicit_roles) != len(spec.get("blocks", [])):
+        errors.append("every HTML one-picture block must declare anchor, support, or caveat role")
+
+    stage_count = sum(block.get("type") in {"flow", "sequence", "timeline"} for block in spec.get("blocks", []))
+    if composition == "stage_story" and not 3 <= stage_count <= 4:
+        errors.append("stage_story composition requires 3-4 flow, sequence, or timeline stage blocks")
 
     for claim_id, claim in claims.items():
         if claim.get("appendix", False) or claim.get("board_status") == "omitted":

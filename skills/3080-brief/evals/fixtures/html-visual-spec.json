@@ -4,6 +4,7 @@
   "style": "Avocado Press",
   "style_rationale": "数据型简报需要克制的双色系统和清晰的证据层级。",
   "reading_path": "先比较证据强度，再检查扩大范围的门槛",
+  "composition": "vertical_story",
   "render_target": "html",
   "alt_text": "分层结果为68，高于汇总结果42，但仍低于75的扩大范围阈值，因此应先验证稳定性。",
   "coverage_percent": 100,

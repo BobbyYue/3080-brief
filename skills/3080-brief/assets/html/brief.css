@@ -90,7 +90,7 @@ figcaption {
   line-height: 1.4;
 }
 
-.visual-canvas { width: 100%; overflow: hidden; }
+.visual-canvas { width: 100%; overflow: auto; }
 .visual-canvas svg { display: block; width: 100%; height: auto; }
 
 .figure-note {
@@ -178,6 +178,7 @@ footer {
   h1 { font-size: 1.55rem; }
   h2 { margin-top: 36px; font-size: 1.28rem; }
   .opening-unit, .one-picture, .body-figure { padding: 14px; }
+  .one-picture .visual-canvas svg { width: 720px; max-width: none; }
   th, td { min-width: 145px; padding: 12px; }
 }
 

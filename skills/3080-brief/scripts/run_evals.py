@@ -2,6 +2,7 @@
 import json
 import os
 import py_compile
+import re
 import subprocess
 import sys
 import tempfile
@@ -240,6 +241,52 @@ def main():
         for expected in ("@media print", "@media (max-width", "class=\"one-picture\"", "data-priority=\"P2\"", "data-theme=\"avocado-press\""):
             if expected not in html_text:
                 raise SystemExit(f"HTML renderer omitted required output feature: {expected}")
+
+        stage_story_output = tmp_path / "stage-story-brief.html"
+        stage_story_spec = FIXTURES / "html-stage-story-visual-spec.json"
+        run(
+            sys.executable,
+            str(SCRIPTS / "build_html_brief.py"),
+            str(FIXTURES / "html-brief.json"),
+            str(stage_story_spec),
+            str(stage_story_output),
+        )
+        run(
+            sys.executable,
+            str(SCRIPTS / "validate_html_output.py"),
+            str(stage_story_output),
+            "--visual-spec", str(stage_story_spec),
+        )
+        stage_story_text = stage_story_output.read_text(encoding="utf-8")
+        for expected in ('data-composition="stage_story"', "14 分钟", "4 分钟", "8 倍", "首次分析中位数"):
+            if expected not in stage_story_text:
+                raise SystemExit(f"stage-story renderer omitted visible payload: {expected}")
+        view_box = re.search(r'<svg[^>]+viewBox="0 0 ([0-9.]+) ([0-9.]+)"', stage_story_text)
+        if not view_box or float(view_box.group(1)) / float(view_box.group(2)) < 1.2:
+            raise SystemExit("stage-story renderer produced a sparse vertical one-picture canvas")
+
+        empty_annotation_spec = json.loads((FIXTURES / "html-visual-spec.json").read_text(encoding="utf-8"))
+        empty_annotation_spec["blocks"].append({
+            "id": "B03",
+            "type": "annotation",
+            "visual_role": "support",
+            "relationship": "annotation",
+            "render_target": "html",
+            "interaction": "none",
+            "claim_ids": ["C04"],
+            "title": "Title-only block",
+        })
+        empty_annotation_path = tmp_path / "empty-annotation.json"
+        empty_annotation_path.write_text(json.dumps(empty_annotation_spec, ensure_ascii=False), encoding="utf-8")
+        empty_annotation = run(
+            sys.executable,
+            str(SCRIPTS / "validate_visual_spec.py"),
+            str(empty_annotation_path),
+            str(FIXTURES / "claim-ledger.json"),
+            expect=1,
+        )
+        if "no visible payload" not in empty_annotation.stdout:
+            raise SystemExit("visual-spec gate did not reject a title-only annotation block")
         for theme in themes:
             themed_spec = json.loads((FIXTURES / "html-visual-spec.json").read_text(encoding="utf-8"))
             themed_spec["style"] = theme["name"]

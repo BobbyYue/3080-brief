@@ -19,6 +19,15 @@ Choose a pattern by the reader question and information relationship, not by vis
 
 Before rendering, write `visual_spec.json` using `visual-spec.schema.json`. Every block must name the claim IDs it carries. Choose the information relationship first, then select one content-fit theme through `theme-selection.md`; the relationship determines the encoding and the theme determines non-semantic treatment. Use `scripts/render_visual_spec.py` for supported native-shape quantitative blocks, then compose or refine the complete board without remapping semantic colors.
 
+Also choose one explicit composition shared by every target format:
+
+- `stage_story`: 3-4 connected process stages with a compact context band and evidence/risk/action strip;
+- `anchor_support`: one dominant quantitative or decision anchor with 1-2 supporting blocks;
+- `comparison_grid`: peer segments or alternatives whose positions are directly comparable;
+- `vertical_story`: a genuinely top-to-bottom argument where vertical order carries meaning.
+
+Composition is not a theme. Do not choose `vertical_story` merely because it is easy to stack blocks. A sequence split into repeated full-width stage panels creates empty space and weakens the overall relationship.
+
 Select the information relationship once and keep it stable across formats. Feishu renders editable native shapes; Word and Markdown use auditable static SVG; HTML uses the bundled offline renderer described in `html-visualization.md`. A renderer may change layout mechanics but cannot change claim meaning, metric scope, semantic color, or evidence strength.
 
 The decision order is:
@@ -28,6 +37,7 @@ The decision order is:
 3. Which visual encoding makes that relationship easier to see than prose?
 4. What must stay on the board to preserve source value?
 5. What should move to the body or generated appendix / 后置补充区?
+6. Which compact composition preserves that relationship in both Feishu and HTML?
 
 ## Visual Pattern Selection Tree
 

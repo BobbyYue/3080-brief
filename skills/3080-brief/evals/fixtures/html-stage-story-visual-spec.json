@@ -1,0 +1,89 @@
+{
+  "title": "值班响应从人工排查变为四阶段自动化闭环",
+  "language": "zh-CN",
+  "style": "Avocado Press",
+  "style_rationale": "流程型技术简报需要克制的状态色和清晰的阶段连接。",
+  "reading_path": "先看旧模式，再沿四个阶段理解自动化闭环，最后核对关键结果和边界",
+  "composition": "stage_story",
+  "render_target": "html",
+  "alt_text": "事件响应由人工排查转为检测、分诊、修复、验证四阶段自动化流程；首次分析中位数14分钟，最快4分钟，季度代码产出提升8倍。",
+  "coverage_percent": 83.3,
+  "source_note": "Synthetic stage-story regression fixture.",
+  "blocks": [
+    {
+      "id": "B00",
+      "type": "annotation",
+      "visual_role": "anchor",
+      "relationship": "change",
+      "claim_ids": ["C01"],
+      "title": "旧模式依赖人工被动排查",
+      "note": "晚间收到异常后，值班人员需要暂停当前工作并手动定位问题。"
+    },
+    {
+      "id": "B01",
+      "type": "flow",
+      "visual_role": "support",
+      "relationship": "flow",
+      "claim_ids": ["C01"],
+      "title": "1. 检测：过滤与分级",
+      "items": [
+        {"label": "规则建议与调优", "semantic_direction": "favorable"},
+        {"label": "判断是否需要通知", "semantic_direction": "favorable"},
+        {"label": "减少无效告警", "semantic_direction": "favorable"}
+      ]
+    },
+    {
+      "id": "B02",
+      "type": "flow",
+      "visual_role": "support",
+      "relationship": "flow",
+      "claim_ids": ["C02"],
+      "title": "2. 分诊：并行调查",
+      "items": [
+        {"label": "编排多个执行单元", "semantic_direction": "favorable"},
+        {"label": "并行调查六类数据源", "semantic_direction": "favorable"},
+        {"label": "形成证据化结论", "semantic_direction": "favorable"}
+      ]
+    },
+    {
+      "id": "B03",
+      "type": "flow",
+      "visual_role": "support",
+      "relationship": "flow",
+      "claim_ids": ["C02"],
+      "title": "3. 修复：从诊断到变更",
+      "items": [
+        {"label": "生成修复 PR", "semantic_direction": "favorable"},
+        {"label": "灰度发布", "semantic_direction": "favorable"},
+        {"label": "基础设施操作", "semantic_direction": "favorable"}
+      ]
+    },
+    {
+      "id": "B04",
+      "type": "flow",
+      "visual_role": "support",
+      "relationship": "flow",
+      "claim_ids": ["C04"],
+      "title": "4. 验证：闭环与交接",
+      "items": [
+        {"label": "验证修复结果", "semantic_direction": "favorable"},
+        {"label": "沉淀复盘经验", "semantic_direction": "favorable"},
+        {"label": "生成交接摘要", "semantic_direction": "favorable"}
+      ]
+    },
+    {
+      "id": "B05",
+      "type": "annotation",
+      "visual_role": "caveat",
+      "relationship": "annotation",
+      "claim_ids": ["C02", "C03"],
+      "title": "速度和产出改善，但仍需人工判断",
+      "items": [
+        {"label": "首次分析中位数", "value": 14, "display": "14 分钟", "semantic_direction": "favorable"},
+        {"label": "最快首次分析", "value": 4, "display": "4 分钟", "semantic_direction": "favorable"},
+        {"label": "季度代码产出", "value": 8, "display": "8 倍", "semantic_direction": "favorable"}
+      ],
+      "note": "边界：结果为来源方自报，复杂事件仍需人工复核和决策。"
+    }
+  ]
+}

@@ -35,6 +35,9 @@ class BriefParser(HTMLParser):
         self.one_picture_count = 0
         self.one_picture_attrs = {}
         self.one_picture_svg = 0
+        self.one_picture_svg_depth = 0
+        self.one_picture_svg_attrs = {}
+        self.one_picture_svg_text = []
         self.one_picture_caption_parts = []
         self.in_caption = False
         self.key_table_depth = 0
@@ -86,6 +89,8 @@ class BriefParser(HTMLParser):
             self.figures[-1]["svg"] += 1
             if self.one_picture_depth:
                 self.one_picture_svg += 1
+                self.one_picture_svg_depth = len(self.stack)
+                self.one_picture_svg_attrs = attrs
         if tag == "table" and "key-questions" in class_set:
             self.key_table_count += 1
             self.key_table_depth = len(self.stack)
@@ -116,6 +121,8 @@ class BriefParser(HTMLParser):
                 self.opening_depth = 0
             if self.one_picture_depth == depth:
                 self.one_picture_depth = 0
+            if self.one_picture_svg_depth == depth:
+                self.one_picture_svg_depth = 0
             if self.key_table_depth == depth:
                 self.key_table_depth = 0
             self.stack.pop()
@@ -127,6 +134,8 @@ class BriefParser(HTMLParser):
             self.heading_parts.append(data)
         if self.in_caption and self.one_picture_depth:
             self.one_picture_caption_parts.append(data)
+        if self.one_picture_svg_depth:
+            self.one_picture_svg_text.append(data)
         if self.current_header_parts is not None:
             self.current_header_parts.append(data)
 
@@ -156,6 +165,8 @@ def main():
         errors.append("TLDR must contain exactly one one-picture figure")
     if parsed.one_picture_svg != 1:
         errors.append("one-picture figure must contain exactly one inline SVG")
+    if config.get("html_render", {}).get("visual_spec_required_for_validation") and not spec:
+        errors.append("HTML one-picture validation requires the approved visual spec")
     if not parsed.one_picture_attrs.get("aria-label"):
         errors.append("one-picture figure requires conclusion-bearing aria-label")
     caption = " ".join("".join(parsed.one_picture_caption_parts).split())
@@ -168,6 +179,22 @@ def main():
         coverage = 0
     if coverage < minimum_coverage:
         errors.append(f"one-picture figure must declare at least {minimum_coverage:g}% coverage")
+    view_box = parsed.one_picture_svg_attrs.get("viewbox", "").replace(",", " ").split()
+    try:
+        svg_width = float(view_box[2])
+        svg_height = float(view_box[3])
+        ratio = svg_width / svg_height
+    except (IndexError, TypeError, ValueError, ZeroDivisionError):
+        ratio = 0
+        errors.append("one-picture SVG requires a valid non-zero viewBox")
+    html_render = config.get("html_render", {})
+    minimum_ratio = float(html_render.get("one_picture_min_width_height_ratio", 1.2))
+    maximum_ratio = float(html_render.get("one_picture_max_width_height_ratio", 2.0))
+    if ratio and not minimum_ratio <= ratio <= maximum_ratio:
+        errors.append(
+            f"one-picture SVG width/height ratio {ratio:.2f} is outside the compact HTML range "
+            f"{minimum_ratio:.2f}-{maximum_ratio:.2f}"
+        )
     if parsed.key_table_count != 1:
         errors.append("TLDR must contain exactly one key-question table")
     question_rows = max(0, parsed.key_table_rows - 1)
@@ -211,6 +238,24 @@ def main():
         expected_coverage = float(spec.get("coverage_percent", 0))
         if expected_coverage and coverage != expected_coverage:
             errors.append("rendered one-picture coverage differs from visual spec")
+        rendered_svg_text = " ".join("".join(parsed.one_picture_svg_text).split())
+        rendered_svg_compact = re.sub(r"\s+", "", rendered_svg_text)
+        rendered_composition = parsed.one_picture_svg_attrs.get("data-composition", "")
+        if rendered_composition != spec.get("composition", ""):
+            errors.append("rendered one-picture composition differs from visual spec")
+        for block in spec.get("blocks", []):
+            required_tokens = [block.get("title", "")]
+            if block.get("note"):
+                required_tokens.append(block["note"])
+            for item in block.get("items") or []:
+                required_tokens.append(item.get("label", ""))
+                display = item.get("display", item.get("value", ""))
+                if display not in (None, ""):
+                    required_tokens.append(str(display))
+            for token in required_tokens:
+                normalized = " ".join(str(token).split())
+                if normalized and re.sub(r"\s+", "", normalized) not in rendered_svg_compact:
+                    errors.append(f"one-picture SVG omitted visible visual-spec payload: {normalized}")
 
     print("FAIL" if errors else "PASS")
     for error in errors:

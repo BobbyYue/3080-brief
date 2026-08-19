@@ -108,7 +108,7 @@
     },
     {
       "id": "VIS-01",
-      "requirement": "The visual reaches weighted coverage, preserves P0 claims, and uses quantitative encoding when required.",
+      "requirement": "The visual reaches weighted coverage, preserves P0 claims, uses quantitative encoding when required, and visibly renders every declared block payload in one deliberate cross-format composition.",
       "owner": {"file": "config/3080-brief.json", "marker": "\"coverage\""},
       "enforced_by": ["scripts/check_coverage.py", "scripts/validate_visual_spec.py", "references/visual-spec.schema.json", "scripts/run_evals.py"]
     },
@@ -138,7 +138,7 @@
     },
     {
       "id": "HTML-01",
-      "requirement": "HTML output is independently implemented, offline, source-grounded, interaction-independent for critical content, responsive, printable, and driven by the approved visual spec.",
+      "requirement": "HTML output is independently implemented, offline, source-grounded, interaction-independent for critical content, responsive, printable, and driven by the same approved visual spec, composition, theme, and visible payload as Feishu.",
       "owner": {"file": "references/html-visualization.md", "marker": "## Ownership Boundary"},
       "enforced_by": [
         "references/brief.schema.json",

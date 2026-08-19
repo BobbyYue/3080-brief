@@ -4,6 +4,7 @@
   "style": "Avocado Press",
   "style_rationale": "数据与技术比较需要克制、清晰且适合定量证据的视觉处理。",
   "reading_path": "先比较证据，再检查决策边界",
+  "composition": "vertical_story",
   "blocks": [
     {
       "id": "B01",

@@ -79,11 +79,11 @@ Only after this first draft exists, run the source-faithful expression pass. Rec
 
 ### 5. Design The Visual
 
-Create `visual_spec.json` before drawing and map each block to claim IDs. The visual must reach configured value-weighted coverage and cannot silently omit P0 claims. Select the relationship once, then render the same approved spec for the target format. If the source has at least three quantitative claims, or the main conclusion depends on quantitative evidence, include a real quantitative encoding beyond boxes and prose; if data cannot be extracted reliably, show a truthful boundary instead of false precision.
+Create `visual_spec.json` before drawing and map each block to claim IDs. Select one explicit relationship and compact composition, then render the same approved spec for every target format. The visual must reach configured value-weighted coverage, cannot silently omit P0 claims, and every block must visibly render its payload rather than only its title. If the source has at least three quantitative claims, or the main conclusion depends on quantitative evidence, include a real quantitative encoding beyond boxes and prose; if data cannot be extracted reliably, show a truthful boundary instead of false precision.
 
 Select exactly one allowed `beautiful-feishu-whiteboard` theme for every visual output from document type, reader, tone, relationship, and density; never use a fixed or silent default. Record the choice and content-based rationale in `visual_spec.json`. Feishu reads only that theme's `design.md`; HTML uses the bundled adaptation of the same theme. Keep semantic colors consistent with the body. Use editable native-shape SVG and validate it. Bitmap generation is inspiration only: never send internal source text, identifiers, links, names, or real metrics, and never let bitmap output carry critical evidence or conclusions.
 
-For HTML, render only the approved brief and visual spec with their selected theme. Use one dominant source relationship, judgment titles, visible value labels, metric scope, alt text, responsive/print CSS, and the canonical semantic colors. Critical conclusions, evidence, risks, and actions must remain visible without hover, animation, filtering, or expansion; collapsed blocks are P2 only.
+For HTML, inspect the standalone SVG, then embed the same approved spec, composition, and theme. Use one dominant relationship, judgment titles, visible values, metric scope, alt text, responsive/print CSS, and canonical semantic colors. Reject title-only blocks, omitted values, repeated full-width stage walls, and sparse vertical canvases. Critical conclusions, evidence, risks, and actions must remain visible without interaction; collapsed blocks are P2 only.
 
 ### 6. Preflight And Audit
 

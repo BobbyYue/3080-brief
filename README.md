@@ -69,7 +69,7 @@ cover the core logic in one picture, and answer the reader's key questions in on
 - **Core-value extraction:** separates decision-critical conclusions, evidence, risks, and actions from background noise.
 - **Clear storyline:** turns fragmented or technical source logic into a coherent argument.
 - **Concrete expression:** value-bearing titles, headings, and leads state the actual object and source-supported result instead of relying on method labels or generic claims.
-- **Visual reasoning:** uses one auditable picture to reveal the dominant relationships rather than decorate the page.
+- **Visual reasoning:** Feishu and HTML share one explicit composition, visible evidence values, theme, and semantic colors, so the one-picture argument does not drift between formats.
 - **Reliable delivery:** preserves the source, traces important claims, matches the output format, and verifies the final artifact.
 
 ## Installation options

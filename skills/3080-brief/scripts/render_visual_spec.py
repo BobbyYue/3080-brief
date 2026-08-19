@@ -32,6 +32,31 @@ def text(x, y, value, size=20, weight=500, fill="#172033", anchor="start"):
     return f'<text x="{x}" y="{y}" font-size="{size}" font-weight="{weight}" fill="{fill}" text-anchor="{anchor}">{esc(value)}</text>'
 
 
+def wrapped_text(x, y, value, size=20, weight=500, fill="#172033", max_chars=18, line_height=None):
+    """Render short SVG labels as separate native text nodes."""
+    content = str(value or "").strip()
+    if not content:
+        return []
+    line_height = line_height or round(size * 1.35)
+    if len(content) <= max_chars:
+        lines = [content]
+    elif " " in content:
+        lines = []
+        current = ""
+        for word in content.split():
+            candidate = f"{current} {word}".strip()
+            if current and len(candidate) > max_chars:
+                lines.append(current)
+                current = word
+            else:
+                current = candidate
+        if current:
+            lines.append(current)
+    else:
+        lines = [content[index:index + max_chars] for index in range(0, len(content), max_chars)]
+    return [text(x, y + index * line_height, line, size, weight, fill) for index, line in enumerate(lines)]
+
+
 def semantic_color(node, block, palette, tint=False, fallback=None):
     direction = node.get("semantic_direction") or block.get("semantic_direction")
     mapping = palette["semantic"].get(direction, {})
@@ -40,8 +65,11 @@ def semantic_color(node, block, palette, tint=False, fallback=None):
 
 
 def block_height(block):
+    block_type = block.get("type")
+    if block_type == "annotation":
+        return 220 if block.get("items") else 150
     compact = {"bar", "diverging_bar", "stacked_bar", "dot", "slope", "threshold", "range", "funnel", "timeline", "flow", "sequence"}
-    return 270 if block.get("type") in compact else 320
+    return 250 if block_type in compact else 300
 
 
 def render_bar(block, x, y, width, palette):
@@ -363,10 +391,101 @@ def render_sequence(block, x, y, width, palette):
         mark_color = semantic_color(item, block, palette)
         output.append(f'<circle cx="{cx:.1f}" cy="{cy}" r="25" fill="{mark_color}"/>')
         output.append(text(cx, cy + 7, index + 1, 17, 700, "#FFFFFF", "middle"))
-        output.append(text(cx, cy + 62, item.get("label", ""), 16, 700, palette["text"], "middle"))
+        label = item.get("label", "")
+        if len(str(label)) <= 18:
+            output.append(text(cx, cy + 62, label, 16, 700, palette["text"], "middle"))
+        else:
+            # Long labels are left-aligned in two or more native text rows to avoid
+            # shrinking the entire visual or clipping at panel edges.
+            output.extend(wrapped_text(cx - gap * 0.36, cy + 58, label, 15, 700, palette["text"], max_chars=max(10, int(gap / 12))))
         if index < len(items) - 1:
             output.append(f'<line x1="{cx + 30:.1f}" y1="{cy}" x2="{cx + gap - 30:.1f}" y2="{cy}" stroke="{mark_color}" stroke-width="3" marker-end="url(#arrow)"/>')
     return output
+
+
+def render_annotation(block, x, y, width, palette):
+    output = [text(x, y, block.get("title", ""), 24, 700, palette["text"])]
+    items = block.get("items", [])[:4]
+    if items:
+        gap = 16
+        card_width = (width - gap * (len(items) - 1)) / len(items)
+        for index, item in enumerate(items):
+            card_x = x + index * (card_width + gap)
+            tint = semantic_color(item, block, palette, tint=True, fallback=palette["background_alt"])
+            mark_color = semantic_color(item, block, palette, fallback=palette["text"])
+            output.append(f'<rect x="{card_x:.1f}" y="{y + 42}" width="{card_width:.1f}" height="105" rx="6" fill="{tint}" stroke="{palette["rule"]}"/>')
+            display = item.get("display", item.get("value", ""))
+            output.append(text(card_x + 18, y + 82, display, 28, 800, mark_color))
+            output.extend(wrapped_text(card_x + 18, y + 116, item.get("label", ""), 16, 600, palette["text"], max_chars=max(10, int(card_width / 12))))
+        if block.get("note"):
+            output.extend(wrapped_text(x, y + 180, block["note"], 16, 500, palette["text"], max_chars=max(24, int(width / 13))))
+    elif block.get("note"):
+        output.extend(wrapped_text(x, y + 48, block["note"], 18, 500, palette["text"], max_chars=max(24, int(width / 13))))
+    return output
+
+
+def panel_fill(block, palette):
+    role = block.get("visual_role", "support")
+    if role == "anchor":
+        return palette["surface"]
+    direction = "warning" if role == "caveat" else "unknown"
+    return palette["semantic"].get(direction, {}).get("svg_tint", palette["surface"])
+
+
+def render_panel(block, x, y, width, height, palette, renderers):
+    output = [f'<rect x="{x}" y="{y}" width="{width}" height="{height}" rx="8" fill="{panel_fill(block, palette)}" stroke="{palette["rule"]}"/>']
+    renderer = renderers.get(block.get("type"), render_annotation)
+    output.extend(renderer(block, x + 28, y + 40, width - 56, palette))
+    return output
+
+
+def render_stage_story(blocks, start_y, palette, renderers):
+    """Render a multi-stage process as one compact story, not stacked full-width cards."""
+    stage_types = {"flow", "sequence", "timeline"}
+    stages = [block for block in blocks if block.get("type") in stage_types]
+    stage_ids = {id(block) for block in stages}
+    context = [block for block in blocks if id(block) not in stage_ids and block.get("visual_role") == "anchor"]
+    remainder = [block for block in blocks if id(block) not in stage_ids and id(block) not in {id(item) for item in context}]
+    output = []
+    y = start_y
+    if context:
+        block = context[0]
+        height = block_height(block)
+        output.extend(render_panel(block, 60, y, 1480, height, palette, renderers))
+        y += height + 28
+
+    count = max(1, len(stages))
+    gap = 24
+    card_width = (1480 - gap * (count - 1)) / count
+    card_height = 350
+    center_y = y + card_height / 2
+    for index in range(count - 1):
+        x1 = 60 + (index + 1) * card_width + index * gap
+        x2 = x1 + gap - 5
+        output.append(f'<line x1="{x1:.1f}" y1="{center_y:.1f}" x2="{x2:.1f}" y2="{center_y:.1f}" stroke="{palette["primary"]}" stroke-width="3" marker-end="url(#arrow)"/>')
+    for stage_index, block in enumerate(stages):
+        card_x = 60 + stage_index * (card_width + gap)
+        output.append(f'<rect x="{card_x:.1f}" y="{y}" width="{card_width:.1f}" height="{card_height}" rx="8" fill="{panel_fill(block, palette)}" stroke="{palette["rule"]}"/>')
+        output.extend(wrapped_text(card_x + 22, y + 40, block.get("title", ""), 22, 750, palette["text"], max_chars=max(10, int(card_width / 13))))
+        items = block.get("items", [])[:4]
+        item_gap = min(78, 245 / max(1, len(items)))
+        for item_index, item in enumerate(items):
+            item_y = y + 105 + item_index * item_gap
+            mark_color = semantic_color(item, block, palette)
+            output.append(f'<circle cx="{card_x + 35:.1f}" cy="{item_y:.1f}" r="15" fill="{mark_color}"/>')
+            output.append(text(card_x + 35, item_y + 6, item_index + 1, 16, 800, "#FFFFFF", "middle"))
+            if item_index < len(items) - 1:
+                output.append(f'<line x1="{card_x + 35:.1f}" y1="{item_y + 18:.1f}" x2="{card_x + 35:.1f}" y2="{item_y + item_gap - 18:.1f}" stroke="{mark_color}" stroke-width="2"/>')
+            output.extend(wrapped_text(card_x + 62, item_y + 5, item.get("label", ""), 17, 650, palette["text"], max_chars=max(10, int((card_width - 82) / 11))))
+        if block.get("note"):
+            output.extend(wrapped_text(card_x + 22, y + card_height - 35, block["note"], 14, 500, palette["text"], max_chars=max(10, int(card_width / 11))))
+    y += card_height + 28
+
+    for block in remainder:
+        height = block_height(block)
+        output.extend(render_panel(block, 60, y, 1480, height, palette, renderers))
+        y += height + 28
+    return output, y
 
 
 def render_svg(spec, config, include_header=True):
@@ -376,13 +495,17 @@ def render_svg(spec, config, include_header=True):
     palette["semantic"] = config.get("semantic_colors", {})
     blocks = spec.get("blocks", [])
     width = 1600
-    heights = [block_height(block) for block in blocks]
     header_height = 170 if include_header else 55
-    content_height = header_height + sum(heights) + max(0, len(blocks) - 1) * 28 + 60
+    composition = spec.get("composition", "vertical_story")
+    stage_count = sum(block.get("type") in {"flow", "sequence", "timeline"} for block in blocks)
+    if composition == "stage_story" and 3 <= stage_count <= 4:
+        estimated_content_height = header_height + 350 + sum(block_height(block) + 28 for block in blocks if block.get("type") not in {"flow", "sequence", "timeline"}) + 60
+    else:
+        estimated_content_height = header_height + sum(block_height(block) for block in blocks) + max(0, len(blocks) - 1) * 28 + 60
     max_aspect = float(config.get("whiteboard_render", {}).get("max_viewbox_aspect_ratio", 1.7))
-    height = max(content_height, math.ceil(width / max_aspect)) if include_header else content_height
+    height = max(estimated_content_height, math.ceil(width / max_aspect))
     output = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-composition="{esc(composition)}">',
         '<defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0 0 L10 4 L0 8 z"/></marker></defs>',
         f'<rect x="0" y="0" width="{width}" height="{height}" fill="{palette["background"]}"/>',
     ]
@@ -411,21 +534,16 @@ def render_svg(spec, config, include_header=True):
         "sequence": render_sequence,
         "hierarchy": render_sequence,
         "network": render_sequence,
+        "annotation": render_annotation,
     }
-    for block, height_item in zip(blocks, heights):
-        role = block.get("visual_role", "support")
-        if role == "anchor":
-            output.append(f'<rect x="60" y="{y - 36}" width="1480" height="{height_item}" rx="8" fill="{palette["surface"]}"/>')
-        else:
-            tint = palette["semantic"].get("warning" if role == "caveat" else "unknown", {}).get("svg_tint", palette["surface"])
-            output.append(f'<rect x="60" y="{y - 36}" width="1480" height="{height_item}" rx="8" fill="{tint}" stroke="{palette["rule"]}"/>')
-        renderer = renderers.get(block.get("type"))
-        if renderer:
-            output.extend(renderer(block, 95, y, 1410, palette))
-        else:
-            output.append(text(95, y, block.get("title", ""), 24, 700, palette["text"]))
-            output.append(text(95, y + 48, block.get("note", ""), 18, 500, palette["text"]))
-        y += height_item + 28
+    if composition == "stage_story" and 3 <= stage_count <= 4:
+        story_output, y = render_stage_story(blocks, y - 36, palette, renderers)
+        output.extend(story_output)
+    else:
+        for block in blocks:
+            height_item = block_height(block)
+            output.extend(render_panel(block, 60, y - 36, 1480, height_item, palette, renderers))
+            y += height_item + 28
     output.append("</svg>")
     return "\n".join(output) + "\n"
 

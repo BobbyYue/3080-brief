@@ -2,13 +2,17 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "3080 Brief Visual Spec",
   "type": "object",
-  "required": ["title", "language", "style", "style_rationale", "reading_path", "blocks"],
+  "required": ["title", "language", "style", "style_rationale", "reading_path", "composition", "blocks"],
   "properties": {
     "title": {"type": "string"},
     "language": {"type": "string", "minLength": 2},
     "style": {"type": "string", "minLength": 1, "description": "One allowed Beautiful Feishu Whiteboard theme from the bundled registry."},
     "style_rationale": {"type": "string", "minLength": 8, "description": "A content-based selection reason kept in audit artifacts, not printed in the document."},
     "reading_path": {"type": "string"},
+    "composition": {
+      "enum": ["vertical_story", "stage_story", "anchor_support", "comparison_grid"],
+      "description": "The deliberate information layout shared by Feishu and HTML. This is not a theme or palette choice."
+    },
     "render_target": {
       "enum": ["feishu", "html", "word", "markdown", "portable"]
     },

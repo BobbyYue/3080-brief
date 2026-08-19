@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-19
+
+### Fixed
+
+- Aligned HTML one-picture output with the Feishu visual contract: both now require one explicit composition, render every declared label/value, reject title-only or overly tall sparse visuals, and use a compact stage-story layout for multi-stage processes.
+
 ## [0.2.0] - 2026-08-18
 
 ### Added

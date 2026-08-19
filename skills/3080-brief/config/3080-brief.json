@@ -75,6 +75,9 @@
     "collapsed_priority_allowed": ["P2"],
     "minimum_body_font_px": 14,
     "minimum_caption_font_px": 12,
+    "one_picture_min_width_height_ratio": 1.2,
+    "one_picture_max_width_height_ratio": 2.0,
+    "visual_spec_required_for_validation": true,
     "required_viewports_px": [390, 1440],
     "print_validation_required": true
   },

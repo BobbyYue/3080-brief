@@ -34,10 +34,12 @@ Start from `claim_ledger.json` and `visual_spec.json`:
 4. Run `scripts/validate_visual_spec.py visual_spec.json claim_ledger.json` to verify claim-to-block mapping and style eligibility.
 5. Use `scripts/render_visual_spec.py` for supported bar, dot, threshold, matrix, timeline, or flow anchors when useful.
 6. Compose the complete board with one dominant reading path.
+7. Render the same approved composition for HTML; do not substitute a separate card stack or omit annotation payloads.
 
 Rules:
 
 - One visual block supports one claim; titles state the conclusion.
+- Every block must contain visible payload beyond its title. Quantitative annotation items must render their label and value, not remain audit-only metadata.
 - Let position, size, line, grouping, boundary, and color encode meaning.
 - Use repeated cards only for true peer items.
 - Put the strongest source-specific insight above expected or common-sense context.
@@ -115,6 +117,8 @@ If live preview is stale, query raw nodes to confirm the write, then export agai
 - [ ] Do directional claims use the same semantic meaning/color as the document body, with a redundant non-color cue?
 - [ ] Are long labels manually wrapped and text sizes readable?
 - [ ] Is the local render free of clipping, overlap, overflow, and cramped spacing?
+- [ ] Is the canvas compact enough for normal document width, without repeated large empty panels?
+- [ ] Does every title, label, note, and display value declared in the visual spec appear in the render?
 - [ ] Is the live Feishu preview also clean and current?
 - [ ] Is the chosen style allowed and appropriate for the content density and tone?
 - [ ] If image2 was used, is all final evidence rebuilt as editable native content?

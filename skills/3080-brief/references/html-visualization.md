@@ -44,6 +44,19 @@ The first visible section is `TLDR` and contains, in order:
 
 The one-picture figure uses one conclusion title, one dominant visual relationship, compact evidence annotations, and visible risk/action boundaries. It is not a dashboard or equal-weight card wall. Critical information must remain available without hover, animation, filtering, or expansion.
 
+## Feishu / HTML Visual Parity
+
+Feishu and HTML share the same approved `visual_spec.json`, selected theme, semantic colors, claim mappings, and deliberate `composition`. The output medium may change text wrapping or responsive behavior, but it must not change the visual argument or fall back to a separate HTML-only card layout.
+
+Before HTML generation:
+
+1. Select the relationship and composition using the Pattern Library; do not leave composition implicit.
+2. Render the standalone SVG with `scripts/render_visual_spec.py` and inspect it at normal document width.
+3. Reject title-only blocks, annotation blocks whose metric items are not visibly rendered, repeated full-width stage panels, and vertical canvases that make the first-screen visual feel sparse.
+4. Build the HTML from the same reviewed spec, then compare the embedded SVG against the standalone preview.
+
+For a process with 3-4 substantive stages, prefer `stage_story`: one compact context band, one connected stage row, and one evidence/risk/action strip. Do not render every stage as a separate full-width panel unless vertical order itself is the conclusion.
+
 ## Visual Selection
 
 Use `visual-pattern-library.md` and `theme-selection.md` before this file. Select exactly one allowed Beautiful Feishu Whiteboard theme and record it in `visual_spec.style` with a content-based `style_rationale`. The bundled renderer adapts that same theme to HTML page tokens; it must not silently choose a default, print the style name, or override semantic evidence colors.
@@ -114,3 +127,5 @@ Validate at desktop and mobile widths and in print:
 - interactive or navigational controls disappear in print without removing evidence.
 
 FAIL when no allowed content-fit theme was selected, HTML and the visual disagree on theme, chartable evidence is rendered primarily as prose/cards, the visual form does not match the source relationship, the figure title is merely a topic label, scope is lost, missing data is shown as zero, critical information is interaction-only, semantic colors conflict, or mobile/print output is clipped.
+
+Also FAIL when the SVG omits any title, label, or display value declared in the approved visual spec; a block has only a title and empty space; the final composition differs from the spec; or the one-picture canvas falls outside the configured compact width/height range.
