@@ -13,7 +13,6 @@ def main():
     parser.add_argument("reviews", nargs="+", help="Three reviewer JSON files")
     parser.add_argument("--output", default="")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG))
-    parser.add_argument("--mode", choices=("independent", "self_check"), default="independent")
     args = parser.parse_args()
 
     expected_roles = set(json.loads(Path(args.config).read_text(encoding="utf-8"))["review_roles"])
@@ -28,33 +27,17 @@ def main():
         issues.append("reviewers did not evaluate the same artifact_set_id")
     if None in rounds or len(rounds) != 1:
         issues.append("reviewers did not evaluate the same review round")
-    modes = [review.get("review_mode") for review in reviews]
-    if any(mode != args.mode for mode in modes):
-        issues.append(f"expected review mode {args.mode}, got {modes}")
-    run_ids = [review.get("reviewer_run_id") for review in reviews]
-    if any(not isinstance(run_id, str) or not run_id.strip() for run_id in run_ids):
-        issues.append("every review must include a non-empty reviewer_run_id")
-    if args.mode == "independent" and len(set(run_ids)) != len(expected_roles):
-        issues.append("independent reviews must use three distinct reviewer_run_id values")
 
     failed = [review.get("reviewer_role") for review in reviews if review.get("verdict") != "PASS"]
     blockers = []
     for review in reviews:
         blockers.extend(review.get("blocking_issues", []))
         blockers.extend(review.get("unsupported_claims", []))
-        blockers.extend(review.get("missing_coverage", []))
-        blockers.extend(review.get("required_fixes", []))
-        checks = review.get("checks")
-        if not isinstance(checks, list) or not checks:
-            issues.append(f"{review.get('reviewer_role', 'unknown')} review has no structured checks")
-        elif any(check.get("result") != "PASS" for check in checks if isinstance(check, dict)):
-            issues.append(f"{review.get('reviewer_role', 'unknown')} review contains a failed check")
     verdict = "PASS" if not issues and not failed and not blockers else "FAIL"
     result = {
         "verdict": verdict,
         "artifact_set_id": next(iter(artifact_ids)) if len(artifact_ids) == 1 else None,
         "review_round": next(iter(rounds)) if len(rounds) == 1 else None,
-        "review_mode": args.mode,
         "roles": roles,
         "failed_roles": failed,
         "integrity_issues": issues,

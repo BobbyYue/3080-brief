@@ -1,21 +1,16 @@
 {
   "title": "分层证据与决策边界",
   "language": "zh-CN",
-  "style": "evaluation-only restrained palette",
+  "style": "Avocado Press",
+  "style_rationale": "数据与技术比较需要克制、清晰且适合定量证据的视觉处理。",
   "reading_path": "先比较证据，再检查决策边界",
-  "palette": {
-    "primary": "#0055A4",
-    "accent": "#DCF4A2",
-    "risk": "#C94B4B",
-    "background": "#FFFFFF",
-    "text": "#172033"
-  },
   "blocks": [
     {
       "id": "B01",
       "type": "bar",
       "claim_ids": ["C01", "C02"],
       "title": "分层比较揭示有效差异",
+      "metric_scope": {"metric": "synthetic score", "unit": "points", "period": "evaluation fixture"},
       "items": [
         {"label": "汇总", "value": 42, "display": "42", "semantic_direction": "neutral"},
         {"label": "分层", "value": 68, "display": "68", "semantic_direction": "favorable"}
@@ -26,6 +21,7 @@
       "type": "threshold",
       "claim_ids": ["C03", "C04"],
       "title": "通过验证阈值后再扩大范围",
+      "metric_scope": {"metric": "synthetic score", "unit": "points", "period": "evaluation fixture"},
       "minimum": 0,
       "maximum": 100,
       "threshold": 75,

@@ -289,6 +289,22 @@ def semantic_claims(ledger):
 def add_semantic_encoding_checks(text, file_format, config, ledger, errors, warnings):
     claims = semantic_claims(ledger)
     semantic_colors = config.get("semantic_colors", {})
+    if file_format == "html":
+        body_match = re.search(r"<body\b[^>]*>(.*?)</body>", text, re.I | re.S)
+        body = body_match.group(1) if body_match else text
+        visible = re.sub(r"<[^>]+>", " ", body)
+        for claim in claims:
+            direction = claim["semantic_direction"]
+            if direction not in semantic_colors:
+                errors.append((1, "unknown semantic direction in claim ledger", direction))
+                continue
+            for value in claim.get("display_values", []):
+                if value not in visible:
+                    continue
+                pattern = rf'<span\b[^>]*class="[^"]*semantic-{re.escape(direction)}[^"]*"[^>]*>[^<]*{re.escape(value)}[^<]*</span>'
+                if not re.search(pattern, body, re.I | re.S):
+                    errors.append((1, "directional HTML value is missing or conflicts with semantic color", f"{value} -> {direction}"))
+        return
     if file_format != "xml":
         for claim in claims:
             for value in claim.get("display_values", []):
@@ -389,6 +405,41 @@ def check_xml(text, config, errors, warnings):
                 if display_width(element_text(cell)) > 120:
                     warnings.append((1, f"XML table cell {cell_index} may be cramped"))
 
+    body_start = next((index for index, node in enumerate(content_nodes[1:], 1) if node.tag == "h1"), len(content_nodes))
+    body_nodes = content_nodes[body_start:]
+    body_callouts = [node for node in body_nodes if node.tag == "callout"]
+    maximum_callouts = int(config.get("feishu_render", {}).get("max_body_callouts", 1))
+    if len(body_callouts) > maximum_callouts:
+        errors.append((1, "Feishu body uses too many callouts", f"{len(body_callouts)} > {maximum_callouts}"))
+    meaningful_body_tags = [node.tag for node in body_nodes if node.tag not in {"h1", "h2", "h3", "hr"}]
+    if meaningful_body_tags and set(meaningful_body_tags) <= {"table", "callout"}:
+        errors.append((1, "Feishu body cannot consist only of tables and callouts", ""))
+    for index, node in enumerate(body_nodes):
+        if node.tag == "table":
+            if node.find("colgroup") is None:
+                warnings.append((1, "Feishu body table should declare column widths"))
+            cells = node.findall(".//th") + node.findall(".//td")
+            if any(cell.attrib.get("vertical-align") != "top" for cell in cells):
+                warnings.append((1, "Feishu body table cells should use top alignment"))
+        if node.tag == "whiteboard" and config.get("feishu_render", {}).get("figure_caption_required", True):
+            following = body_nodes[index + 1] if index + 1 < len(body_nodes) else None
+            if following is None or following.tag != "blockquote" or not element_text(following):
+                errors.append((1, "Feishu body figure requires a compact explanatory caption", ""))
+
+    current_section = []
+    for node in body_nodes + [ET.Element("h1")]:
+        if node.tag == "h1":
+            dense_index = next((index for index, item in enumerate(current_section) if item.tag in {"table", "whiteboard"}), None)
+            prose_index = next((index for index, item in enumerate(current_section) if item.tag == "p" and element_text(item)), None)
+            if dense_index is not None and (prose_index is None or prose_index > dense_index):
+                errors.append((1, "Feishu section must explain its judgment before the first table or figure", ""))
+            current_section = []
+        else:
+            current_section.append(node)
+    for first, second in zip(meaningful_body_tags, meaningful_body_tags[1:]):
+        if first == second == "table":
+            errors.append((1, "Feishu body cannot contain consecutive tables without explanatory prose", ""))
+
     forbidden = {normalize(item) for item in config["forbidden_headings"]}
     fragments = [normalize(item) for item in config.get("forbidden_heading_fragments", [])]
     for node in content_nodes:
@@ -398,39 +449,62 @@ def check_xml(text, config, errors, warnings):
                 errors.append((1, "forbidden or audience-labeled heading", heading))
 
 
-def add_output_type_checks(text, file_format, output_type, errors):
-    if output_type != "feishu":
-        return
-    if file_format != "xml":
-        errors.append((1, "Feishu output must be preflighted as native Feishu XML", "ordinary Markdown images are not editable whiteboards"))
-        return
-    nodes, parse_error = xml_children(text)
-    if parse_error or not nodes:
-        return
-    whiteboards = [node for node in nodes if node.tag == "whiteboard"]
-    if len(whiteboards) != 1:
-        errors.append((1, "Feishu output must contain exactly one native whiteboard block", str(len(whiteboards))))
-        return
-    whiteboard = whiteboards[0]
-    if normalize(whiteboard.attrib.get("type", "")) != "svg":
-        errors.append((1, "Feishu whiteboard must use type=svg", whiteboard.attrib.get("type", "<missing>")))
-    local_tags = {str(node.tag).split("}")[-1].casefold() for node in whiteboard.iter()}
-    if "svg" not in local_tags:
-        errors.append((1, "Feishu whiteboard block does not contain editable SVG content", ""))
-    if not local_tags.intersection({"rect", "text", "path", "line", "polyline", "polygon", "circle", "ellipse"}):
-        errors.append((1, "Feishu whiteboard has no native editable shape content", ""))
-    if any(node.tag in {"img", "image"} for node in nodes):
-        errors.append((1, "Feishu TLDR cannot substitute an image/media block for the required whiteboard", ""))
+def html_visible_text(value):
+    value = re.sub(r"<(script|style)\b[^>]*>.*?</\1>", " ", value, flags=re.I | re.S)
+    return " ".join(re.sub(r"<[^>]+>", " ", value).split())
+
+
+def check_html(text, config, errors, warnings):
+    title_match = re.search(r"<title\b[^>]*>(.*?)</title>", text, re.I | re.S)
+    title = html_visible_text(title_match.group(1)) if title_match else ""
+    if not normalize(title).startswith("3080 brief"):
+        errors.append((1, "HTML title must start with 3080 Brief", title))
+    headings = [
+        (match.group(1).casefold(), html_visible_text(match.group(2)))
+        for match in re.finditer(r"<h([1-6])\b[^>]*>(.*?)</h\1>", text, re.I | re.S)
+    ]
+    if not headings or headings[0] != ("1", "TLDR"):
+        errors.append((1, "first HTML heading must be H1 TLDR", headings[0][1] if headings else ""))
+    forbidden = {normalize(item) for item in config["forbidden_headings"]}
+    fragments = [normalize(item) for item in config.get("forbidden_heading_fragments", [])]
+    for _, heading in headings[1:]:
+        if is_forbidden_heading(heading, forbidden, fragments):
+            errors.append((1, "forbidden or audience-labeled heading", heading))
+
+    opening = re.findall(r'<div\b[^>]*class="[^"]*opening-unit[^"]*"[^>]*>(.*?)</div>', text, re.I | re.S)
+    if len(opening) != 1:
+        errors.append((1, "HTML TLDR must contain exactly one opening unit", str(len(opening))))
+    else:
+        lines = [html_visible_text(value) for value in re.findall(r"<p\b[^>]*>(.*?)</p>", opening[0], re.I | re.S)]
+        add_opening_unit_errors(lines, 1, config, errors)
+    pictures = re.findall(r'<figure\b[^>]*class="[^"]*one-picture[^"]*"[^>]*>', text, re.I)
+    if len(pictures) != 1:
+        errors.append((1, "HTML TLDR must contain exactly one one-picture figure", str(len(pictures))))
+    tables = re.findall(r'<table\b[^>]*class="[^"]*key-questions[^"]*"[^>]*>(.*?)</table>', text, re.I | re.S)
+    if len(tables) != 1:
+        errors.append((1, "HTML TLDR must contain exactly one key-question table", str(len(tables))))
+    else:
+        headers = [normalize(html_visible_text(value)) for value in re.findall(r"<th\b[^>]*>(.*?)</th>", tables[0], re.I | re.S)]
+        expected = [
+            [normalize(value) for value in config["tldr"]["default_table_headers"]],
+            [normalize(value) for value in config["tldr"]["english_table_headers"]],
+        ]
+        if headers not in expected:
+            errors.append((1, "unexpected HTML TLDR table headers", " / ".join(headers)))
+        row_count = max(0, len(re.findall(r"<tr\b", tables[0], re.I)) - 1)
+        if not config["tldr"]["questions_min"] <= row_count <= config["tldr"]["questions_max"]:
+            errors.append((1, "HTML TLDR table question-row count is outside configured range", str(row_count)))
+    if len(re.findall(r'class="[^"]*source-citation[^"]*"', text, re.I)) != 1:
+        errors.append((1, "HTML TLDR requires one compact source citation", ""))
 
 
 def main():
     parser = argparse.ArgumentParser(description="Structured preflight checks for 3080-brief drafts.")
-    parser.add_argument("draft", help="Draft Markdown or Feishu XML file")
-    parser.add_argument("--format", choices=["auto", "markdown", "xml"], default="auto")
+    parser.add_argument("draft", help="Draft Markdown, Feishu XML, or HTML file")
+    parser.add_argument("--format", choices=["auto", "markdown", "xml", "html"], default="auto")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG))
     parser.add_argument("--claim-ledger", default="", help="Optional claim ledger for deterministic semantic-color checks")
     parser.add_argument("--source-inventory", required=True, help="Source inventory containing the language decision record")
-    parser.add_argument("--output-type", choices=["auto", "feishu", "docx", "markdown"], default="auto")
     args = parser.parse_args()
 
     path = Path(args.draft)
@@ -443,13 +517,18 @@ def main():
     add_pattern_errors(text, config, errors)
     file_format = args.format
     if file_format == "auto":
-        file_format = "xml" if re.search(r"<(title|h1|callout|whiteboard|table)\b", text) else "markdown"
+        if re.search(r"<!doctype\s+html|<html\b", text, re.I):
+            file_format = "html"
+        else:
+            file_format = "xml" if re.search(r"<(title|h1|callout|whiteboard|table)\b", text) else "markdown"
     if file_format == "xml":
         check_xml(text, config, errors, warnings)
+    elif file_format == "html":
+        check_html(text, config, errors, warnings)
     else:
         check_markdown(text, config, errors, warnings)
-    add_output_type_checks(text, file_format, args.output_type, errors)
-    add_language_checks(text, inventory_text, config, errors)
+    language_text = html_visible_text(text) if file_format == "html" else text
+    add_language_checks(language_text, inventory_text, config, errors)
     add_semantic_encoding_checks(text, file_format, config, ledger, errors, warnings)
 
     if re.search(r"(?im)^#{1,6}\s*(附录|Appendix)\b|<h[1-6]>\s*(附录|Appendix)\b", text):

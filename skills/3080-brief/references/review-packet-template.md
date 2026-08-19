@@ -1,6 +1,6 @@
 # Review Packet Contract
 
-Use `scripts/run_3080.py prepare-review` to build three packets from the recorded generated review draft. Do not manually reuse one generic packet for all roles.
+Use `scripts/build_review_packet.py --role all` to build three independent packets from one artifact set. Do not manually reuse one generic packet for all roles.
 
 ## Shared Integrity
 
@@ -24,10 +24,10 @@ Provide `visual_spec.json`, value-weighted coverage result, local/live whiteboar
 
 ## Output And Aggregation
 
-Each reviewer returns JSON with its role key, review mode, unique reviewer execution ID, artifact-set ID, round, PASS/FAIL checks, blockers, unsupported claims, missing coverage, and required fixes. Aggregate only after all three results arrive:
+Each reviewer returns JSON with its role key, artifact-set ID, round, PASS/FAIL checks, blockers, unsupported claims, missing coverage, and required fixes. Aggregate only after all three results arrive:
 
 ```bash
-scripts/aggregate_reviews.py reader.json source.json visual.json --mode independent --output review_result.json
+scripts/aggregate_reviews.py reader.json source.json visual.json --output review_result.json
 ```
 
-Aggregation fails when roles are missing or duplicated, independent reviewer execution IDs are missing or repeated, artifact IDs differ, rounds differ, any check/verdict is `FAIL`, or any blocker, unsupported claim, missing coverage, or required fix remains.
+Aggregation fails when roles are missing or duplicated, artifact IDs differ, rounds differ, any verdict is `FAIL`, or a blocking/unsupported claim remains.

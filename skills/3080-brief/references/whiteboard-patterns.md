@@ -12,7 +12,7 @@ Use this reference only after selecting the visual relationship and pattern in [
 
 ## Style Selection
 
-Use `beautiful-feishu-whiteboard/CATALOG.md` to choose a candidate from source type, tone, reader scenario, information density, and explicit preference. In a 3080 run, choose automatically when the user did not express a style preference; do not pause only to ask for a vibe. Read:
+Use [theme-selection.md](theme-selection.md) and `beautiful-feishu-whiteboard/CATALOG.md` to choose a candidate from source type, tone, reader scenario, information density, and explicit preference. In a 3080 run, choose automatically when the user did not express a style preference; do not pause only to ask for a vibe. Record the content-based reason in `visual_spec.style_rationale`. Read:
 
 - `beautiful-feishu-whiteboard/RULES.md`;
 - `beautiful-feishu-whiteboard/CATALOG.md`;

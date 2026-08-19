@@ -17,7 +17,9 @@ This library synthesizes common practice from public visualization references su
 
 Choose a pattern by the reader question and information relationship, not by visual appearance.
 
-Before rendering, write `visual_spec.json` using `visual-spec.schema.json`. Every block must name the claim IDs it carries. Use `scripts/render_visual_spec.py` for supported native-shape quantitative blocks, then compose or refine the complete board with the selected Feishu palette.
+Before rendering, write `visual_spec.json` using `visual-spec.schema.json`. Every block must name the claim IDs it carries. Choose the information relationship first, then select one content-fit theme through `theme-selection.md`; the relationship determines the encoding and the theme determines non-semantic treatment. Use `scripts/render_visual_spec.py` for supported native-shape quantitative blocks, then compose or refine the complete board without remapping semantic colors.
+
+Select the information relationship once and keep it stable across formats. Feishu renders editable native shapes; Word and Markdown use auditable static SVG; HTML uses the bundled offline renderer described in `html-visualization.md`. A renderer may change layout mechanics but cannot change claim meaning, metric scope, semantic color, or evidence strength.
 
 The decision order is:
 
@@ -267,6 +269,8 @@ Use these outside the opening whiteboard to carry supporting details without ove
 | Show phased action | Stage list, mini roadmap, or timeline | next steps have order | unordered action bullets |
 | Explain metric scope | Short note, metric definition block, or table | denominator, period, filter matter | mixing incompatible numbers |
 | Show before/after details | Narrative delta, chart, or table | source has old/new values | vague "improved" wording |
+| Show compact trend context | Inline value plus sparkline or endpoint delta | a short series changes the interpretation | decorative mini charts without source data |
+| Explain a source screenshot | Annotated source image with visible callouts | the interface/state itself is evidence | generated or unlabeled screenshots as proof |
 | Separate reader layers | Executive / business / technical sections | different roles need different depth | one universal dense section |
 
 ## Advanced Cross-Dimension Analysis

@@ -1,0 +1,77 @@
+{
+  "title": "3080 Brief｜Synthetic Evaluation Brief",
+  "language": "zh-CN",
+  "context": {
+    "document_type": "data analysis",
+    "audience": "cross-functional",
+    "tone": "restrained and evidence-led",
+    "density": "balanced"
+  },
+  "source": {
+    "title": "Synthetic Evaluation Source",
+    "url": "https://example.invalid/source"
+  },
+  "opening": {
+    "lines": [
+      "分层分析揭示了汇总指标掩盖的高价值信号，但现有证据仍不足以直接扩大使用范围。",
+      [
+        {"text": "分层结果比汇总结果高 "},
+        {"text": "+26pp", "semantic_direction": "favorable", "strong": true},
+        {"text": "，说明差异值得继续验证。"}
+      ],
+      [
+        {"text": "当前结果 "},
+        {"text": "68", "semantic_direction": "warning", "strong": true},
+        {"text": " 仍未达到阈值，下一步先验证稳定性。"}
+      ]
+    ]
+  },
+  "questions": [
+    {"question": "本质变化是什么？", "conclusion": "从汇总判断改为分层判断。", "why": "两个分层对结果的解释作用不同。"},
+    {"question": "哪个发现最重要？", "conclusion": "高价值信号集中在特定分层。", "why": "汇总指标会掩盖这一差异。"},
+    {"question": "下一步做什么？", "conclusion": "先验证分层稳定性。", "why": "当前证据不足以直接扩大为通用规则。"}
+  ],
+  "body": [
+    {
+      "heading": "汇总指标掩盖了真正差异",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": [
+            {"text": "汇总结果为 "},
+            {"text": "42", "semantic_direction": "neutral", "strong": true},
+            {"text": "；分层后可以区分稳定信号和仍待验证的机制。"}
+          ]
+        },
+        {
+          "type": "figure",
+          "title": "分层结果保留了汇总指标掩盖的差异",
+          "alt_text": "分层结果为68，汇总结果为42，分层结果高26个百分点。",
+          "visual_block_ids": ["B01"],
+          "note": "该比较支持差异判断，不证明机制。"
+        }
+      ]
+    },
+    {
+      "heading": "分层验证决定能否扩大使用",
+      "blocks": [
+        {
+          "type": "callout",
+          "tone": "warning",
+          "title": "当前边界",
+          "text": [
+            {"text": "机制解释仍需验证；当前值 "},
+            {"text": "68", "semantic_direction": "warning", "strong": true},
+            {"text": " 不能被写成已证明的因果结论。"}
+          ]
+        },
+        {
+          "type": "details",
+          "priority": "P2",
+          "summary": "补充口径",
+          "paragraphs": ["本段只用于验证打印时保留P2补充信息。"]
+        }
+      ]
+    }
+  ]
+}

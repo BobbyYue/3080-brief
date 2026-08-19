@@ -1,12 +1,23 @@
 #!/usr/bin/env python3
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 
+from theme_registry import resolve_visual_theme
+
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
+ALLOWED_TYPES = {
+    "bar", "diverging_bar", "stacked_bar", "dot", "slope", "line", "scatter",
+    "threshold", "range", "distribution", "matrix", "heatmap", "funnel",
+    "timeline", "flow", "sequence", "hierarchy", "network", "annotation",
+}
+QUANTITATIVE_TYPES = {
+    "bar", "diverging_bar", "stacked_bar", "dot", "slope", "line", "scatter",
+    "threshold", "range", "distribution", "heatmap", "funnel",
+}
+ALLOWED_TARGETS = {"feishu", "html", "word", "markdown", "portable"}
 
 
 def main():
@@ -26,21 +37,32 @@ def main():
         if not all(mapping.get(key) for key in ("body", "svg", "svg_tint")):
             errors.append(f"semantic color {direction} is missing body/svg/svg_tint mapping")
 
-    for field in ("title", "language", "style", "reading_path", "blocks"):
+    for field in ("title", "language", "style", "style_rationale", "reading_path", "blocks"):
         if not spec.get(field):
             errors.append(f"visual spec missing required field: {field}")
+    if spec.get("style_rationale") and len(str(spec["style_rationale"]).strip()) < 8:
+        errors.append("visual spec style_rationale must explain content fit")
+    render_target = spec.get("render_target", "portable")
+    if render_target not in ALLOWED_TARGETS:
+        errors.append(f"visual spec uses unknown render_target: {render_target}")
+    if render_target == "html":
+        if not spec.get("alt_text"):
+            errors.append("HTML visual spec requires conclusion-bearing alt_text")
+        if float(spec.get("coverage_percent", 0)) < float(config.get("coverage", {}).get("minimum_percent", 80)):
+            errors.append("HTML one-picture visual must declare configured minimum coverage_percent")
     expected_language = ledger.get("source", {}).get("output_language")
     if expected_language and str(spec.get("language", "")).casefold() != str(expected_language).casefold():
         errors.append(f"visual spec language {spec.get('language', '<missing>')} does not match output language {expected_language}")
-    canonical_style = lambda value: re.sub(r"[^a-z0-9]+", "", str(value).casefold())
-    banned = {canonical_style(name) for name in config["banned_whiteboard_styles"]}
-    if canonical_style(spec.get("style", "")) in banned:
-        errors.append(f"visual spec uses banned style: {spec.get('style')}")
+    try:
+        resolve_visual_theme(spec, config)
+    except ValueError as exc:
+        errors.append(str(exc))
 
     claims = {claim.get("id"): claim for claim in ledger.get("claims", []) if claim.get("id")}
     block_ids = set()
     block_claims = {}
     block_semantics = {}
+    explicit_roles = []
     for block in spec.get("blocks", []):
         block_id = block.get("id")
         if not block_id or block_id in block_ids:
@@ -49,6 +71,35 @@ def main():
         block_ids.add(block_id)
         if not block.get("title") or not block.get("type"):
             errors.append(f"{block_id}: missing title or type")
+        block_type = block.get("type")
+        if block_type and block_type not in ALLOWED_TYPES:
+            errors.append(f"{block_id}: unsupported visual type {block_type}")
+        if block.get("visual_role"):
+            explicit_roles.append((block_id, block.get("visual_role")))
+        block_target = block.get("render_target", render_target)
+        if block_target not in ALLOWED_TARGETS:
+            errors.append(f"{block_id}: unknown render_target {block_target}")
+        interaction = block.get("interaction", "none")
+        if interaction != "none" and not block.get("fallback"):
+            errors.append(f"{block_id}: interactive visual requires a visible fallback")
+        if block_target == "html" and not (block.get("alt_text") or spec.get("alt_text")):
+            errors.append(f"{block_id}: HTML visual requires alt text")
+        if block_type in QUANTITATIVE_TYPES and not block.get("metric_scope"):
+            errors.append(f"{block_id}: quantitative visual requires metric_scope")
+        if block_type == "scatter":
+            for index, item in enumerate(block.get("items") or [], 1):
+                if not isinstance(item.get("x"), (int, float)) or not isinstance(item.get("y"), (int, float)):
+                    errors.append(f"{block_id}: scatter item {index} requires source-backed numeric x and y")
+        if block_type == "heatmap":
+            rows = set(block.get("rows") or [])
+            columns = set(block.get("columns") or [])
+            cells = block.get("cells") or []
+            seen_rows = {cell.get("row") for cell in cells}
+            seen_columns = {cell.get("column") for cell in cells}
+            for row in sorted(rows - seen_rows):
+                errors.append(f"{block_id}: heatmap row {row} has no source data")
+            for column in sorted(columns - seen_columns):
+                errors.append(f"{block_id}: heatmap column {column} has no source data")
         claim_ids = block.get("claim_ids") or []
         if not claim_ids:
             errors.append(f"{block_id}: claim_ids cannot be empty")
@@ -66,6 +117,9 @@ def main():
         for claim_id in claim_ids:
             if claim_id not in claims:
                 errors.append(f"{block_id}: unknown claim id {claim_id}")
+
+    if explicit_roles and sum(role == "anchor" for _, role in explicit_roles) != 1:
+        errors.append("visual spec with explicit roles must contain exactly one anchor block")
 
     for claim_id, claim in claims.items():
         if claim.get("appendix", False) or claim.get("board_status") == "omitted":

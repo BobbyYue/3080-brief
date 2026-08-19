@@ -68,6 +68,16 @@ Edit only after the source-grounded reader narrative is complete.
 
 Do not force first person, slang, rhetorical questions, emotion, deliberate mistakes, varied punctuation, or a personal voice. Do not rewrite a clear passage merely because it contains one listed pattern.
 
+## Make Value Expressions Concrete
+
+Apply this rule to a title, subtitle, section heading, opening judgment, or product/value line that tells the reader why something matters.
+
+1. Record `specific object -> source-backed action or change -> reader-observable result` before composing the visible line.
+2. Use the simplest natural expression of that relationship. In Chinese, a familiar verb-object or result-complement phrase such as `把复杂内容写明白` is often effective, but no language must follow a fixed grammatical template.
+3. Remove method labels, process narration, and generic benefit words only when they add no necessary meaning. A line that says only `更清晰`, `更高效`, `赋能`, or `不用猜` must be rewritten when the source provides the actual object and result.
+4. Keep a method name, technical term, scope, evidence boundary, or uncertainty when it is the decision object or needed to interpret the result. Do not invent an outcome, user effect, magnitude, or certainty to make the line sound concrete.
+5. Read the line without its body. It passes only when the target reader can identify the actual object and supported action, change, or result, and the wording sounds natural rather than like a reusable slogan.
+
 ## Prevent False Positives
 
 Treat expression patterns as clusters, not banned words. A style warning is actionable only when multiple signals create real reader friction in context. Keep the original when a phrase:

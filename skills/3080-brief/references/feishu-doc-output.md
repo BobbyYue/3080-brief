@@ -30,14 +30,15 @@ Before creating/updating docs, read the relevant lark references:
 - Create a new doc unless the user explicitly asks to update an already generated summary doc.
 - Never edit the source doc.
 - Do not include source appendix / 附录 / Appendix content in the generated summary unless the user explicitly requests it.
-- Use XML by default.
+- Use XML by default. Build it from the reviewed `brief.json` and `visual_spec.json`; do not independently rewrite the content during XML assembly.
 - Include one `<title>`.
 - Put `<h1>TLDR</h1>` first by default, or a short source-language equivalent only when the user explicitly prefers localized wording.
 - Put `<callout>` immediately after that heading for the one-sentence summary; it must let readers get the source document's core value within 30 seconds.
 - Put `<whiteboard type="svg">...</whiteboard>` immediately after the first callout; it must cover at least 80% of value-weighted non-appendix claims in one visual.
-- Build `claim_ledger.json` and `visual_spec.json` first. Every board block must map to claim IDs; pass `scripts/run_3080.py preflight` before insertion.
+- Build `claim_ledger.json`, `brief.json`, and `visual_spec.json` first. Every board block must map to claim IDs; run `scripts/check_coverage.py`, `scripts/validate_visual_spec.py`, and `scripts/validate_brief.py` before rendering.
 - Put one compact key-question table immediately after the whiteboard. Use output-language headers (`问题 / 结论 / 为什么` for Chinese; `Question / Conclusion / Why` for English); make dense rows taller, split them, or move detail into the body.
 - Add the source link near the top as compact, low-emphasis citation metadata.
+- Select one content-fit theme through `theme-selection.md`. The main board, body figures, and any HTML counterpart use the same `visual_spec.style`; never print the theme name in the document.
 - Choose body-level prose, bullets, callouts, tables, charts, timelines, examples, or short stories when they improve comprehension beyond the opening whiteboard.
 - Use short judgment-style body headings that form a logical narrative path.
 - For decision-relevant directional values/statuses, read `semantic-color-system.md`, classify meaning in the claim ledger, and use `<span text-color="...">` for the compact value/label. Keep signs/arrows/wording as redundant cues.
@@ -52,7 +53,13 @@ Use visual expression in the document body when it helps readers understand fast
 
 - Pick the format from the relationship being explained; tables are optional, not preferred.
 - Start important body sections with short explanatory prose before dense structured objects.
+- When the body is long and contains multiple chartable quantitative relationships, include at least one source-grounded body figure instead of leaving all evidence as prose.
+- Reuse only the relevant `visual_spec` block IDs for a body figure; do not calculate a second version of the metric during rendering.
 - Use callouts, tables, charts, timelines, bullets, or examples only when they reduce reader effort.
+- Do not place consecutive body tables or let the body consist only of tables and callouts.
+- Keep callouts scarce: use no more than the configured body maximum, and reserve them for a real decision, risk, boundary, or action.
+- Give every body figure a judgment title and a compact caption explaining its conclusion, scope, or boundary.
+- Give dense tables explicit column widths and top-aligned cells. Widen columns or move long explanations into prose rather than compressing multi-line cells.
 - Preserve source value: if an important detail is omitted from the whiteboard, place it in the closest relevant body section with the simplest effective format.
 - Color only decision-bearing values or short status labels, never whole paragraphs. Verify the rendered color instead of trusting XML alone.
 
@@ -92,12 +99,20 @@ Use visual expression in the document body when it helps readers understand fast
 
 Generate body headings from the source narrative instead of using a fixed heading list.
 
-Validate through `scripts/run_3080.py preflight`; it binds the draft to the frozen source artifacts and runs the structure, language, evidence, expression, coverage, visual, and Feishu whiteboard checks.
+Build and validate the generated document with:
+
+```bash
+scripts/validate_brief.py brief.json visual_spec.json
+scripts/build_feishu_brief.py brief.json visual_spec.json output.xml
+scripts/preflight_check.py output.xml --format xml --source-inventory source_inventory.md --claim-ledger claim_ledger.json
+```
+
+Exact restrictions and the Language Gate live in config/preflight.
 
 ## Whiteboard Insert Workflow
 
-1. Build `claim_ledger.json` and `visual_spec.json`; render supported chart blocks with `scripts/render_visual_spec.py` when useful.
-2. Build or refine `diagram.svg` with the selected content-fit palette.
+1. Build `claim_ledger.json`, `brief.json`, and `visual_spec.json`; choose one content-fit theme and render supported chart blocks with `scripts/render_visual_spec.py`.
+2. Build or refine `diagram.svg` with the selected theme. Preserve configured semantic colors.
 3. Run:
    ```bash
    scripts/validate_whiteboard.sh diagram.svg output_dir
@@ -113,9 +128,6 @@ Validate through `scripts/run_3080.py preflight`; it binds the draft to the froz
    lark-cli whiteboard +query --whiteboard-token TOKEN --output_as image --output output/live_preview --overwrite --as user
    ```
 8. Inspect the live preview and preserve its hash in the reviewer artifact set.
-9. Save the raw generated-document fetch response and whiteboard query response, then run `scripts/run_3080.py record-output`. A normal image/media block cannot satisfy this checkpoint.
-
-After review, re-fetch the source and generated document and run `scripts/run_3080.py finalize`. Delivery requires the original whiteboard block ID in the live document, the recorded whiteboard token in the query response, a non-empty current preview, and an unchanged source hash.
 
 ## Updating Generated Docs
 

@@ -2,22 +2,19 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "3080 Brief Visual Spec",
   "type": "object",
-  "required": ["title", "language", "style", "reading_path", "blocks"],
+  "required": ["title", "language", "style", "style_rationale", "reading_path", "blocks"],
   "properties": {
     "title": {"type": "string"},
     "language": {"type": "string", "minLength": 2},
-    "style": {"type": "string"},
+    "style": {"type": "string", "minLength": 1, "description": "One allowed Beautiful Feishu Whiteboard theme from the bundled registry."},
+    "style_rationale": {"type": "string", "minLength": 8, "description": "A content-based selection reason kept in audit artifacts, not printed in the document."},
     "reading_path": {"type": "string"},
-    "palette": {
-      "type": "object",
-      "properties": {
-        "primary": {"type": "string"},
-        "accent": {"type": "string"},
-        "risk": {"type": "string"},
-        "background": {"type": "string"},
-        "text": {"type": "string"}
-      }
+    "render_target": {
+      "enum": ["feishu", "html", "word", "markdown", "portable"]
     },
+    "alt_text": {"type": "string"},
+    "coverage_percent": {"type": "number", "minimum": 0, "maximum": 100},
+    "source_note": {"type": "string"},
     "blocks": {
       "type": "array",
       "items": {
@@ -25,16 +22,67 @@
         "required": ["id", "type", "claim_ids", "title"],
         "properties": {
           "id": {"type": "string"},
-          "type": {"enum": ["bar", "dot", "threshold", "matrix", "timeline", "flow", "annotation"]},
+          "type": {
+            "enum": [
+              "bar", "diverging_bar", "stacked_bar", "dot", "slope", "line",
+              "scatter", "threshold", "range", "distribution", "matrix", "heatmap",
+              "funnel", "timeline", "flow", "sequence", "hierarchy", "network", "annotation"
+            ]
+          },
           "claim_ids": {"type": "array", "items": {"type": "string"}},
           "title": {"type": "string"},
+          "visual_role": {"enum": ["anchor", "support", "caveat"]},
+          "relationship": {
+            "enum": [
+              "change", "comparison", "trend", "distribution", "correlation", "threshold",
+              "composition", "flow", "hierarchy", "segmentation", "risk", "time", "annotation"
+            ]
+          },
+          "render_target": {
+            "enum": ["feishu", "html", "word", "markdown", "portable"]
+          },
+          "interaction": {"enum": ["none", "tooltip", "filter", "expand"]},
+          "alt_text": {"type": "string"},
+          "fallback": {"type": "string"},
+          "source_note": {"type": "string"},
+          "metric_scope": {
+            "type": "object",
+            "properties": {
+              "metric": {"type": "string"},
+              "unit": {"type": "string"},
+              "period": {"type": "string"},
+              "denominator": {"type": "string"},
+              "segment": {"type": "string"},
+              "filter": {"type": "string"}
+            }
+          },
+          "encoding": {
+            "type": "object",
+            "properties": {
+              "x": {"type": "string"},
+              "y": {"type": "string"},
+              "color": {"type": "string"},
+              "size": {"type": "string"},
+              "position": {"type": "string"}
+            }
+          },
           "semantic_direction": {"enum": ["favorable", "unfavorable", "warning", "neutral", "unknown"]},
           "items": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "semantic_direction": {"enum": ["favorable", "unfavorable", "warning", "neutral", "unknown"]}
+                "semantic_direction": {"enum": ["favorable", "unfavorable", "warning", "neutral", "unknown"]},
+                "label": {"type": "string"},
+                "series": {"type": "string"},
+                "display": {"type": ["string", "number"]},
+                "value": {"type": "number"},
+                "x": {"type": "number"},
+                "y": {"type": "number"},
+                "low": {"type": "number"},
+                "high": {"type": "number"},
+                "start": {"type": "number"},
+                "end": {"type": "number"}
               }
             }
           },
@@ -45,10 +93,15 @@
             "items": {
               "type": "object",
               "properties": {
-                "semantic_direction": {"enum": ["favorable", "unfavorable", "warning", "neutral", "unknown"]}
+                "semantic_direction": {"enum": ["favorable", "unfavorable", "warning", "neutral", "unknown"]},
+                "row": {"type": "string"},
+                "column": {"type": "string"},
+                "value": {"type": ["number", "string"]},
+                "label": {"type": "string"}
               }
             }
           },
+          "links": {"type": "array"},
           "minimum": {"type": "number"},
           "maximum": {"type": "number"},
           "threshold": {"type": "number"},

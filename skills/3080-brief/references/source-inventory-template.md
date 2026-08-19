@@ -6,8 +6,6 @@ Keep this compact. It is the source-of-truth working object for drafting, visual
 
 - Title:
 - Link / path:
-- Run directory containing `run_state.json`:
-- Raw source-before snapshot path:
 - Type:
 - Source language: use a primary BCP 47 tag such as `en`, `zh-CN`, or `ja`
 - Output language: match source language unless the user explicitly requests another language
@@ -25,7 +23,6 @@ The language used in the user's message, conversation, interface, locale, or sur
 - Included non-appendix sections:
 - Excluded appendix / 附录 / Appendix sections:
 - Normalized non-appendix snapshot path: `source_non_appendix.md`
-- Grounding freeze status: record only after `scripts/run_3080.py ground` passes
 - Embedded objects inspected:
 - Embedded objects not inspected and why:
 

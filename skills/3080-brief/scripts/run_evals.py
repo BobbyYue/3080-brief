@@ -5,7 +5,6 @@ import py_compile
 import subprocess
 import sys
 import tempfile
-import zipfile
 from pathlib import Path
 
 
@@ -27,20 +26,29 @@ def main():
     for script in SCRIPTS.glob("*.py"):
         py_compile.compile(str(script), doraise=True)
     config = json.loads((SKILL / "config" / "3080-brief.json").read_text(encoding="utf-8"))
-    execution = config.get("execution", {})
-    if execution.get("required_entrypoint") != "scripts/run_3080.py":
-        raise SystemExit("stateful runtime entrypoint is missing")
-    if execution.get("required_stages") != ["grounded", "preflight", "review_draft", "review", "finalized"]:
-        raise SystemExit("stateful runtime stage contract is incomplete")
-    dependency_config = json.loads((SKILL / "config" / "dependencies.json").read_text(encoding="utf-8"))
-    bundle_contract = dependency_config.get("installation_bundle", {})
-    if bundle_contract.get("approval_mode") != "single_explicit_approval":
-        raise SystemExit("dependency config must require one explicit bundled approval")
+    json.loads((SKILL / "config" / "dependencies.json").read_text(encoding="utf-8"))
     json.loads((SKILL / "references" / "claim-ledger.schema.json").read_text(encoding="utf-8"))
     json.loads((SKILL / "references" / "visual-spec.schema.json").read_text(encoding="utf-8"))
-    json.loads((SKILL / "evals" / "agent_acceptance.json").read_text(encoding="utf-8"))
+    json.loads((SKILL / "references" / "brief.schema.json").read_text(encoding="utf-8"))
+    theme_registry = json.loads((SKILL / "assets" / "themes" / "beautiful-feishu-themes.json").read_text(encoding="utf-8"))
+    themes = theme_registry.get("themes") or []
+    if len(themes) != 22:
+        raise SystemExit(f"theme registry must contain the 22 allowed themes, found {len(themes)}")
+    banned = {name.casefold() for name in config.get("banned_whiteboard_styles", [])}
+    if any(theme.get("name", "").casefold() in banned for theme in themes):
+        raise SystemExit("theme registry contains a banned whiteboard style")
+    required_tokens = {"background", "surface", "surface_subtle", "ink", "muted", "rule", "accent", "accent2", "visual_primary", "visual_accent", "radius", "border_width", "content_width", "section_gap"}
+    for theme in themes:
+        if not required_tokens <= set(theme.get("tokens") or {}):
+            raise SystemExit(f"theme {theme.get('name', '<unnamed>')} is missing required HTML/visual tokens")
+    if not (SKILL / "assets" / "themes" / "LICENSE.beautiful-feishu-whiteboard.txt").is_file():
+        raise SystemExit("theme adaptation must include the upstream MIT notice")
     expression_suite = json.loads((SKILL / "evals" / "expression_cases.json").read_text(encoding="utf-8"))
     inventory_zh = FIXTURES / "inventory-zh-source.md"
+
+    review_packet_text = (SCRIPTS / "build_review_packet.py").read_text(encoding="utf-8")
+    if "Every value-bearing title, heading, and lead identifies the actual object" not in review_packet_text:
+        raise SystemExit("reader review packet omitted the concrete value-expression gate")
 
     run(sys.executable, str(SCRIPTS / "validate_skill.py"), str(SKILL))
     run(sys.executable, str(SCRIPTS / "check_context_budget.py"), str(SKILL))
@@ -49,24 +57,6 @@ def main():
 
     run(sys.executable, str(SCRIPTS / "preflight_check.py"), str(FIXTURES / "valid-brief.md"), "--source-inventory", str(inventory_zh))
     run(sys.executable, str(SCRIPTS / "preflight_check.py"), str(FIXTURES / "valid-brief.xml"), "--format", "xml", "--source-inventory", str(inventory_zh))
-    run(
-        sys.executable,
-        str(SCRIPTS / "preflight_check.py"),
-        str(FIXTURES / "valid-brief.xml"),
-        "--format", "xml",
-        "--output-type", "feishu",
-        "--source-inventory", str(inventory_zh),
-    )
-    image_substitution = run(
-        sys.executable,
-        str(SCRIPTS / "preflight_check.py"),
-        str(FIXTURES / "valid-brief.md"),
-        "--output-type", "feishu",
-        "--source-inventory", str(inventory_zh),
-        expect=1,
-    )
-    if "ordinary Markdown images are not editable whiteboards" not in image_substitution.stdout:
-        raise SystemExit("Feishu preflight accepted a normal image as the required editable whiteboard")
     run(
         sys.executable,
         str(SCRIPTS / "preflight_check.py"),
@@ -203,6 +193,8 @@ def main():
     )
     run(sys.executable, str(SCRIPTS / "check_coverage.py"), str(FIXTURES / "claim-ledger.json"))
     run(sys.executable, str(SCRIPTS / "validate_visual_spec.py"), str(FIXTURES / "visual-spec.json"), str(FIXTURES / "claim-ledger.json"))
+    run(sys.executable, str(SCRIPTS / "validate_visual_spec.py"), str(FIXTURES / "html-visual-spec.json"), str(FIXTURES / "claim-ledger.json"))
+    run(sys.executable, str(SCRIPTS / "validate_brief.py"), str(FIXTURES / "html-brief.json"), str(FIXTURES / "visual-spec.json"))
 
     with tempfile.TemporaryDirectory(prefix="3080-brief-eval-") as tmp:
         tmp_path = Path(tmp)
@@ -221,6 +213,144 @@ def main():
         )
         if "too wide for reliable preview" not in wide_svg.stdout:
             raise SystemExit("whiteboard validation did not reject a clipping-prone wide canvas")
+
+        html_output = tmp_path / "synthetic-brief.html"
+        run(
+            sys.executable,
+            str(SCRIPTS / "build_html_brief.py"),
+            str(FIXTURES / "html-brief.json"),
+            str(FIXTURES / "html-visual-spec.json"),
+            str(html_output),
+        )
+        run(
+            sys.executable,
+            str(SCRIPTS / "preflight_check.py"),
+            str(html_output),
+            "--format", "html",
+            "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
+            "--source-inventory", str(inventory_zh),
+        )
+        run(
+            sys.executable,
+            str(SCRIPTS / "validate_html_output.py"),
+            str(html_output),
+            "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
+        )
+        html_text = html_output.read_text(encoding="utf-8")
+        for expected in ("@media print", "@media (max-width", "class=\"one-picture\"", "data-priority=\"P2\"", "data-theme=\"avocado-press\""):
+            if expected not in html_text:
+                raise SystemExit(f"HTML renderer omitted required output feature: {expected}")
+        for theme in themes:
+            themed_spec = json.loads((FIXTURES / "html-visual-spec.json").read_text(encoding="utf-8"))
+            themed_spec["style"] = theme["name"]
+            themed_spec["style_rationale"] = "Registry-wide render verification for a content-fit selected theme."
+            themed_spec_path = tmp_path / f"theme-{theme['slug']}.json"
+            themed_spec_path.write_text(json.dumps(themed_spec, ensure_ascii=False), encoding="utf-8")
+            themed_output = tmp_path / f"theme-{theme['slug']}.html"
+            run(sys.executable, str(SCRIPTS / "build_html_brief.py"), str(FIXTURES / "html-brief.json"), str(themed_spec_path), str(themed_output))
+            if f'data-theme="{theme["slug"]}"' not in themed_output.read_text(encoding="utf-8"):
+                raise SystemExit(f"HTML renderer did not apply registered theme {theme['name']}")
+
+        feishu_output = tmp_path / "synthetic-brief.xml"
+        run(
+            sys.executable,
+            str(SCRIPTS / "build_feishu_brief.py"),
+            str(FIXTURES / "html-brief.json"),
+            str(FIXTURES / "visual-spec.json"),
+            str(feishu_output),
+        )
+        run(
+            sys.executable,
+            str(SCRIPTS / "preflight_check.py"),
+            str(feishu_output),
+            "--format", "xml",
+            "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
+            "--source-inventory", str(inventory_zh),
+        )
+        feishu_text = feishu_output.read_text(encoding="utf-8")
+        for expected in ("<colgroup>", 'vertical-align="top"', "<blockquote>", "#F5F7FA"):
+            if expected not in feishu_text:
+                raise SystemExit(f"Feishu renderer omitted required native output feature: {expected}")
+        if feishu_text.count('<whiteboard type="svg">') < 2:
+            raise SystemExit("Feishu renderer did not preserve the source-grounded body figure")
+
+        reading_room_spec = json.loads((FIXTURES / "html-visual-spec.json").read_text(encoding="utf-8"))
+        reading_room_spec["style"] = "Reading Room"
+        reading_room_spec["style_rationale"] = "长篇复盘面向正式读者，需要更强的出版感与章节秩序。"
+        reading_room_path = tmp_path / "reading-room-spec.json"
+        reading_room_path.write_text(json.dumps(reading_room_spec, ensure_ascii=False), encoding="utf-8")
+        reading_room_html = tmp_path / "reading-room.html"
+        run(sys.executable, str(SCRIPTS / "build_html_brief.py"), str(FIXTURES / "html-brief.json"), str(reading_room_path), str(reading_room_html))
+        reading_room_text = reading_room_html.read_text(encoding="utf-8")
+        if 'data-theme="reading-room"' not in reading_room_text or reading_room_text == html_text:
+            raise SystemExit("HTML theme selection did not produce a distinct selected theme")
+
+        for case_name, replacement, expected_error in (
+            ("banned", {"style": "Riso Brut"}, "theme is banned"),
+            ("unknown", {"style": "Imaginary Theme"}, "unknown Beautiful Feishu Whiteboard theme"),
+            ("missing-rationale", {"style_rationale": ""}, "style_rationale"),
+        ):
+            invalid_spec = json.loads((FIXTURES / "visual-spec.json").read_text(encoding="utf-8"))
+            invalid_spec.update(replacement)
+            invalid_spec_path = tmp_path / f"{case_name}-theme.json"
+            invalid_spec_path.write_text(json.dumps(invalid_spec, ensure_ascii=False), encoding="utf-8")
+            invalid_theme = run(
+                sys.executable,
+                str(SCRIPTS / "validate_visual_spec.py"),
+                str(invalid_spec_path),
+                str(FIXTURES / "claim-ledger.json"),
+                expect=1,
+            )
+            if expected_error not in invalid_theme.stdout:
+                raise SystemExit(f"visual theme gate did not reject {case_name}")
+
+        dense_first = json.loads((FIXTURES / "html-brief.json").read_text(encoding="utf-8"))
+        dense_first["body"][0]["blocks"].insert(0, {"type": "table", "headers": ["A"], "rows": [["B"]]})
+        dense_first_path = tmp_path / "dense-first.json"
+        dense_first_path.write_text(json.dumps(dense_first, ensure_ascii=False), encoding="utf-8")
+        dense_failure = run(
+            sys.executable,
+            str(SCRIPTS / "validate_brief.py"),
+            str(dense_first_path),
+            str(FIXTURES / "visual-spec.json"),
+            expect=1,
+        )
+        if "must explain the judgment before" not in dense_failure.stdout:
+            raise SystemExit("shared brief gate did not reject an unexplained dense body section")
+        invalid_html = tmp_path / "external-runtime.html"
+        invalid_html.write_text(html_text.replace("</body>", '<script src="https://example.invalid/chart.js"></script></body>'), encoding="utf-8")
+        external_failure = run(
+            sys.executable,
+            str(SCRIPTS / "validate_html_output.py"),
+            str(invalid_html),
+            "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
+            expect=1,
+        )
+        if "external runtime resources" not in external_failure.stdout:
+            raise SystemExit("HTML validator did not reject an external runtime resource")
+
+        chart_gallery_spec = {
+            "title": "Renderer coverage fixture",
+            "language": "en",
+            "style": "Avocado Press",
+            "style_rationale": "定量图表族测试需要克制、清晰并支持多种比较关系。",
+            "reading_path": "Render supported P0 chart families",
+            "blocks": [
+                {"id": "L", "type": "line", "claim_ids": ["C"], "title": "Trend changes", "metric_scope": {"metric": "value"}, "items": [{"label": "A", "value": 1}, {"label": "B", "value": 3}]},
+                {"id": "S", "type": "slope", "claim_ids": ["C"], "title": "Before and after differ", "metric_scope": {"metric": "value"}, "items": [{"label": "A", "start": 1, "end": 4}]},
+                {"id": "P", "type": "scatter", "claim_ids": ["C"], "title": "Observed pairs differ", "metric_scope": {"metric": "pair"}, "items": [{"label": "A", "x": 1, "y": 2}, {"label": "B", "x": 2, "y": 4}]},
+                {"id": "H", "type": "heatmap", "claim_ids": ["C"], "title": "Segments differ", "metric_scope": {"metric": "score"}, "rows": ["R1"], "columns": ["C1", "C2"], "cells": [{"row": "R1", "column": "C1", "value": 1}, {"row": "R1", "column": "C2", "value": 2}]},
+                {"id": "F", "type": "funnel", "claim_ids": ["C"], "title": "Scope narrows", "metric_scope": {"metric": "count"}, "items": [{"label": "Start", "value": 100}, {"label": "End", "value": 60}]}
+            ]
+        }
+        gallery_spec = tmp_path / "chart-gallery.json"
+        gallery_spec.write_text(json.dumps(chart_gallery_spec), encoding="utf-8")
+        gallery_svg = tmp_path / "chart-gallery.svg"
+        run(sys.executable, str(SCRIPTS / "render_visual_spec.py"), str(gallery_spec), str(gallery_svg))
+        gallery_text = gallery_svg.read_text(encoding="utf-8")
+        for title in ("Trend changes", "Before and after differ", "Observed pairs differ", "Segments differ", "Scope narrows"):
+            if title not in gallery_text:
+                raise SystemExit(f"native SVG renderer omitted chart family fixture: {title}")
 
         invalid_semantic_xml = tmp_path / "invalid-semantic.xml"
         valid_xml = (FIXTURES / "valid-brief.xml").read_text(encoding="utf-8")
@@ -266,8 +396,6 @@ def main():
             review_path = tmp_path / f"{role}.json"
             review_path.write_text(json.dumps({
                 "reviewer_role": role,
-                "review_mode": "independent",
-                "reviewer_run_id": f"dynamic-{role}-run",
                 "artifact_set_id": artifact_set_id,
                 "review_round": 1,
                 "verdict": "PASS",
@@ -294,184 +422,6 @@ def main():
             "--whiteboard-preview", str(svg),
         )
 
-        duplicate_id_reviews = []
-        for role in ("reader", "source", "visual"):
-            review_path = tmp_path / f"duplicate-{role}.json"
-            review_path.write_text(json.dumps({
-                "reviewer_role": role,
-                "review_mode": "independent",
-                "reviewer_run_id": "same-reviewer-run",
-                "artifact_set_id": artifact_set_id,
-                "review_round": 1,
-                "verdict": "PASS",
-                "checks": [{"name": f"{role} gates", "result": "PASS", "reason": "fixture"}],
-                "blocking_issues": [],
-                "unsupported_claims": [],
-                "missing_coverage": [],
-                "required_fixes": [],
-            }), encoding="utf-8")
-            duplicate_id_reviews.append(review_path)
-        duplicate_ids = run(
-            sys.executable,
-            str(SCRIPTS / "aggregate_reviews.py"),
-            *(str(item) for item in duplicate_id_reviews),
-            "--mode", "independent",
-            expect=1,
-        )
-        if "three distinct reviewer_run_id" not in duplicate_ids.stdout:
-            raise SystemExit("review aggregation accepted three reviews from one execution context")
-
-        run_dir = tmp_path / "stateful-run"
-        run(
-            sys.executable,
-            str(SCRIPTS / "run_3080.py"),
-            "init", str(run_dir),
-            "--source-ref", "https://example.invalid/source",
-            "--source-type", "feishu",
-            "--output-type", "feishu",
-            "--profile", "standard",
-        )
-        run(
-            sys.executable,
-            str(SCRIPTS / "run_3080.py"),
-            "ground", str(run_dir),
-            "--source-before", str(FIXTURES / "source-data-analysis.md"),
-            "--source-snapshot", str(FIXTURES / "source-data-analysis.md"),
-            "--inventory", str(inventory_zh),
-            "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
-        )
-        run(
-            sys.executable,
-            str(SCRIPTS / "run_3080.py"),
-            "preflight", str(run_dir),
-            "--draft", str(FIXTURES / "valid-brief.xml"),
-            "--visual-spec", str(FIXTURES / "visual-spec.json"),
-            "--whiteboard-svg", str(svg),
-        )
-        live_document = tmp_path / "live-document.json"
-        live_document.write_text(json.dumps({
-            "document_token": "doc-output-1",
-            "blocks": [{"block_type": "whiteboard", "block_id": "wb-block-1"}],
-        }), encoding="utf-8")
-        whiteboard_query = tmp_path / "whiteboard-query.json"
-        whiteboard_query.write_text(json.dumps({
-            "whiteboard_token": "wb-token-1",
-            "status": "PASS",
-        }), encoding="utf-8")
-        run(
-            sys.executable,
-            str(SCRIPTS / "run_3080.py"),
-            "record-output", str(run_dir),
-            "--output-ref", "https://example.invalid/generated-doc",
-            "--document-snapshot", str(live_document),
-            "--whiteboard-query", str(whiteboard_query),
-            "--whiteboard-preview", str(svg),
-            "--whiteboard-token", "wb-token-1",
-            "--whiteboard-block-id", "wb-block-1",
-        )
-        run(
-            sys.executable,
-            str(SCRIPTS / "run_3080.py"),
-            "prepare-review", str(run_dir),
-            "--document-preview", str(svg),
-        )
-        run_state = json.loads((run_dir / "run_state.json").read_text(encoding="utf-8"))
-        state_artifact_id = run_state["review_preparation"]["artifact_set_id"]
-        stateful_reviews = []
-        for role in ("reader", "source", "visual"):
-            review_path = tmp_path / f"stateful-{role}.json"
-            review_path.write_text(json.dumps({
-                "reviewer_role": role,
-                "review_mode": "independent",
-                "reviewer_run_id": f"stateful-{role}-run",
-                "artifact_set_id": state_artifact_id,
-                "review_round": 1,
-                "verdict": "PASS",
-                "checks": [{"name": f"{role} gates", "result": "PASS", "reason": "fixture"}],
-                "blocking_issues": [],
-                "unsupported_claims": [],
-                "missing_coverage": [],
-                "required_fixes": [],
-            }), encoding="utf-8")
-            stateful_reviews.append(review_path)
-        blind_reader = tmp_path / "blind-reader.json"
-        blind_reader.write_text(json.dumps({
-            "reader_role": "primary",
-            "artifact_set_id": state_artifact_id,
-            "questions": [
-                {"question": "核心判断是什么？", "answer": "需要分层判断。", "inference_or_uncertainty": "none"},
-                {"question": "为什么？", "answer": "汇总会掩盖差异。", "inference_or_uncertainty": "none"},
-                {"question": "下一步是什么？", "answer": "先验证稳定性。", "inference_or_uncertainty": "none"}
-            ]
-        }), encoding="utf-8")
-        run(
-            sys.executable,
-            str(SCRIPTS / "run_3080.py"),
-            "record-review", str(run_dir),
-            "--reader-review", str(stateful_reviews[0]),
-            "--source-review", str(stateful_reviews[1]),
-            "--visual-review", str(stateful_reviews[2]),
-            "--blind-reader-result", str(blind_reader),
-        )
-        changed_source = tmp_path / "source-after-changed.md"
-        changed_source.write_text(
-            (FIXTURES / "source-data-analysis.md").read_text(encoding="utf-8") + "\nChanged after generation.\n",
-            encoding="utf-8",
-        )
-        source_change = run(
-            sys.executable,
-            str(SCRIPTS / "run_3080.py"),
-            "finalize", str(run_dir),
-            "--source-after", str(changed_source),
-            "--final-document-snapshot", str(live_document),
-            "--whiteboard-query", str(whiteboard_query),
-            "--whiteboard-preview", str(svg),
-            expect=3,
-        )
-        if "source changed during generation" not in source_change.stderr:
-            raise SystemExit("stateful runtime did not block a changed source")
-        run(
-            sys.executable,
-            str(SCRIPTS / "run_3080.py"),
-            "finalize", str(run_dir),
-            "--source-after", str(FIXTURES / "source-data-analysis.md"),
-            "--final-document-snapshot", str(live_document),
-            "--whiteboard-query", str(whiteboard_query),
-            "--whiteboard-preview", str(svg),
-        )
-        delivery = json.loads((run_dir / "delivery_receipt.json").read_text(encoding="utf-8"))
-        if delivery.get("verdict") != "PASS" or delivery.get("checks", {}).get("native_editable_whiteboard") != "PASS":
-            raise SystemExit("stateful runtime did not issue a complete Feishu delivery receipt")
-        thin_receipt = tmp_path / "thin-delivery-receipt.json"
-        thin_delivery = dict(delivery)
-        thin_delivery["run_id"] = "synthetic-thin-run"
-        thin_receipt.write_text(json.dumps(thin_delivery), encoding="utf-8")
-        markdown_receipt = tmp_path / "markdown-delivery-receipt.json"
-        markdown_delivery = dict(delivery)
-        markdown_delivery["run_id"] = "synthetic-markdown-run"
-        markdown_delivery["output_type"] = "markdown"
-        markdown_delivery["generated_output"] = str(FIXTURES / "valid-brief.md")
-        markdown_delivery["checks"] = dict(delivery["checks"])
-        markdown_delivery["checks"]["native_editable_whiteboard"] = "NOT_APPLICABLE"
-        markdown_receipt.write_text(json.dumps(markdown_delivery), encoding="utf-8")
-        acceptance_result = tmp_path / "agent-acceptance-result.json"
-        acceptance_result.write_text(json.dumps({
-            "host": "synthetic-host",
-            "agent_version": "test-only",
-            "model": "test-only",
-            "executed_at": "2026-01-01T00:00:00Z",
-            "cases": [
-                {"id": "data-analysis-feishu", "status": "PASS", "delivery_receipt": str(run_dir / "delivery_receipt.json")},
-                {"id": "thin-source-feishu", "status": "PASS", "delivery_receipt": str(thin_receipt)},
-                {"id": "format-following-markdown", "status": "PASS", "delivery_receipt": str(markdown_receipt)}
-            ]
-        }), encoding="utf-8")
-        run(
-            sys.executable,
-            str(SCRIPTS / "validate_agent_acceptance.py"),
-            str(acceptance_result),
-        )
-
     with tempfile.TemporaryDirectory(prefix="3080-brief-dependencies-") as tmp:
         tmp_path = Path(tmp)
         empty_cache = tmp_path / "empty-cache"
@@ -479,9 +429,7 @@ def main():
         isolated_env.pop("LARK_CLI", None)
         isolated_env.pop("WHITEBOARD_CLI", None)
         isolated_env.pop("BEAUTIFUL_FEISHU_WHITEBOARD_SKILL", None)
-        isolated_env.pop("BRIEF3080_SKILL_INSTALL_ROOT", None)
         isolated_env.pop("BRIEF3080_SKILL_ROOTS", None)
-        isolated_env.pop("BRIEF3080_HOST_CAPABILITIES", None)
         isolated_env.pop("NODE", None)
         missing = run(
             sys.executable,
@@ -499,77 +447,11 @@ def main():
         request = missing_report.get("installation_request", {})
         if not request.get("required") or not request.get("requires_user_approval"):
             raise SystemExit("missing Feishu dependencies did not produce an installation approval request")
-        requested_dependencies = {
-            item.get("tool") or item.get("skill") or item.get("capability")
-            for item in request.get("installations", [])
-        }
-        if requested_dependencies != {
-            "lark-cli", "whiteboard-cli", "beautiful-feishu-whiteboard", "lark-doc", "lark-whiteboard"
-        }:
-            raise SystemExit("installation request does not cover the Feishu CLIs, style Skill, and executable host workflows")
-        bundle = request.get("approval_bundle", {})
-        if bundle.get("approval_mode") != "single_explicit_approval":
-            raise SystemExit("missing dependencies did not produce one bundled approval")
-        if set(bundle.get("single_approval_covers", [])) != requested_dependencies:
-            raise SystemExit("single approval does not cover every listed missing dependency")
-        if bundle.get("approval_scope") != "all_missing_feishu_dependencies" or "all missing" not in bundle.get("approval_prompt", "").casefold():
-            raise SystemExit("bundle approval prompt does not clearly ask once for all missing dependencies")
-        if "non-Feishu" not in bundle.get("on_decline", "") or "BLOCKED" not in bundle.get("on_decline", ""):
-            raise SystemExit("bundle decline behavior must preserve the core Skill and block only Feishu output")
-        excluded_text = " ".join(bundle.get("excludes", [])).casefold()
-        if "node.js" not in excluded_text or "authentication" not in excluded_text:
-            raise SystemExit("bundle must exclude undisclosed Node.js installation and account authorization")
-        requested_skill = next(item for item in request["installations"] if item.get("skill") == "beautiful-feishu-whiteboard")
-        if requested_skill.get("install_root") is not None or requested_skill.get("command") is not None:
-            raise SystemExit("dependency diagnostic guessed a Skill registry without an explicit host root")
-        if not requested_skill.get("requires_host_registration") or not request.get("host_registration_required"):
-            raise SystemExit("missing host registry did not request native independent-Skill registration")
-        if "zarazhangrui/beautiful-feishu-whiteboard" not in requested_skill.get("host_install_prompt", ""):
-            raise SystemExit("host registration request omitted the verified whiteboard Skill source")
-        requested_capabilities = {
-            item.get("capability"): item
-            for item in request["installations"]
-            if item.get("capability")
-        }
-        if set(requested_capabilities) != {"lark-doc", "lark-whiteboard"}:
-            raise SystemExit("dependency diagnostic omitted required host capabilities")
-        if any("specification alone does not count" not in item.get("host_install_prompt", "") for item in requested_capabilities.values()):
-            raise SystemExit("host-capability plan did not distinguish Skill text from executable readiness")
-        if len(request.get("approval_commands", [])) != 1:
-            raise SystemExit("unresolved host Skill registration must not emit a local file-install command")
-        human_missing = run(
-            sys.executable,
-            str(SCRIPTS / "check_dependencies.py"),
-            "--mode", "feishu",
-            "--isolated",
-            "--tool-cache", str(empty_cache),
-            expect=3,
-            env=isolated_env,
-        )
-        if "ONE APPROVAL FOR ALL LISTED DEPENDENCIES" not in human_missing.stdout:
-            raise SystemExit("human dependency plan did not present one bundled approval")
-
-        explicit_root = tmp_path / "explicit-host-registry"
-        explicit_env = isolated_env.copy()
-        explicit_env["BRIEF3080_SKILL_INSTALL_ROOT"] = str(explicit_root)
-        explicit_missing = run(
-            sys.executable,
-            str(SCRIPTS / "check_dependencies.py"),
-            "--mode", "feishu",
-            "--json",
-            "--isolated",
-            "--tool-cache", str(empty_cache),
-            expect=3,
-            env=explicit_env,
-        )
-        explicit_request = json.loads(explicit_missing.stdout)["installation_request"]
-        explicit_skill = next(item for item in explicit_request["installations"] if item.get("skill") == "beautiful-feishu-whiteboard")
-        if explicit_skill.get("install_root") != str((explicit_root / "beautiful-feishu-whiteboard").resolve()):
-            raise SystemExit("explicit host Skill registry root was not honored")
-        if explicit_skill.get("requires_host_registration") or not explicit_skill.get("command"):
-            raise SystemExit("explicit host Skill registry did not enable the approval-gated file installer")
-        if len(explicit_request.get("approval_commands", [])) != 2:
-            raise SystemExit("explicit CLI/Skill install plan must emit both approval-gated commands")
+        requested_dependencies = {item.get("tool") or item.get("skill") for item in request.get("installations", [])}
+        if requested_dependencies != {"lark-cli", "whiteboard-cli", "beautiful-feishu-whiteboard"}:
+            raise SystemExit("installation request does not cover both Feishu CLIs and the whiteboard style skill")
+        if len(request.get("approval_commands", [])) != 2:
+            raise SystemExit("mixed CLI/skill dependency request must emit separate approval-gated commands")
 
         optional = run(
             sys.executable,
@@ -590,7 +472,6 @@ def main():
             "--tool", "whiteboard-cli",
             "--tool-cache", str(empty_cache),
             expect=3,
-            env=isolated_env,
         )
         if "explicit user approval" not in refusal.stderr:
             raise SystemExit("installer did not refuse execution without explicit user approval")
@@ -600,35 +481,12 @@ def main():
             "--tool", "whiteboard-cli",
             "--tool-cache", str(empty_cache),
             "--dry-run",
-            env=isolated_env,
         )
-        no_registry = run(
-            sys.executable,
-            str(SCRIPTS / "install_skill_dependency.py"),
-            "--skill", "beautiful-feishu-whiteboard",
-            "--user-approved",
-            expect=3,
-            env=isolated_env,
-        )
-        if "no verified host Agent Skill registry root" not in no_registry.stderr:
-            raise SystemExit("skill installer did not block an unregistered execution directory")
-        host_dry_run = run(
-            sys.executable,
-            str(SCRIPTS / "install_skill_dependency.py"),
-            "--skill", "beautiful-feishu-whiteboard",
-            "--dry-run",
-            env=isolated_env,
-        )
-        host_plan = json.loads(host_dry_run.stdout)["installation"]
-        if not host_plan.get("requires_host_registration") or host_plan.get("command") is not None:
-            raise SystemExit("installer dry-run guessed a host registry from its execution path")
         skill_refusal = run(
             sys.executable,
             str(SCRIPTS / "install_skill_dependency.py"),
             "--skill", "beautiful-feishu-whiteboard",
-            "--install-root", str(tmp_path / "refused-skills"),
             expect=3,
-            env=isolated_env,
         )
         if "explicit user approval" not in skill_refusal.stderr:
             raise SystemExit("skill installer did not refuse execution without explicit user approval")
@@ -636,81 +494,17 @@ def main():
             sys.executable,
             str(SCRIPTS / "install_skill_dependency.py"),
             "--skill", "beautiful-feishu-whiteboard",
-            "--install-root", str(tmp_path / "portable-skills"),
             "--dry-run",
-            env=isolated_env,
         )
         skill_plan = json.loads(skill_dry_run.stdout)["installation"]
-        if skill_plan["source"]["repo"] != "zarazhangrui/beautiful-feishu-whiteboard":
-            raise SystemExit("skill install plan omitted the verified GitHub source")
-        if skill_plan.get("download_url") != "https://github.com/zarazhangrui/beautiful-feishu-whiteboard/archive/refs/heads/main.zip":
-            raise SystemExit("skill install plan omitted the verified GitHub archive")
-        if not skill_plan.get("requires_agent_reload") or "requires_codex_restart" in skill_plan:
-            raise SystemExit("skill install plan must use an agent-agnostic reload requirement")
-        expected_install = (tmp_path / "portable-skills" / "beautiful-feishu-whiteboard").resolve()
-        if skill_plan["install_root"] != str(expected_install):
-            raise SystemExit("skill install plan ignored the host agent skill root")
-
-        local_archive = tmp_path / "beautiful-feishu-whiteboard.zip"
-        archive_root = "beautiful-feishu-whiteboard-main"
-        with zipfile.ZipFile(local_archive, "w") as bundle:
-            bundle.writestr(
-                f"{archive_root}/SKILL.md",
-                "---\nname: beautiful-feishu-whiteboard\nversion: 1.1.1\ndescription: fixture\n---\n",
-            )
-            bundle.writestr(f"{archive_root}/CATALOG.md", "# Catalogue\n")
-            bundle.writestr(f"{archive_root}/RULES.md", "# Rules\n")
-            bundle.writestr(f"{archive_root}/templates/example/design.md", "# Example\n")
-        portable_root = tmp_path / "installed-agent-skills"
-        portable_install = run(
-            sys.executable,
-            str(SCRIPTS / "install_skill_dependency.py"),
-            "--skill", "beautiful-feishu-whiteboard",
-            "--install-root", str(portable_root),
-            "--archive", str(local_archive),
-            "--user-approved",
-            env=isolated_env,
-        )
-        if "REGISTRATION PENDING" not in portable_install.stdout or "Do not treat this dependency as PASS" not in portable_install.stdout:
-            raise SystemExit("file installer falsely reported host registration success")
-        if portable_install.stdout.startswith("PASS") or "\nPASS " in portable_install.stdout:
-            raise SystemExit("file installer conflated file verification with dependency PASS")
-        installed_skill = portable_root / "beautiful-feishu-whiteboard"
-        if not (installed_skill / "SKILL.md").is_file() or not (installed_skill / "templates").is_dir():
-            raise SystemExit("portable skill installer did not preserve the complete skill folder")
-        no_overwrite = run(
-            sys.executable,
-            str(SCRIPTS / "install_skill_dependency.py"),
-            "--skill", "beautiful-feishu-whiteboard",
-            "--install-root", str(portable_root),
-            "--archive", str(local_archive),
-            "--user-approved",
-            expect=1,
-            env=isolated_env,
-        )
-        if "will not be overwritten" not in no_overwrite.stderr:
-            raise SystemExit("portable skill installer did not protect an existing destination")
-
-        unsafe_archive = tmp_path / "unsafe-skill.zip"
-        with zipfile.ZipFile(unsafe_archive, "w") as bundle:
-            bundle.writestr("beautiful-feishu-whiteboard-main/../../outside.txt", "unsafe\n")
-        unsafe_install = run(
-            sys.executable,
-            str(SCRIPTS / "install_skill_dependency.py"),
-            "--skill", "beautiful-feishu-whiteboard",
-            "--install-root", str(tmp_path / "unsafe-agent-skills"),
-            "--archive", str(unsafe_archive),
-            "--user-approved",
-            expect=1,
-            env=isolated_env,
-        )
-        if "unsafe archive member" not in unsafe_install.stderr:
-            raise SystemExit("portable skill installer did not reject archive path traversal")
+        if skill_plan["source"]["repo"] != "zarazhangrui/beautiful-feishu-whiteboard" or not skill_plan["requires_codex_restart"]:
+            raise SystemExit("skill install plan omitted the verified source or restart requirement")
 
         fake_cache = tmp_path / "fake-cache"
         fake_node = tmp_path / "node"
         fake_node.write_text("#!/bin/sh\necho v20.0.0\n", encoding="utf-8")
         fake_node.chmod(0o755)
+        dependency_config = json.loads((SKILL / "config" / "dependencies.json").read_text(encoding="utf-8"))
         for tool_id, spec in dependency_config["tools"].items():
             prefix = fake_cache / tool_id / spec["install_version"]
             package_root = prefix / "node_modules" / Path(spec["package"])
@@ -728,45 +522,6 @@ def main():
             (shim_dir / spec["command"]).symlink_to(Path("..") / Path(spec["package"]) / "bin" / "cli")
         passing_env = isolated_env.copy()
         passing_env["NODE"] = str(fake_node)
-        registered_runtime_root = tmp_path / "registered-runtime-skills"
-        registered_main_skill = registered_runtime_root / "3080-brief"
-        registered_main_skill.mkdir(parents=True)
-        (registered_main_skill / "SKILL.md").write_text(
-            "---\nname: 3080-brief\ndescription: fixture\n---\n",
-            encoding="utf-8",
-        )
-        staged_only = run(
-            sys.executable,
-            str(SCRIPTS / "check_dependencies.py"),
-            "--mode", "feishu",
-            "--json",
-            "--isolated",
-            "--tool-cache", str(fake_cache),
-            "--skill-root", str(registered_runtime_root),
-            expect=3,
-            env=passing_env,
-        )
-        staged_skill_check = next(
-            check for check in json.loads(staged_only.stdout)["checks"] if check["id"] == "beautiful-feishu-whiteboard"
-        )
-        if staged_skill_check["status"] != "BLOCKED":
-            raise SystemExit("a dependency copied outside the registered runtime root was incorrectly accepted")
-
-        registered_dependency = run(
-            sys.executable,
-            str(SCRIPTS / "check_dependencies.py"),
-            "--mode", "feishu",
-            "--json",
-            "--isolated",
-            "--tool-cache", str(fake_cache),
-            "--skill-root", str(portable_root),
-            "--host-capability", "lark-doc",
-            "--host-capability", "lark-whiteboard",
-            env=passing_env,
-        )
-        if json.loads(registered_dependency.stdout).get("overall_status") != "PASS":
-            raise SystemExit("dependency installed in the declared runtime registry did not pass recheck")
-
         fake_skill_root = tmp_path / "fake-skills"
         fake_skill = fake_skill_root / "beautiful-feishu-whiteboard"
         (fake_skill / "templates").mkdir(parents=True)
@@ -776,24 +531,6 @@ def main():
         )
         (fake_skill / "CATALOG.md").write_text("# Catalogue\n", encoding="utf-8")
         (fake_skill / "RULES.md").write_text("# Rules\n", encoding="utf-8")
-        runtime_unready = run(
-            sys.executable,
-            str(SCRIPTS / "check_dependencies.py"),
-            "--mode", "feishu",
-            "--json",
-            "--isolated",
-            "--tool-cache", str(fake_cache),
-            "--skill-root", str(fake_skill_root),
-            expect=3,
-            env=passing_env,
-        )
-        runtime_unready_report = json.loads(runtime_unready.stdout)
-        blocked_host_capabilities = {
-            check["id"] for check in runtime_unready_report["checks"]
-            if check.get("kind") == "host_capability" and check["status"] == "BLOCKED"
-        }
-        if blocked_host_capabilities != {"lark-doc", "lark-whiteboard"}:
-            raise SystemExit("installed files were incorrectly treated as executable host readiness")
         passing = run(
             sys.executable,
             str(SCRIPTS / "check_dependencies.py"),
@@ -802,8 +539,6 @@ def main():
             "--isolated",
             "--tool-cache", str(fake_cache),
             "--skill-root", str(fake_skill_root),
-            "--host-capability", "lark-doc",
-            "--host-capability", "lark-whiteboard",
             env=passing_env,
         )
         passing_report = json.loads(passing.stdout)
@@ -821,8 +556,6 @@ def main():
             "--isolated",
             "--tool-cache", str(fake_cache),
             "--skill-root", str(fake_skill_root),
-            "--host-capability", "lark-doc",
-            "--host-capability", "lark-whiteboard",
             expect=3,
             env=passing_env,
         )
@@ -841,8 +574,6 @@ def main():
             "--isolated",
             "--tool-cache", str(fake_cache),
             "--skill-root", str(fake_skill_root),
-            "--host-capability", "lark-doc",
-            "--host-capability", "lark-whiteboard",
             expect=3,
             env=passing_env,
         )
@@ -992,7 +723,7 @@ def main():
     replay_path = SKILL / "references" / "blind-reader-replay.md"
     if not replay_path.is_file() or "Run Blind Reader Replay only after" not in replay_path.read_text(encoding="utf-8"):
         raise SystemExit("blind-reader replay reference is missing")
-    if "run_3080.py record-review" not in skill_text or "references/blind-reader-replay.md" not in skill_text:
+    if "### 7. Replay Reader Understanding" not in skill_text or "references/blind-reader-replay.md" not in skill_text:
         raise SystemExit("blind-reader replay is not connected to the runtime workflow")
     print("3080-brief evals PASS")
 

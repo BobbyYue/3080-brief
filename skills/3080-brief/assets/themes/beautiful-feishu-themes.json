@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "source": {
+    "name": "beautiful-feishu-whiteboard",
+    "author": "Zara Zhang (@zarazhangrui)",
+    "license": "MIT",
+    "license_file": "LICENSE.beautiful-feishu-whiteboard.txt",
+    "adaptation": "Palette and mood tokens adapted for native Feishu SVG and offline HTML; semantic colors remain owned by 3080 Brief."
+  },
+  "themes": [
+    {
+      "name": "Avocado Press", "slug": "avocado-press", "level": "restrained", "formality": "medium",
+      "vibe": "clean duotone, airy and modern", "tags": ["data", "technical", "product", "strategy", "general"],
+      "tokens": {"background": "#F5F7FA", "surface": "#FFFFFF", "surface_subtle": "#F2F7E8", "ink": "#173B5C", "muted": "#587089", "rule": "#B8CBDB", "accent": "#0055A4", "accent2": "#DCF4A2", "visual_primary": "#0055A4", "visual_accent": "#DCF4A2", "radius": 6, "border_width": 1, "content_width": 920, "section_gap": 44}
+    },
+    {
+      "name": "Jade Lens", "slug": "jade-lens", "level": "restrained", "formality": "high",
+      "vibe": "calm, harmonious and analytical", "tags": ["research", "system", "technical", "risk", "strategy"],
+      "tokens": {"background": "#F5F1EE", "surface": "#FBF9F7", "surface_subtle": "#E6F2ED", "ink": "#1E2421", "muted": "#56615C", "rule": "#B9C9C2", "accent": "#08754C", "accent2": "#2BA483", "visual_primary": "#2BA483", "visual_accent": "#08754C", "radius": 6, "border_width": 1, "content_width": 900, "section_gap": 46}
+    },
+    {
+      "name": "Long Table", "slug": "long-table", "level": "restrained", "formality": "medium",
+      "vibe": "warm ruled-paper editorial", "tags": ["operations", "review", "narrative", "planning"],
+      "tokens": {"background": "#FAF1E2", "surface": "#FAF1E2", "surface_subtle": "#F2E5CF", "ink": "#8E2D1F", "muted": "#8A6259", "rule": "#B53D2A", "accent": "#8E2D1F", "accent2": "#E8D7B6", "visual_primary": "#B53D2A", "visual_accent": "#E8D7B6", "radius": 0, "border_width": 1, "content_width": 880, "section_gap": 40}
+    },
+    {
+      "name": "Papier Bleu", "slug": "papier-bleu", "level": "restrained", "formality": "medium",
+      "vibe": "calm, artful and explanatory", "tags": ["research", "learning", "journey", "overview"],
+      "tokens": {"background": "#FAF3EB", "surface": "#FFFFFF", "surface_subtle": "#DDF3F8", "ink": "#1A3C8F", "muted": "#53678F", "rule": "#9FCFDC", "accent": "#1A3C8F", "accent2": "#72D0E9", "visual_primary": "#1A3C8F", "visual_accent": "#72D0E9", "radius": 12, "border_width": 1, "content_width": 900, "section_gap": 46}
+    },
+    {
+      "name": "Reading Room", "slug": "reading-room", "level": "restrained", "formality": "high",
+      "vibe": "literary, bookish and institutional", "tags": ["research", "policy", "learning", "longform", "review"],
+      "tokens": {"background": "#F6EBD8", "surface": "#FFFDF8", "surface_subtle": "#F1DAB1", "ink": "#0B0A09", "muted": "#625B52", "rule": "#0B0A09", "accent": "#A65435", "accent2": "#D6C7CC", "visual_primary": "#DE916A", "visual_accent": "#D6C7CC", "radius": 0, "border_width": 2, "content_width": 860, "section_gap": 50}
+    },
+    {
+      "name": "Salmon Stamp", "slug": "salmon-stamp", "level": "restrained", "formality": "low",
+      "vibe": "clean stamp poster with a fresh accent", "tags": ["launch", "marketing", "product", "summary"],
+      "tokens": {"background": "#F7F8FA", "surface": "#FFFFFF", "surface_subtle": "#FBE5DF", "ink": "#111111", "muted": "#626262", "rule": "#D7B4AA", "accent": "#047A43", "accent2": "#F0AE9E", "visual_primary": "#049550", "visual_accent": "#F0AE9E", "radius": 6, "border_width": 1, "content_width": 920, "section_gap": 42}
+    },
+    {
+      "name": "Apricot Arc", "slug": "apricot-arc", "level": "balanced", "formality": "medium",
+      "vibe": "warm, geometric and friendly", "tags": ["product", "planning", "roadmap", "strategy", "onboarding"],
+      "tokens": {"background": "#FFF8EE", "surface": "#FFFFFF", "surface_subtle": "#FCE8DB", "ink": "#7A3214", "muted": "#7A4A33", "rule": "#E2B38E", "accent": "#A94517", "accent2": "#F9C2BD", "visual_primary": "#F69834", "visual_accent": "#F9C2BD", "radius": 8, "border_width": 1, "content_width": 920, "section_gap": 44}
+    },
+    {
+      "name": "Berry Pop", "slug": "berry-pop", "level": "balanced", "formality": "medium",
+      "vibe": "fresh, confident and polished", "tags": ["product", "growth", "marketing", "comparison"],
+      "tokens": {"background": "#F7F8FA", "surface": "#FFFFFF", "surface_subtle": "#EEF1FA", "ink": "#4F1830", "muted": "#745666", "rule": "#C7B5BF", "accent": "#9E2B50", "accent2": "#C7D2F0", "visual_primary": "#9E2B50", "visual_accent": "#C7D2F0", "radius": 7, "border_width": 1, "content_width": 920, "section_gap": 44}
+    },
+    {
+      "name": "Bold Poster", "slug": "bold-poster", "level": "balanced", "formality": "medium",
+      "vibe": "direct, editorial and high-contrast", "tags": ["decision", "risk", "launch", "performance", "executive"],
+      "tokens": {"background": "#F5F2EF", "surface": "#FFFFFF", "surface_subtle": "#F5F2EF", "ink": "#1C1410", "muted": "#675D58", "rule": "#1C1410", "accent": "#D8000F", "accent2": "#1C1410", "visual_primary": "#D8000F", "visual_accent": "#1C1410", "radius": 0, "border_width": 2, "content_width": 900, "section_gap": 42}
+    },
+    {
+      "name": "Checker Bloom", "slug": "checker-bloom", "level": "balanced", "formality": "low",
+      "vibe": "playful, fresh and structured", "tags": ["workshop", "onboarding", "team", "product"],
+      "tokens": {"background": "#E8F1DD", "surface": "#FFFFFF", "surface_subtle": "#DCE8D1", "ink": "#151515", "muted": "#596055", "rule": "#9AAE8C", "accent": "#2C6EE0", "accent2": "#5E9E4A", "visual_primary": "#2C6EE0", "visual_accent": "#5E9E4A", "radius": 6, "border_width": 2, "content_width": 920, "section_gap": 42}
+    },
+    {
+      "name": "Coral", "slug": "coral", "level": "balanced", "formality": "medium",
+      "vibe": "warm, clear and human", "tags": ["product", "proposal", "strategy", "customer", "general"],
+      "tokens": {"background": "#F5F0E8", "surface": "#FFFFFF", "surface_subtle": "#F7DEDA", "ink": "#1A1A1A", "muted": "#6B6B6B", "rule": "#D7BEB8", "accent": "#D44A4A", "accent2": "#F1B7AF", "visual_primary": "#E85D5D", "visual_accent": "#D44A4A", "radius": 6, "border_width": 1, "content_width": 920, "section_gap": 44}
+    },
+    {
+      "name": "Cut Bloom", "slug": "cut-bloom", "level": "balanced", "formality": "medium",
+      "vibe": "calm, geometric and evidence-led", "tags": ["data", "technical", "research", "comparison", "strategy"],
+      "tokens": {"background": "#F6F7FA", "surface": "#FFFFFF", "surface_subtle": "#EEF0F8", "ink": "#2E3566", "muted": "#64698A", "rule": "#B6BAD1", "accent": "#535D9E", "accent2": "#F0CB65", "visual_primary": "#535D9E", "visual_accent": "#F0CB65", "radius": 6, "border_width": 1, "content_width": 920, "section_gap": 44}
+    },
+    {
+      "name": "Editorial Forest", "slug": "editorial-forest", "level": "balanced", "formality": "high",
+      "vibe": "literary, serious and refined", "tags": ["strategy", "policy", "research", "decision", "review"],
+      "tokens": {"background": "#EFE7D4", "surface": "#F8F3E7", "surface_subtle": "#E6DCC4", "ink": "#1A1A17", "muted": "#625E54", "rule": "#2E4A2A", "accent": "#2E4A2A", "accent2": "#E89CB1", "visual_primary": "#2E4A2A", "visual_accent": "#E89CB1", "radius": 4, "border_width": 1, "content_width": 880, "section_gap": 48}
+    },
+    {
+      "name": "Lime Slab", "slug": "lime-slab", "level": "balanced", "formality": "medium",
+      "vibe": "modern, sharp and product-led", "tags": ["software", "product", "growth", "launch", "saas"],
+      "tokens": {"background": "#FFFFF2", "surface": "#FFFFFF", "surface_subtle": "#F3F6C7", "ink": "#0A0A05", "muted": "#5C5B4F", "rule": "#2F2E25", "accent": "#0A0A05", "accent2": "#EEFA79", "visual_primary": "#0A0A05", "visual_accent": "#EEFA79", "radius": 5, "border_width": 1, "content_width": 940, "section_gap": 42}
+    },
+    {
+      "name": "Pin & Paper", "slug": "pin-and-paper", "level": "balanced", "formality": "medium",
+      "vibe": "clean, graphic and action-oriented", "tags": ["roadmap", "operations", "planning", "product", "process"],
+      "tokens": {"background": "#F7F8FA", "surface": "#FFFFFF", "surface_subtle": "#F8F6C8", "ink": "#2A3C78", "muted": "#66709A", "rule": "#A9B0CE", "accent": "#2A3C99", "accent2": "#F1E84E", "visual_primary": "#2A3C99", "visual_accent": "#F1E84E", "radius": 5, "border_width": 1, "content_width": 920, "section_gap": 42}
+    },
+    {
+      "name": "Violet Marker", "slug": "violet-marker", "level": "balanced", "formality": "low",
+      "vibe": "modern highlighter with controlled energy", "tags": ["brainstorm", "product", "workshop", "launch"],
+      "tokens": {"background": "#F7F8FA", "surface": "#FFFFFF", "surface_subtle": "#EFE8FA", "ink": "#111111", "muted": "#666463", "rule": "#C7B7D8", "accent": "#111111", "accent2": "#C5A1FF", "visual_primary": "#C5A1FF", "visual_accent": "#CFEE30", "radius": 7, "border_width": 1, "content_width": 920, "section_gap": 42}
+    },
+    {
+      "name": "Confetti Wedge", "slug": "confetti-wedge", "level": "bold", "formality": "low",
+      "vibe": "bright, upbeat and content-first", "tags": ["kickoff", "culture", "onboarding", "celebration", "team"],
+      "tokens": {"background": "#F4F8FB", "surface": "#FFFFFF", "surface_subtle": "#E7F2F1", "ink": "#111111", "muted": "#3A3C3E", "rule": "#A9C7C6", "accent": "#111111", "accent2": "#F8BED4", "visual_primary": "#62C0A5", "visual_accent": "#F8BED4", "radius": 12, "border_width": 1, "content_width": 940, "section_gap": 46}
+    },
+    {
+      "name": "Court Press", "slug": "court-press", "level": "bold", "formality": "low",
+      "vibe": "athletic, energetic and sequential", "tags": ["process", "milestone", "operations", "team", "launch"],
+      "tokens": {"background": "#F2EFE6", "surface": "#FFFFFF", "surface_subtle": "#E6EBD9", "ink": "#2F4224", "muted": "#65705F", "rule": "#66914C", "accent": "#52773C", "accent2": "#DA9EB7", "visual_primary": "#66914C", "visual_accent": "#DA9EB7", "radius": 0, "border_width": 2, "content_width": 920, "section_gap": 42}
+    },
+    {
+      "name": "Grove Block", "slug": "grove-block", "level": "bold", "formality": "medium",
+      "vibe": "brand-forward, confident and friendly", "tags": ["product", "feature", "system", "launch", "comparison"],
+      "tokens": {"background": "#F7F1EC", "surface": "#FCF6F1", "surface_subtle": "#F8E4EC", "ink": "#01623F", "muted": "#527262", "rule": "#008248", "accent": "#008248", "accent2": "#F6BDDA", "visual_primary": "#008248", "visual_accent": "#FCC715", "radius": 8, "border_width": 2, "content_width": 940, "section_gap": 42}
+    },
+    {
+      "name": "Mint Brut", "slug": "mint-brut", "level": "bold", "formality": "low",
+      "vibe": "playful, approachable and app-like", "tags": ["onboarding", "education", "product", "workflow", "team"],
+      "tokens": {"background": "#D0FDE4", "surface": "#FFFBF3", "surface_subtle": "#F8E0F0", "ink": "#000000", "muted": "#505752", "rule": "#000000", "accent": "#000000", "accent2": "#F888C8", "visual_primary": "#F888C8", "visual_accent": "#70F0A8", "radius": 8, "border_width": 2, "content_width": 940, "section_gap": 42}
+    },
+    {
+      "name": "Specimen Bold", "slug": "specimen-bold", "level": "bold", "formality": "low",
+      "vibe": "graphic, direct and high-energy", "tags": ["launch", "statement", "showcase", "comparison", "brand"],
+      "tokens": {"background": "#F3F3F3", "surface": "#FFFFFF", "surface_subtle": "#EEF8E9", "ink": "#2E302E", "muted": "#666A66", "rule": "#2E302E", "accent": "#2E302E", "accent2": "#3EC06A", "visual_primary": "#3EC06A", "visual_accent": "#FBEF4A", "radius": 0, "border_width": 2, "content_width": 940, "section_gap": 40}
+    },
+    {
+      "name": "Stencil & Tablet", "slug": "stencil-tablet", "level": "bold", "formality": "low",
+      "vibe": "retro print, modular and expressive", "tags": ["portfolio", "roadmap", "feature", "operations", "showcase"],
+      "tokens": {"background": "#E2DCC9", "surface": "#F4EFE0", "surface_subtle": "#E8DFC8", "ink": "#0A0A0A", "muted": "#615D52", "rule": "#2D7E73", "accent": "#2D7E73", "accent2": "#EE7A2E", "visual_primary": "#2D7E73", "visual_accent": "#EE7A2E", "radius": 12, "border_width": 1, "content_width": 940, "section_gap": 42}
+    }
+  ]
+}

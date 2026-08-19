@@ -115,6 +115,12 @@ def validate(skill_dir):
 
     if len(text.splitlines()) > MAX_SKILL_LINES:
         errors.append(f"SKILL.md exceeds the {MAX_SKILL_LINES}-line progressive-disclosure limit")
+    for required_term in (
+        "specific object -> source-backed action or change -> reader-observable result",
+        "Record the object-action/result map for each value-bearing title, heading, and lead",
+    ):
+        if required_term not in text:
+            errors.append(f"SKILL.md is missing the executable value-expression rule: {required_term}")
     for filename in sorted(FORBIDDEN_ROOT_DOCS):
         if (skill_dir / filename).exists():
             errors.append(f"installable skill contains auxiliary root document: {filename}")

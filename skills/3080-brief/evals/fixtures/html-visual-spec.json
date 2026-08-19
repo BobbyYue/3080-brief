@@ -1,0 +1,49 @@
+{
+  "title": "分层证据更强，但尚未达到扩大范围的阈值",
+  "language": "zh-CN",
+  "style": "Avocado Press",
+  "style_rationale": "数据型简报需要克制的双色系统和清晰的证据层级。",
+  "reading_path": "先比较证据强度，再检查扩大范围的门槛",
+  "render_target": "html",
+  "alt_text": "分层结果为68，高于汇总结果42，但仍低于75的扩大范围阈值，因此应先验证稳定性。",
+  "coverage_percent": 100,
+  "source_note": "Synthetic evaluation fixture; values are used only to validate the renderer.",
+  "blocks": [
+    {
+      "id": "B01",
+      "type": "bar",
+      "visual_role": "anchor",
+      "relationship": "comparison",
+      "render_target": "html",
+      "interaction": "none",
+      "claim_ids": ["C01", "C02"],
+      "title": "分层结果比汇总结果高26pp",
+      "alt_text": "分层结果68，汇总结果42，差异为26个百分点。",
+      "metric_scope": {"metric": "synthetic score", "unit": "points", "period": "evaluation fixture"},
+      "items": [
+        {"label": "汇总", "value": 42, "display": "42", "semantic_direction": "neutral"},
+        {"label": "分层", "value": 68, "display": "68", "semantic_direction": "favorable"}
+      ]
+    },
+    {
+      "id": "B02",
+      "type": "threshold",
+      "visual_role": "caveat",
+      "relationship": "threshold",
+      "render_target": "html",
+      "interaction": "none",
+      "claim_ids": ["C03", "C04"],
+      "title": "当前结果仍低于扩大范围阈值",
+      "alt_text": "当前值68，扩大范围所需阈值75。",
+      "metric_scope": {"metric": "synthetic score", "unit": "points", "period": "evaluation fixture"},
+      "minimum": 0,
+      "maximum": 100,
+      "threshold": 75,
+      "value": 68,
+      "semantic_direction": "warning",
+      "threshold_label": "阈值",
+      "value_label": "当前",
+      "note": "先验证稳定性，再决定是否扩大范围。"
+    }
+  ]
+}

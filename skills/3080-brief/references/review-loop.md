@@ -76,7 +76,7 @@ If any item affects the main decision, ask first.
 
 ## Three-Reviewer Subagent Protocol
 
-After the complete generated review draft has been recorded by `scripts/run_3080.py record-output`, create three role-specific, hash-locked packets with `scripts/run_3080.py prepare-review`, then send them to three reviewer executions at the same time. They must evaluate independently and must not see each other's comments before submitting their own verdicts.
+Before final output, create three role-specific, hash-locked packets using [review-packet-template.md](review-packet-template.md) and `scripts/build_review_packet.py --role all`, then send them to three reviewer subagents at the same time. They must evaluate independently and must not see each other's comments before submitting their own verdicts.
 
 The main agent must not expose, quote, summarize, hint at, or use any reviewer's comments in prompts to the other reviewers before all three reviews have been submitted.
 
@@ -88,7 +88,7 @@ Use three independent reviewer roles:
 
 1. **Reader Comprehension Reviewer**
    - Persona: mixed reader layer, including decision maker, cross-functional reader, domain reader, implementer, and capable novice.
-   - Focus: whether the document can be understood; whether the first opening line contains exactly one highest-level judgment; whether its 1–3 support lines contain only evidence, action, or boundary rather than a second peer conclusion; whether the opening works within 30 seconds and follows Pyramid Principle instead of a reusable template; whether the key-question table answers what readers most want to ask; whether the body follows SUCCESs Framework and Stepwise Information Delivery; whether Novice Reverse Review catches jargon/background gaps; and whether expression edits are minimal and contextual rather than driven by blanket word, punctuation, voice, or sentence bans.
+   - Focus: whether the document can be understood; whether the first opening line contains exactly one highest-level judgment; whether its 1–3 support lines contain only evidence, action, or boundary rather than a second peer conclusion; whether the opening works within 30 seconds and follows Pyramid Principle instead of a reusable template; whether value-bearing titles, headings, and leads identify their actual object and supported action, change, or result; whether the key-question table answers what readers most want to ask; whether the body follows SUCCESs Framework and Stepwise Information Delivery; whether Novice Reverse Review catches jargon/background gaps; and whether expression edits are minimal and contextual rather than driven by blanket word, punctuation, voice, or sentence bans.
 
 2. **Source Coverage And Grounding Reviewer**
    - Persona: source auditor.
@@ -115,8 +115,6 @@ Require each reviewer to return JSON only:
 ```json
 {
   "reviewer_role": "reader | source | visual",
-  "review_mode": "independent | self_check",
-  "reviewer_run_id": "unique execution ID",
   "artifact_set_id": "sha256-derived ID from the packet",
   "review_round": 1,
   "verdict": "PASS | FAIL",
@@ -129,8 +127,6 @@ Require each reviewer to return JSON only:
 ```
 
 Use role-specific binary gates instead of asking every reviewer to score every dimension. This reduces token use and avoids false precision while preserving strict failure behavior.
-
-For `standard` and `strict`, every report must use `review_mode: independent` and a distinct `reviewer_run_id`; aggregation fails when the three IDs are not unique. For `fast`, use `review_mode: self_check` and still produce three role-separated reports.
 
 ### PASS Criteria
 
@@ -161,6 +157,7 @@ Role-specific pass conditions:
   - The body has no `先回答关键问题`, `Key Questions First`, `术语与口径`, `Glossary`, `30 秒判断`, `30 秒读法`, or `30-second read` section heading.
   - The body does not use a fixed section order when the source logic calls for another sequence.
   - Body first-level headings are short judgment-style titles that advance the narrative, not long paragraph sentences or functional labels.
+  - Every value-bearing title, heading, and lead names the actual object plus a supported action, change, or result; method labels, process descriptions, generic benefit words, and negative problem statements do not stand in for that value.
   - The reader can understand within the first minute what problem is being solved.
   - The reader can simply restate the proposed solution.
   - The reader can remember one concrete case, scenario, or story when the source supports one.
@@ -202,8 +199,8 @@ If one or more reviewers fail, the main agent must merge required fixes across a
 
 Use this loop:
 
-1. Pass deterministic preflight and create the complete generated review draft.
-2. Record its live evidence, then build three role-specific, hash-locked reviewer packets.
+1. Draft v1.
+2. Build three role-specific, hash-locked reviewer packets.
 3. Three reviewers evaluate independently in parallel from their role-specific evidence.
 4. Do not aggregate, summarize, or share any review until all three reports are complete.
 5. Run `scripts/aggregate_reviews.py` to verify roles, artifact-set ID, round, verdicts, and blockers; then aggregate the three reports.
@@ -229,7 +226,7 @@ Use this wording:
 
 - **Standard (default)**: run every deterministic hard gate, one cluster-based expression scan, all three independent reviewers, and Primary Blind Reader Replay. Escalate additional readers only under the configured conditions.
 - **Strict**: use when explicitly requested or when conclusions affect material resources, policy/rules, causal claims, risk, or broad rollout. Before reviewer packets are built, replay every non-appendix P0/P1 protected relation against its source excerpt and confirm output assertion does not exceed evidence ceiling. Then run Standard review and configured reader escalation.
-- **Fast**: use only when the user explicitly prioritizes speed or asks to skip independent review. Still run every deterministic hard gate and one expression scan. Replace the three independent reviewers with three role-separated structured self-check reports against the same gates, skip Blind Reader Replay, and disclose both omissions. Never describe Fast output as independently reviewed.
+- **Fast**: use only when the user explicitly prioritizes speed or asks to skip independent review. Still run every deterministic hard gate and one expression scan. Replace the three independent reviewers with a lightweight self-check against the same role gates, skip Blind Reader Replay, and disclose both omissions. Never describe Fast output as independently reviewed.
 
 No profile may bypass source grounding, blocking clarification, relation/claim-strength gates, source language, appendix exclusion, the new-doc-only rule, TLDR structure, visual coverage, or format validation.
 
@@ -239,7 +236,7 @@ Audit review and Blind Reader Replay are sequential quality gates, not parallel 
 
 ## Final Output Rule
 
-Do not present a generated doc as final until `scripts/run_3080.py finalize` emits a PASS `delivery_receipt.json` and either:
+Do not present a generated doc as final until either:
 
 - All three reviewers return `PASS` and the required Blind Reader Replay completes without a blocking comprehension failure, or
 - The user explicitly asks to publish despite known unresolved issues.

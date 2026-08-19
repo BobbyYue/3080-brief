@@ -8,7 +8,7 @@
 
 [Chinese (Simplified)](README.zh-CN.md) · [Quick start](#quick-start) · [Worked example](docs/examples/claude-code-session-value.md) · [Latest release](https://github.com/BobbyYue/3080-brief/releases/latest)
 
-An open-source **AI Agent Skill** that turns source documents into reader-first decision briefs: a 30-second executive summary, one auditable visual, a key-question table, and a clear storyline. It preserves the source and can create a new brief in Feishu/Lark, Markdown, or Word/docx when the host supports that format.
+An open-source **AI Agent Skill** that turns source documents into reader-first decision briefs: a 30-second executive summary, one auditable visual, a key-question table, and a clear storyline. It preserves the source and can create a new brief in Feishu/Lark, Markdown, Word/docx, or self-contained HTML when the host supports that format.
 
 <p align="center"><strong>① Original article on the left → ② 3080 Brief output on the right</strong></p>
 
@@ -68,6 +68,7 @@ cover the core logic in one picture, and answer the reader's key questions in on
 - **Reader-first:** reorganizes material around what readers need to understand, trust, decide, or do.
 - **Core-value extraction:** separates decision-critical conclusions, evidence, risks, and actions from background noise.
 - **Clear storyline:** turns fragmented or technical source logic into a coherent argument.
+- **Concrete expression:** value-bearing titles, headings, and leads state the actual object and source-supported result instead of relying on method labels or generic claims.
 - **Visual reasoning:** uses one auditable picture to reveal the dominant relationships rather than decorate the page.
 - **Reliable delivery:** preserves the source, traces important claims, matches the output format, and verifies the final artifact.
 

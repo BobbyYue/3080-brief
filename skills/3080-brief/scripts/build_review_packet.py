@@ -12,11 +12,14 @@ ROLE_GATES = {
     "reader": [
         "The opening produces a useful judgment within 30 seconds without a fixed phrase template.",
         "The full rendered draft is readable, source-fit, and follows a coherent reasoning path.",
+        "Every value-bearing title, heading, and lead identifies the actual object plus a source-supported action, change, or result instead of relying on method labels or generic benefit language.",
         "Expression edits are minimal and contextual; legitimate technical terms, uncertainty, passive voice, neutral tone, and punctuation are not penalized in isolation.",
         "The title, TLDR, table, body, and visual use the declared output language; conversation language is not treated as an override.",
         "A capable newcomer can restate the problem, solution, memorable example, and next action when source-backed.",
         "The TLDR table answers real reader questions and does not become a terminology dump.",
+        "The body uses prose, lists, tables, and figures according to the content; it is neither a text wall nor a sequence of tables/cards without explanation.",
         "Decision-relevant directional values are understandable through accurate semantic color plus a redundant sign, arrow, label, or wording cue.",
+        "Critical conclusions, evidence, risks, and actions remain understandable without hover, animation, filtering, or opening a collapsed block.",
     ],
     "source": [
         "Every P0/P1 conclusion, metric, risk, and action is traceable to the supplied source outline or excerpt.",
@@ -32,9 +35,14 @@ ROLE_GATES = {
         "The visual spec maps every board block to source claim IDs and value-weighted board coverage is at least 80%.",
         "The visual language matches the declared document output language, except for source-native proper nouns and necessary terms.",
         "The preview uses content-fit visual encoding rather than boxes plus prose when chartable data exists.",
-        "The chosen style fits the source and is not banned; image2 is not an evidence carrier.",
+        "Exactly one allowed theme was selected from document type, audience, tone, relationship, and density; its rationale is content-based rather than a silent default.",
+        "The one-picture visual, body figures, and HTML page use the same theme while preserving the canonical semantic colors.",
         "The rendered board has a clear reading path and no visible clipping, overlap, overflow, or misleading precision.",
         "The body and whiteboard use the same source-grounded semantic mapping; mathematical sign alone does not determine favorable or unfavorable color.",
+        "Each figure uses a judgment title, preserves metric scope, labels decision-bearing values, and provides useful alt text when the target format supports it.",
+        "Missing values remain N/A rather than zero; scatter points, funnel stages, area, size, and flow magnitude are used only when source data supports them.",
+        "For HTML, the artifact is readable on desktop, mobile, and print; critical information is visible without interaction and no runtime resource is external.",
+        "For Feishu, body figures use editable native shapes, judgment titles, compact captions, and readable table widths/alignment.",
     ],
 }
 
@@ -80,7 +88,6 @@ def packet_for(role, args):
 - Role key: `{role}`
 - Reviewer role: {ROLE_NAMES[role]}
 - Review round: {args.round}
-- Review mode: {args.review_mode}
 - Artifact set ID: `{artifact_set_id}`
 - Isolation: do not request, infer, or reference another reviewer's opinion.
 
@@ -163,8 +170,6 @@ Return JSON only:
 ```json
 {{
   "reviewer_role": "{role}",
-  "review_mode": "{args.review_mode}",
-  "reviewer_run_id": "unique ID for this reviewer execution",
   "artifact_set_id": "{artifact_set_id}",
   "review_round": {args.round},
   "verdict": "PASS or FAIL",
@@ -198,7 +203,6 @@ def main():
     parser.add_argument("--whiteboard-preview", default="")
     parser.add_argument("--document-preview", default="")
     parser.add_argument("--round", type=int, default=1)
-    parser.add_argument("--review-mode", choices=["independent", "self_check"], default="independent")
     parser.add_argument("--output", required=True, help="Output file for one role, or directory for --role all")
     args = parser.parse_args()
 

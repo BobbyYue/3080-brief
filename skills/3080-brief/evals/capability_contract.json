@@ -19,16 +19,18 @@
   },
   "required_capability_ids": [
     "TRG-01",
-    "RUN-01",
     "SRC-01",
     "FMT-01",
     "LANG-01",
     "EVD-01",
     "EXP-01",
+    "VAL-01",
     "TLDR-01",
     "VIS-01",
+    "THEME-01",
+    "FSH-01",
+    "HTML-01",
     "DEP-01",
-    "HST-01",
     "REV-01",
     "RPL-01",
     "DEL-01",
@@ -42,22 +44,16 @@
       "enforced_by": ["config/3080-brief.json", "evals/trigger_cases.json", "scripts/run_evals.py"]
     },
     {
-      "id": "RUN-01",
-      "requirement": "Every production run uses one resumable state machine and cannot deliver before all ordered checkpoints pass.",
-      "owner": {"file": "config/3080-brief.json", "marker": "\"required_entrypoint\""},
-      "enforced_by": ["scripts/run_3080.py", "scripts/run_evals.py"]
-    },
-    {
       "id": "SRC-01",
       "requirement": "Create a new artifact and never modify the source.",
       "owner": {"file": "SKILL.md", "marker": "Create a new output. Never edit"},
-      "enforced_by": ["scripts/run_3080.py", "references/source-inventory-template.md"]
+      "enforced_by": ["scripts/preflight_check.py", "references/source-inventory-template.md"]
     },
     {
       "id": "FMT-01",
       "requirement": "Match output type to input type unless explicitly overridden.",
       "owner": {"file": "SKILL.md", "marker": "Match output type to input type"},
-      "enforced_by": ["references/output-format-rules.md", "scripts/preflight_check.py", "scripts/run_3080.py", "scripts/run_evals.py"]
+      "enforced_by": ["references/output-format-rules.md", "scripts/run_evals.py"]
     },
     {
       "id": "LANG-01",
@@ -69,7 +65,7 @@
       "id": "EVD-01",
       "requirement": "Source-back claims and preserve evidence boundaries.",
       "owner": {"file": "SKILL.md", "marker": "Source-back every number"},
-      "enforced_by": ["references/claim-ledger.schema.json", "references/evidence-and-risk-rules.md", "scripts/validate_claim_ledger.py", "scripts/run_3080.py"]
+      "enforced_by": ["references/claim-ledger.schema.json", "references/evidence-and-risk-rules.md", "scripts/build_review_packet.py"]
     },
     {
       "id": "EXP-01",
@@ -82,6 +78,18 @@
         "scripts/build_review_packet.py",
         "scripts/verify_reviewed_artifacts.py",
         "evals/expression_cases.json",
+        "scripts/run_evals.py"
+      ]
+    },
+    {
+      "id": "VAL-01",
+      "requirement": "Value-bearing titles, headings, and leads name the specific object and a source-supported action, change, or reader-observable result in natural language without deleting necessary terms, scope, evidence boundaries, or uncertainty.",
+      "owner": {"file": "references/source-faithful-expression.md", "marker": "## Make Value Expressions Concrete"},
+      "enforced_by": [
+        "SKILL.md",
+        "references/review-loop.md",
+        "scripts/build_review_packet.py",
+        "scripts/check_context_budget.py",
         "scripts/run_evals.py"
       ]
     },
@@ -102,7 +110,44 @@
       "id": "VIS-01",
       "requirement": "The visual reaches weighted coverage, preserves P0 claims, and uses quantitative encoding when required.",
       "owner": {"file": "config/3080-brief.json", "marker": "\"coverage\""},
-      "enforced_by": ["scripts/check_coverage.py", "scripts/validate_visual_spec.py", "scripts/preflight_check.py", "scripts/run_3080.py", "references/visual-spec.schema.json", "scripts/run_evals.py"]
+      "enforced_by": ["scripts/check_coverage.py", "scripts/validate_visual_spec.py", "references/visual-spec.schema.json", "scripts/run_evals.py"]
+    },
+    {
+      "id": "THEME-01",
+      "requirement": "Every visual output selects one allowed content-fit Beautiful Feishu theme with a rationale, and Feishu/HTML share it without remapping semantic colors.",
+      "owner": {"file": "references/theme-selection.md", "marker": "## Contract"},
+      "enforced_by": [
+        "assets/themes/beautiful-feishu-themes.json",
+        "scripts/theme_registry.py",
+        "scripts/validate_visual_spec.py",
+        "scripts/validate_html_output.py",
+        "scripts/run_evals.py"
+      ]
+    },
+    {
+      "id": "FSH-01",
+      "requirement": "Feishu output renders native XML from the shared reviewed brief, preserves editable source-grounded figures, and applies body readability gates.",
+      "owner": {"file": "references/feishu-doc-output.md", "marker": "## Body Visualization Rules"},
+      "enforced_by": [
+        "references/brief.schema.json",
+        "scripts/brief_model.py",
+        "scripts/build_feishu_brief.py",
+        "scripts/preflight_check.py",
+        "scripts/run_evals.py"
+      ]
+    },
+    {
+      "id": "HTML-01",
+      "requirement": "HTML output is independently implemented, offline, source-grounded, interaction-independent for critical content, responsive, printable, and driven by the approved visual spec.",
+      "owner": {"file": "references/html-visualization.md", "marker": "## Ownership Boundary"},
+      "enforced_by": [
+        "references/brief.schema.json",
+        "assets/html/brief.css",
+        "scripts/build_html_brief.py",
+        "scripts/preflight_check.py",
+        "scripts/validate_html_output.py",
+        "scripts/run_evals.py"
+      ]
     },
     {
       "id": "DEP-01",
@@ -111,16 +156,10 @@
       "enforced_by": ["scripts/check_dependencies.py", "scripts/install_optional_dependencies.py", "scripts/install_skill_dependency.py", "scripts/run_evals.py"]
     },
     {
-      "id": "HST-01",
-      "requirement": "Host-level support claims require real-agent Standard runs and actual PASS delivery receipts, not offline fixtures or successful installation alone.",
-      "owner": {"file": "evals/agent_acceptance.json", "marker": "\"Internal release qualification"},
-      "enforced_by": ["scripts/validate_agent_acceptance.py", "scripts/run_3080.py", "scripts/run_evals.py"]
-    },
-    {
       "id": "REV-01",
       "requirement": "Three independent reviewers use isolated, role-specific, hash-locked packets.",
       "owner": {"file": "config/3080-brief.json", "marker": "\"review_roles\""},
-      "enforced_by": ["references/review-loop.md", "scripts/build_review_packet.py", "scripts/aggregate_reviews.py", "scripts/run_3080.py", "scripts/run_evals.py"]
+      "enforced_by": ["references/review-loop.md", "scripts/build_review_packet.py", "scripts/aggregate_reviews.py", "scripts/run_evals.py"]
     },
     {
       "id": "RPL-01",
@@ -132,7 +171,7 @@
       "id": "DEL-01",
       "requirement": "Delivery verifies format, language, source integrity, visual state, reviews, replay, and artifact hashes.",
       "owner": {"file": "SKILL.md", "marker": "## Delivery"},
-      "enforced_by": ["scripts/verify_reviewed_artifacts.py", "scripts/run_3080.py", "scripts/run_evals.py"]
+      "enforced_by": ["scripts/verify_reviewed_artifacts.py", "scripts/run_evals.py"]
     },
     {
       "id": "CTX-01",

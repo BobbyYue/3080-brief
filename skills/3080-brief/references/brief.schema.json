@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "3080 Brief Structured Document",
+  "type": "object",
+  "required": ["title", "language", "source", "opening", "questions", "body"],
+  "$defs": {
+    "rich_text": {
+      "oneOf": [
+        {"type": "string"},
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["text"],
+            "properties": {
+              "text": {"type": "string"},
+              "strong": {"type": "boolean"},
+              "semantic_direction": {"enum": ["favorable", "unfavorable", "warning", "neutral", "unknown"]}
+            },
+            "additionalProperties": false
+          }
+        }
+      ]
+    }
+  },
+  "properties": {
+    "title": {"type": "string", "pattern": "^3080 Brief"},
+    "language": {"type": "string", "minLength": 2},
+    "context": {
+      "type": "object",
+      "properties": {
+        "document_type": {"type": "string"},
+        "audience": {"type": "string"},
+        "tone": {"type": "string"},
+        "density": {"enum": ["compact", "balanced", "deep"]}
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {"title": {"type": "string"}, "url": {"type": "string"}},
+      "additionalProperties": false
+    },
+    "opening": {
+      "type": "object",
+      "required": ["lines"],
+      "properties": {"lines": {"type": "array", "minItems": 2, "maxItems": 4, "items": {"$ref": "#/$defs/rich_text"}}},
+      "additionalProperties": false
+    },
+    "questions": {
+      "type": "array", "minItems": 3, "maxItems": 5,
+      "items": {
+        "type": "object", "required": ["question", "conclusion", "why"],
+        "properties": {
+          "question": {"$ref": "#/$defs/rich_text"},
+          "conclusion": {"$ref": "#/$defs/rich_text"},
+          "why": {"$ref": "#/$defs/rich_text"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "body": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["heading", "blocks"],
+        "properties": {
+          "heading": {"$ref": "#/$defs/rich_text"},
+          "blocks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": {"enum": ["paragraph", "bullets", "callout", "table", "figure", "details"]},
+                "text": {"$ref": "#/$defs/rich_text"},
+                "items": {"type": "array", "items": {"$ref": "#/$defs/rich_text"}},
+                "title": {"$ref": "#/$defs/rich_text"},
+                "tone": {"enum": ["favorable", "unfavorable", "warning", "neutral", "unknown"]},
+                "headers": {"type": "array", "items": {"$ref": "#/$defs/rich_text"}},
+                "rows": {"type": "array", "items": {"type": "array", "items": {"$ref": "#/$defs/rich_text"}}},
+                "widths": {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}},
+                "visual_block_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+                "svg": {"type": "string"},
+                "alt_text": {"type": "string"},
+                "note": {"$ref": "#/$defs/rich_text"},
+                "priority": {"enum": ["P2"]},
+                "summary": {"$ref": "#/$defs/rich_text"},
+                "paragraphs": {"type": "array", "items": {"$ref": "#/$defs/rich_text"}},
+                "blocks": {"type": "array"}
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

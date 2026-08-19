@@ -1,19 +1,5 @@
 {
-  "version": 8,
-  "execution": {
-    "required_entrypoint": "scripts/run_3080.py",
-    "state_file": "run_state.json",
-    "delivery_receipt": "delivery_receipt.json",
-    "required_stages": ["grounded", "preflight", "review_draft", "review", "finalized"],
-    "delivery_allowed_when": "run_state.delivery_allowed=true",
-    "source_freeze": "sha256_before_equals_after",
-    "feishu_native_whiteboard_evidence": [
-      "whiteboard_block_id_in_live_document",
-      "whiteboard_token_in_live_query",
-      "nonempty_live_preview"
-    ],
-    "standard_review_mode": "independent"
-  },
+  "version": 10,
   "language_policy": {
     "default_output_basis": "source_primary_language",
     "allowed_override_basis": "explicit_user_request",
@@ -64,6 +50,33 @@
   },
   "whiteboard_render": {
     "max_viewbox_aspect_ratio": 1.7
+  },
+  "theme_policy": {
+    "required": true,
+    "registry": "assets/themes/beautiful-feishu-themes.json",
+    "source_library": "beautiful-feishu-whiteboard",
+    "same_theme_for_visual_and_html": true,
+    "selection_basis": ["document_type", "audience", "tone", "information_relationship", "density"],
+    "default_theme_allowed": false,
+    "content_fit_rationale_required": true
+  },
+  "feishu_render": {
+    "structured_builder": "scripts/build_feishu_brief.py",
+    "max_body_callouts": 1,
+    "figure_caption_required": true,
+    "body_visualization_text_threshold": 1600,
+    "dense_section_requires_intro": true,
+    "consecutive_tables_allowed": false
+  },
+  "html_render": {
+    "offline_required": true,
+    "external_runtime_resources_allowed": false,
+    "critical_information_may_require_interaction": false,
+    "collapsed_priority_allowed": ["P2"],
+    "minimum_body_font_px": 14,
+    "minimum_caption_font_px": 12,
+    "required_viewports_px": [390, 1440],
+    "print_validation_required": true
   },
   "tldr": {
     "default_title": "TLDR",
