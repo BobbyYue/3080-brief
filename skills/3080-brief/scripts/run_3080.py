@@ -20,8 +20,8 @@ STAGES = [
     "preflight",
     "review_draft",
     "visual_replay",
-    "audit_review",
     "reader_replay",
+    "audit_review",
     "finalized",
 ]
 
@@ -93,7 +93,7 @@ def clear_from(state, stage):
     index = STAGES.index(stage)
     for name in STAGES[index:]:
         state.get("completed", {}).pop(name, None)
-    if index <= STAGES.index("audit_review"):
+    if index <= STAGES.index("visual_replay"):
         state.pop("review_preparation", None)
     state["status"] = "IN_PROGRESS"
     state["delivery_allowed"] = False
@@ -144,10 +144,10 @@ def next_action(state):
         "initialized": "Fetch the source, create source_before/source_non_appendix/source_inventory/claim_ledger, then run `run_3080.py ground`.",
         "grounded": "Create the draft and visual spec, then run `run_3080.py preflight`.",
         "preflight": "Create the complete review draft in the target format, capture live evidence, then run `run_3080.py record-output`.",
-        "review_draft": "Run `run_3080.py record-visual-replay` before preparing audit packets.",
-        "visual_replay": "Run `run_3080.py prepare-review`, execute the three isolated audit packets, then run `run_3080.py record-review`.",
-        "audit_review": "Run the Primary Blind Reader on the approved artifact, apply the escalation gate, then run `run_3080.py record-reader`.",
-        "reader_replay": "Re-fetch the source and generated output, then run `run_3080.py finalize`.",
+        "review_draft": "Run `run_3080.py record-visual-replay` before review readiness.",
+        "visual_replay": "Run `run_3080.py prepare-review`, then run the Primary Blind Reader and `run_3080.py record-reader` before launching the audit.",
+        "reader_replay": "Execute the three isolated audit packets, then run `run_3080.py record-review`.",
+        "audit_review": "Re-fetch the source and generated output, then run `run_3080.py finalize`.",
         "finalized": "Delivery is allowed; return the generated output reference and delivery_receipt.json summary.",
     }
     return actions[stage]
@@ -395,6 +395,69 @@ def command_record_visual_replay(args):
     print_status(state)
 
 
+def prepared_artifact_set_id(state, preparation):
+    grounding = state["completed"]["grounded"]["artifacts"]
+    preflight = state["completed"]["preflight"]["artifacts"]
+    hashes = {
+        "source_snapshot": grounding["source_snapshot"]["sha256"],
+        "inventory": grounding["inventory"]["sha256"],
+        "claim_ledger": grounding["claim_ledger"]["sha256"],
+        "tldr": preparation["tldr"]["sha256"],
+        "body": preparation["body"]["sha256"],
+        "draft": preflight["draft"]["sha256"],
+        "visual_spec": preflight["visual_spec"]["sha256"],
+        "html_design_plan": preparation.get("html_design_plan", {}).get("sha256"),
+        "validation_notes": preparation["validation_notes"]["sha256"],
+        "whiteboard_preview": preparation["visual_preview"]["sha256"],
+        "document_preview": preparation["document_preview"]["sha256"],
+        "source_outline": preparation["source_outline"]["sha256"],
+        "source_excerpts": preparation["source_excerpts"]["sha256"],
+        "readiness_receipt": preparation["readiness_receipt"]["sha256"],
+    }
+    hashes = {key: value for key, value in hashes.items() if value}
+    return hashlib.sha256(json.dumps(hashes, sort_keys=True).encode("utf-8")).hexdigest()
+
+
+def build_prepared_review_packets(state, preparation):
+    grounding = state["completed"]["grounded"]["artifacts"]
+    preflight = state["completed"]["preflight"]["artifacts"]
+    packet_dir = Path(preparation["packet_dir"])
+    arguments = [
+        "--role", "all",
+        "--source-snapshot", grounding["source_snapshot"]["path"],
+        "--inventory", grounding["inventory"]["path"],
+        "--claim-ledger", grounding["claim_ledger"]["path"],
+        "--tldr", preparation["tldr"]["path"],
+        "--body", preparation["body"]["path"],
+        "--draft", preflight["draft"]["path"],
+        "--source-outline", preparation["source_outline"]["path"],
+        "--source-excerpts", preparation["source_excerpts"]["path"],
+        "--visual-spec", preflight["visual_spec"]["path"],
+        "--validation-notes", preparation["validation_notes"]["path"],
+        "--whiteboard-preview", preparation["visual_preview"]["path"],
+        "--document-preview", preparation["document_preview"]["path"],
+        "--readiness-receipt", preparation["readiness_receipt"]["path"],
+        "--round", preparation["round"],
+        "--output", packet_dir,
+    ]
+    if preparation.get("user_request"):
+        arguments.extend(("--user-request", preparation["user_request"]))
+    if preparation.get("whiteboard_summary"):
+        arguments.extend(("--whiteboard-summary", preparation["whiteboard_summary"]))
+    if preparation.get("html_design_plan"):
+        arguments.extend(("--html-design-plan", preparation["html_design_plan"]["path"]))
+    run_script("build_review_packet.py", *arguments)
+    reader_packet = require_file(packet_dir / "review_packet_reader.md", "reader audit packet", 20)
+    marker = "Artifact set ID: `"
+    packet_text = reader_packet.read_text(encoding="utf-8")
+    packet_id = packet_text.split(marker, 1)[1].split("`", 1)[0]
+    if packet_id != preparation["artifact_set_id"]:
+        raise ContractError("audit packet artifact set differs from review readiness")
+    for role in ("source", "visual"):
+        require_file(packet_dir / f"review_packet_{role}.md", f"{role} audit packet", 20)
+    preparation["audit_packets_ready"] = True
+
+
 def command_prepare_review(args):
     state, path = load_state(args.run_dir)
     require_stage(state, "visual_replay")
@@ -412,46 +475,53 @@ def command_prepare_review(args):
         or review_draft["artifacts"].get("one_picture_preview")
     )
     visual_preview = verify_artifact_record(visual_preview_record, "one-picture preview")
-    validation_notes = require_file(args.validation_notes, "validation notes", 20) if args.validation_notes else None
-    packet_dir = Path(args.run_dir).expanduser().resolve() / f"review_round_{args.round}"
-    arguments = [
-        "--role", "all",
+    validation_notes = require_file(args.validation_notes, "validation notes", 20)
+    source_outline = require_file(
+        args.source_outline or frozen_grounding["source_snapshot"],
+        "non-appendix source outline",
+        20,
+    )
+    source_excerpts = require_file(
+        args.source_excerpts or frozen_grounding["source_snapshot"],
+        "P0/P1 source excerpts",
+        20,
+    )
+    readiness_receipt = Path(args.run_dir).expanduser().resolve() / f"review_readiness_round_{args.round}.json"
+    readiness_arguments = [
         "--source-snapshot", frozen_grounding["source_snapshot"],
         "--inventory", frozen_grounding["inventory"],
         "--claim-ledger", frozen_grounding["claim_ledger"],
         "--tldr", tldr,
         "--body", body,
         "--draft", frozen_preflight["draft"],
-        "--source-outline", args.source_outline or frozen_grounding["source_snapshot"],
-        "--source-excerpts", args.source_excerpts or frozen_grounding["source_snapshot"],
-        "--visual-spec", frozen_preflight["visual_spec"],
-        "--whiteboard-preview", visual_preview,
+        "--source-outline", source_outline,
+        "--source-excerpts", source_excerpts,
+        "--validation-notes", validation_notes,
         "--document-preview", document_preview,
-        "--round", args.round,
-        "--output", packet_dir,
+        "--visual-spec", frozen_preflight["visual_spec"],
+        "--visual-preview", visual_preview,
+        "--output", readiness_receipt,
     ]
-    if args.user_request:
-        arguments.extend(("--user-request", args.user_request))
-    if args.whiteboard_summary:
-        arguments.extend(("--whiteboard-summary", args.whiteboard_summary))
     if frozen_preflight.get("html_design"):
-        arguments.extend(("--html-design-plan", frozen_preflight["html_design"]))
-    if validation_notes:
-        arguments.extend(("--validation-notes", validation_notes))
-    run_script("build_review_packet.py", *arguments)
-    reader_packet = (packet_dir / "review_packet_reader.md").read_text(encoding="utf-8")
-    marker = "Artifact set ID: `"
-    artifact_set_id = reader_packet.split(marker, 1)[1].split("`", 1)[0]
-    clear_from(state, "audit_review")
+        readiness_arguments.extend(("--html-design-plan", frozen_preflight["html_design"]))
+    run_script("validate_review_readiness.py", *readiness_arguments)
+    packet_dir = Path(args.run_dir).expanduser().resolve() / f"review_round_{args.round}"
+    clear_from(state, "reader_replay")
     state["review_preparation"] = {
         "round": args.round,
-        "artifact_set_id": artifact_set_id,
         "mode": "self_check" if state["profile"] == "fast" else "independent",
         "tldr": artifact(tldr, "TLDR review artifact", 20),
         "body": artifact(body, "body review artifact", 20),
         "document_preview": artifact(document_preview, "rendered document preview", 100),
         "visual_preview": artifact(visual_preview, "one-picture preview", 100),
+        "source_outline": artifact(source_outline, "non-appendix source outline", 20),
+        "source_excerpts": artifact(source_excerpts, "P0/P1 source excerpts", 20),
+        "readiness_receipt": artifact(readiness_receipt, "review readiness receipt", 20),
+        "validation_notes": artifact(validation_notes, "validation notes", 20),
         "packet_dir": str(packet_dir),
+        "audit_packets_ready": False,
+        "user_request": args.user_request,
+        "whiteboard_summary": args.whiteboard_summary,
     }
     if frozen_preflight.get("html_design"):
         state["review_preparation"]["html_design_plan"] = artifact(
@@ -459,12 +529,16 @@ def command_prepare_review(args):
             "HTML design plan",
             20,
         )
-    if validation_notes:
-        state["review_preparation"]["validation_notes"] = artifact(
-            validation_notes,
-            "validation notes",
-            20,
-        )
+    artifact_set_id = prepared_artifact_set_id(state, state["review_preparation"])
+    state["review_preparation"]["artifact_set_id"] = artifact_set_id
+    if state["profile"] == "fast":
+        state["completed"]["reader_replay"] = {
+            "at": now_utc(),
+            "mode": "skipped_fast",
+            "artifact_set_id": artifact_set_id,
+            "artifacts": {},
+        }
+        build_prepared_review_packets(state, state["review_preparation"])
     save_state(state, path)
     print(json.dumps(state["review_preparation"], ensure_ascii=False, indent=2))
 
@@ -492,15 +566,33 @@ def validate_blind_reader(path, artifact_set_id, expected_role):
 
 def command_record_review(args):
     state, path = load_state(args.run_dir)
-    require_stage(state, "visual_replay")
+    require_stage(state, "reader_replay")
     preparation = state.get("review_preparation")
     if not preparation:
         raise ContractError("review packets are missing; run prepare-review first")
-    for label in ("tldr", "body", "document_preview", "visual_preview"):
+    for label in (
+        "tldr",
+        "body",
+        "document_preview",
+        "visual_preview",
+        "source_outline",
+        "source_excerpts",
+        "readiness_receipt",
+        "validation_notes",
+    ):
         verify_artifact_record(preparation[label], label)
-    for label in ("html_design_plan", "validation_notes"):
+    for label in ("html_design_plan",):
         if preparation.get(label):
             verify_artifact_record(preparation[label], label)
+    reader_replay = state["completed"]["reader_replay"]
+    verify_group(reader_replay["artifacts"], tuple(reader_replay["artifacts"]))
+    if reader_replay.get("artifact_set_id") != preparation.get("artifact_set_id"):
+        raise ContractError("Blind Reader Replay does not match the prepared artifact set")
+    if not preparation.get("audit_packets_ready"):
+        raise ContractError("audit packets are not ready; complete Blind Reader Replay first")
+    packet_dir = Path(preparation["packet_dir"])
+    for role in ("reader", "source", "visual"):
+        require_file(packet_dir / f"review_packet_{role}.md", f"{role} audit packet", 20)
     reviews = [
         require_file(args.reader_review, "reader review", 20),
         require_file(args.source_review, "source review", 20),
@@ -530,29 +622,34 @@ def command_record_review(args):
         "artifact_set_id": preparation["artifact_set_id"],
         "artifacts": records,
     }
-    if state["profile"] == "fast":
-        state["completed"]["reader_replay"] = {
-            "at": now_utc(),
-            "mode": "skipped_fast",
-            "artifact_set_id": preparation["artifact_set_id"],
-            "artifacts": {},
-        }
     save_state(state, path)
     print_status(state)
 
 
 def command_record_reader(args):
     state, path = load_state(args.run_dir)
-    require_stage(state, "audit_review")
+    require_stage(state, "visual_replay")
     if state["profile"] == "fast":
         raise ContractError("Fast profile skips Blind Reader Replay and records that limitation automatically")
     preparation = state.get("review_preparation")
-    audit = state["completed"]["audit_review"]
-    verify_group(audit["artifacts"], tuple(audit["artifacts"]))
-    if not preparation or audit["artifact_set_id"] != preparation.get("artifact_set_id"):
-        raise ContractError("audit result does not match the prepared artifact set")
+    if not preparation:
+        raise ContractError("review readiness is missing; run prepare-review first")
+    for label in (
+        "tldr",
+        "body",
+        "document_preview",
+        "visual_preview",
+        "source_outline",
+        "source_excerpts",
+        "readiness_receipt",
+        "validation_notes",
+    ):
+        verify_artifact_record(preparation[label], label)
+    for label in ("html_design_plan",):
+        if preparation.get(label):
+            verify_artifact_record(preparation[label], label)
     if not args.blind_reader_result:
-        raise ContractError("standard/strict profile requires --blind-reader-result after audit PASS")
+        raise ContractError("standard/strict profile requires --blind-reader-result before audit")
     records = {
         "blind_reader_result": validate_blind_reader(
             args.blind_reader_result,
@@ -581,6 +678,7 @@ def command_record_reader(args):
         "artifact_set_id": preparation["artifact_set_id"],
         "artifacts": records,
     }
+    build_prepared_review_packets(state, preparation)
     save_state(state, path)
     print_status(state)
 
@@ -607,12 +705,15 @@ def verify_reviewed_set(state):
         "--validation-notes", validation_notes,
         "--whiteboard-preview", preparation["visual_preview"]["path"],
         "--document-preview", preparation["document_preview"]["path"],
+        "--source-outline", preparation["source_outline"]["path"],
+        "--source-excerpts", preparation["source_excerpts"]["path"],
+        "--readiness-receipt", preparation["readiness_receipt"]["path"],
     )
 
 
 def command_finalize(args):
     state, path = load_state(args.run_dir)
-    require_stage(state, "reader_replay")
+    require_stage(state, "audit_review")
     grounding = state["completed"]["grounded"]["artifacts"]
     preflight = state["completed"]["preflight"]["artifacts"]
     review_draft = state["completed"]["review_draft"]
@@ -686,13 +787,22 @@ def command_finalize(args):
 def command_status(args):
     state, _ = load_state(args.run_dir)
     if state.get("delivery_allowed"):
-        for stage in ("grounded", "preflight", "review_draft", "visual_replay", "audit_review", "reader_replay"):
+        for stage in ("grounded", "preflight", "review_draft", "visual_replay", "reader_replay", "audit_review"):
             records = state.get("completed", {}).get(stage, {}).get("artifacts", {})
             verify_group(records, tuple(records))
         preparation = state.get("review_preparation", {})
-        for label in ("tldr", "body", "document_preview", "visual_preview"):
+        for label in (
+            "tldr",
+            "body",
+            "document_preview",
+            "visual_preview",
+            "source_outline",
+            "source_excerpts",
+            "readiness_receipt",
+            "validation_notes",
+        ):
             verify_artifact_record(preparation.get(label), label)
-        for label in ("html_design_plan", "validation_notes"):
+        for label in ("html_design_plan",):
             if preparation.get(label):
                 verify_artifact_record(preparation[label], label)
         finalized = state.get("completed", {}).get("finalized", {})
@@ -757,7 +867,7 @@ def build_parser():
     prepare.add_argument("--source-excerpts", default="")
     prepare.add_argument("--whiteboard-summary", default="")
     prepare.add_argument("--document-preview", required=True)
-    prepare.add_argument("--validation-notes", default="")
+    prepare.add_argument("--validation-notes", required=True)
     prepare.add_argument("--round", type=int, default=1)
     prepare.set_defaults(handler=command_prepare_review)
 

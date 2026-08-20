@@ -32,6 +32,7 @@
     "HTML-01",
     "HTMLKIT-01",
     "DEP-01",
+    "EFF-01",
     "REV-01",
     "VBR-01",
     "RPL-01",
@@ -176,10 +177,22 @@
       "enforced_by": ["scripts/check_dependencies.py", "scripts/install_optional_dependencies.py", "scripts/install_skill_dependency.py", "scripts/run_evals.py"]
     },
     {
+      "id": "EFF-01",
+      "requirement": "Evidence and review inputs are complete before rendering or delegation; independent artifacts use separate concurrent lanes; the normal path spends one full audit batch and reruns work by change impact.",
+      "owner": {"file": "references/execution-efficiency.md", "marker": "## One Full Audit On The Normal Path"},
+      "enforced_by": [
+        "config/3080-brief.json",
+        "scripts/validate_review_readiness.py",
+        "scripts/build_review_packet.py",
+        "scripts/verify_reviewed_artifacts.py",
+        "scripts/run_evals.py"
+      ]
+    },
+    {
       "id": "REV-01",
       "requirement": "Three independent reviewers use isolated, role-specific, hash-locked packets.",
       "owner": {"file": "config/3080-brief.json", "marker": "\"review_roles\""},
-      "enforced_by": ["references/review-loop.md", "scripts/build_review_packet.py", "scripts/aggregate_reviews.py", "scripts/run_evals.py"]
+      "enforced_by": ["references/review-loop.md", "scripts/validate_review_readiness.py", "scripts/build_review_packet.py", "scripts/aggregate_reviews.py", "scripts/run_evals.py"]
     },
     {
       "id": "VBR-01",
@@ -195,7 +208,7 @@
     },
     {
       "id": "RPL-01",
-      "requirement": "Blind reader replay starts after audit PASS and preserves role isolation.",
+      "requirement": "Full-artifact Blind Reader Replay stabilizes comprehension before the complete audit and preserves role isolation.",
       "owner": {"file": "config/3080-brief.json", "marker": "\"blind_reader_replay\""},
       "enforced_by": ["references/blind-reader-replay.md", "scripts/run_evals.py"]
     },

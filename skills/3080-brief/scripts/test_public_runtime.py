@@ -125,12 +125,19 @@ def main():
             "--visual-replay-result",
             visual_replay,
         )
+        validation_notes = workspace / "validation-notes.md"
+        validation_notes.write_text(
+            "Deterministic HTML, visual, source, and responsive checks passed.\n",
+            encoding="utf-8",
+        )
         run(
             SCRIPTS / "run_3080.py",
             "prepare-review",
             run_dir,
             "--document-preview",
             output,
+            "--validation-notes",
+            validation_notes,
         )
         state = json.loads((run_dir / "run_state.json").read_text(encoding="utf-8"))
         artifact_set_id = state["review_preparation"]["artifact_set_id"]
@@ -151,17 +158,6 @@ def main():
                 ],
             },
         )
-        blocked = run(
-            SCRIPTS / "run_3080.py",
-            "record-reader",
-            run_dir,
-            "--blind-reader-result",
-            primary_reader,
-            expect=3,
-        )
-        if "audit_review" not in blocked.stderr:
-            raise RuntimeError("Blind Reader Replay was not blocked before audit review PASS")
-
         review_paths = []
         for role in ("reader", "source", "visual"):
             review_path = workspace / f"{role}-review.json"
@@ -182,6 +178,27 @@ def main():
                 },
             )
             review_paths.append(review_path)
+        blocked = run(
+            SCRIPTS / "run_3080.py",
+            "record-review",
+            run_dir,
+            "--reader-review",
+            review_paths[0],
+            "--source-review",
+            review_paths[1],
+            "--visual-review",
+            review_paths[2],
+            expect=3,
+        )
+        if "reader_replay" not in blocked.stderr:
+            raise RuntimeError("final audit was not blocked before Blind Reader Replay PASS")
+        run(
+            SCRIPTS / "run_3080.py",
+            "record-reader",
+            run_dir,
+            "--blind-reader-result",
+            primary_reader,
+        )
         run(
             SCRIPTS / "run_3080.py",
             "record-review",
@@ -192,13 +209,6 @@ def main():
             review_paths[1],
             "--visual-review",
             review_paths[2],
-        )
-        run(
-            SCRIPTS / "run_3080.py",
-            "record-reader",
-            run_dir,
-            "--blind-reader-result",
-            primary_reader,
         )
         run(
             SCRIPTS / "run_3080.py",

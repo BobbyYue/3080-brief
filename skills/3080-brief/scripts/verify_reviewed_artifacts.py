@@ -27,6 +27,9 @@ def main():
     parser.add_argument("--validation-notes", default="")
     parser.add_argument("--whiteboard-preview", default="")
     parser.add_argument("--document-preview", default="")
+    parser.add_argument("--source-outline", required=True)
+    parser.add_argument("--source-excerpts", required=True)
+    parser.add_argument("--readiness-receipt", required=True)
     args = parser.parse_args()
 
     reviewed = json.loads(Path(args.review_result).read_text(encoding="utf-8"))
@@ -42,6 +45,9 @@ def main():
         "validation_notes": digest(args.validation_notes),
         "whiteboard_preview": digest(args.whiteboard_preview),
         "document_preview": digest(args.document_preview),
+        "source_outline": digest(args.source_outline),
+        "source_excerpts": digest(args.source_excerpts),
+        "readiness_receipt": digest(args.readiness_receipt),
     }
     hashes = {key: value for key, value in hashes.items() if value}
     artifact_set_id = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode("utf-8")).hexdigest()

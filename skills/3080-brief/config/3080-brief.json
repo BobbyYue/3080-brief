@@ -1,5 +1,5 @@
 {
-  "version": 17,
+  "version": 18,
   "reading_path_contract": {
     "required": true,
     "contract_version": "1.0",
@@ -317,6 +317,7 @@
     "failure_restart": "visualize_then_deterministic_gates"
   },
   "blind_reader_replay": {
+    "position": "after_visual_replay_before_audit",
     "question_count": 3,
     "primary_role": "primary",
     "roles": {
@@ -332,5 +333,15 @@
       "primary_cannot_judge_conclusion_feasibility",
       "conclusion_affects_resources_risk_or_broad_rollout"
     ]
+  },
+  "execution_efficiency": {
+    "batch_scope_before_build": true,
+    "separate_artifact_lanes": true,
+    "review_readiness_receipt_required": true,
+    "normal_full_audit_batches_per_artifact": 1,
+    "extra_full_batch_requires_prior_failure": true,
+    "merge_all_review_fixes_before_revision": true,
+    "change_impact_rerun_required": true,
+    "stop_on_missing_external_input": true
   }
 }

@@ -86,6 +86,8 @@ def main():
         raise SystemExit("visual review packet omitted the visible-coverage replay gate")
     if "Visual Blind Replay is a separate earlier gate" not in (SKILL / "references" / "review-packet-template.md").read_text(encoding="utf-8"):
         raise SystemExit("visual audit packet does not preserve Visual Blind Replay isolation")
+    if not (SCRIPTS / "validate_review_readiness.py").is_file():
+        raise SystemExit("review readiness validator is missing")
 
     run(sys.executable, str(SCRIPTS / "validate_skill.py"), str(SKILL))
     run(sys.executable, str(SCRIPTS / "check_context_budget.py"), str(SKILL))
@@ -883,6 +885,31 @@ def main():
         if "conflicting semantic color" not in semantic_failure.stdout:
             raise SystemExit("preflight did not reject conflicting body semantic color")
 
+        source_outline = tmp_path / "source-outline.md"
+        source_outline.write_text("# Synthetic non-appendix outline\n\nP0 and P1 evidence is present.\n", encoding="utf-8")
+        source_excerpts = tmp_path / "source-excerpts.md"
+        source_excerpts.write_text("# Synthetic P0/P1 excerpts\n\nThe fixture preserves its source statements.\n", encoding="utf-8")
+        validation_notes = tmp_path / "validation-notes.md"
+        validation_notes.write_text("Deterministic HTML, visual, and responsive checks passed.\n", encoding="utf-8")
+        readiness_receipt = tmp_path / "review-readiness.json"
+        run(
+            sys.executable,
+            str(SCRIPTS / "validate_review_readiness.py"),
+            "--source-snapshot", str(FIXTURES / "source-data-analysis.md"),
+            "--inventory", str(SKILL / "references" / "source-inventory-template.md"),
+            "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
+            "--tldr", str(FIXTURES / "valid-brief.md"),
+            "--body", str(FIXTURES / "valid-brief.md"),
+            "--draft", str(FIXTURES / "valid-brief.md"),
+            "--source-outline", str(source_outline),
+            "--source-excerpts", str(source_excerpts),
+            "--validation-notes", str(validation_notes),
+            "--document-preview", str(rich_html_output),
+            "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
+            "--html-design-plan", str(FIXTURES / "html-design.json"),
+            "--visual-preview", str(rich_html_output),
+            "--output", str(readiness_receipt),
+        )
         packets = tmp_path / "packets"
         run(
             sys.executable,
@@ -894,13 +921,43 @@ def main():
             "--tldr", str(FIXTURES / "valid-brief.md"),
             "--body", str(FIXTURES / "valid-brief.md"),
             "--draft", str(FIXTURES / "valid-brief.md"),
-            "--source-outline", "Synthetic non-appendix outline",
-            "--source-excerpts", "Synthetic P0/P1 excerpts",
+            "--source-outline", str(source_outline),
+            "--source-excerpts", str(source_excerpts),
             "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
             "--html-design-plan", str(FIXTURES / "html-design.json"),
+            "--validation-notes", str(validation_notes),
+            "--whiteboard-preview", str(rich_html_output),
             "--document-preview", str(rich_html_output),
+            "--readiness-receipt", str(readiness_receipt),
             "--output", str(packets),
         )
+        original_notes = validation_notes.read_text(encoding="utf-8")
+        validation_notes.write_text(original_notes + "stale change\n", encoding="utf-8")
+        stale_packets = tmp_path / "stale-packets"
+        stale_failure = run(
+            sys.executable,
+            str(SCRIPTS / "build_review_packet.py"),
+            "--role", "all",
+            "--source-snapshot", str(FIXTURES / "source-data-analysis.md"),
+            "--inventory", str(SKILL / "references" / "source-inventory-template.md"),
+            "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
+            "--tldr", str(FIXTURES / "valid-brief.md"),
+            "--body", str(FIXTURES / "valid-brief.md"),
+            "--draft", str(FIXTURES / "valid-brief.md"),
+            "--source-outline", str(source_outline),
+            "--source-excerpts", str(source_excerpts),
+            "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
+            "--html-design-plan", str(FIXTURES / "html-design.json"),
+            "--validation-notes", str(validation_notes),
+            "--whiteboard-preview", str(rich_html_output),
+            "--document-preview", str(rich_html_output),
+            "--readiness-receipt", str(readiness_receipt),
+            "--output", str(stale_packets),
+            expect=1,
+        )
+        if "changed after readiness validation" not in (stale_failure.stdout + stale_failure.stderr):
+            raise SystemExit("review packet builder accepted stale readiness evidence")
+        validation_notes.write_text(original_notes, encoding="utf-8")
         packet_texts = [(packets / f"review_packet_{role}.md").read_text(encoding="utf-8") for role in ("reader", "source", "visual")]
         if len(set(packet_texts)) != 3:
             raise SystemExit("role-specific review packets are not distinct")
@@ -934,7 +991,12 @@ def main():
             "--draft", str(FIXTURES / "valid-brief.md"),
             "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
             "--html-design-plan", str(FIXTURES / "html-design.json"),
+            "--validation-notes", str(validation_notes),
+            "--whiteboard-preview", str(rich_html_output),
             "--document-preview", str(rich_html_output),
+            "--source-outline", str(source_outline),
+            "--source-excerpts", str(source_excerpts),
+            "--readiness-receipt", str(readiness_receipt),
         )
 
     with tempfile.TemporaryDirectory(prefix="3080-brief-dependencies-") as tmp:
@@ -1181,6 +1243,8 @@ def main():
     replay = config.get("blind_reader_replay", {})
     if replay.get("question_count") != 3 or replay.get("primary_role") != "primary":
         raise SystemExit("blind-reader replay contract is missing or invalid")
+    if replay.get("position") != "after_visual_replay_before_audit":
+        raise SystemExit("full-artifact Blind Reader Replay must stabilize the candidate before audit")
     if set(replay.get("roles", {})) != {"primary", "technical", "decision"}:
         raise SystemExit("blind-reader replay roles are incomplete")
     if len(replay.get("escalation_conditions", [])) != 6:
@@ -1193,6 +1257,19 @@ def main():
     forbidden_visual_inputs = set(visual_replay.get("forbidden_inputs", []))
     if not {"tldr_text", "body", "claim_ledger", "visual_spec", "alt_text", "expected_answer", "reviewer_comments"} <= forbidden_visual_inputs:
         raise SystemExit("Visual Blind Replay isolation does not exclude answer-bearing context")
+    efficiency = config.get("execution_efficiency", {})
+    required_efficiency = {
+        "batch_scope_before_build": True,
+        "separate_artifact_lanes": True,
+        "review_readiness_receipt_required": True,
+        "normal_full_audit_batches_per_artifact": 1,
+        "extra_full_batch_requires_prior_failure": True,
+        "merge_all_review_fixes_before_revision": True,
+        "change_impact_rerun_required": True,
+        "stop_on_missing_external_input": True,
+    }
+    if efficiency != required_efficiency:
+        raise SystemExit("execution-efficiency contract is missing or inconsistent")
     opening = config.get("tldr", {}).get("opening_unit", {})
     if opening != {
         "primary_judgment_count": 1,
@@ -1250,9 +1327,9 @@ def main():
     if len(expression.get("style_warning_groups", [])) < 6:
         raise SystemExit("expression warning groups do not cover both Chinese and English")
     replay_path = SKILL / "references" / "blind-reader-replay.md"
-    if not replay_path.is_file() or "Run Blind Reader Replay only after" not in replay_path.read_text(encoding="utf-8"):
+    if not replay_path.is_file() or "before the complete three-reviewer audit" not in replay_path.read_text(encoding="utf-8"):
         raise SystemExit("blind-reader replay reference is missing")
-    if "### 7. Replay Reader Understanding" not in skill_text or "references/blind-reader-replay.md" not in skill_text:
+    if "### 7. Stabilize Comprehension Before Audit" not in skill_text or "references/blind-reader-replay.md" not in skill_text:
         raise SystemExit("blind-reader replay is not connected to the runtime workflow")
     if "references/visual-blind-replay.md" not in skill_text or "before audit" not in skill_text:
         raise SystemExit("Visual Blind Replay is not connected before the audit workflow")

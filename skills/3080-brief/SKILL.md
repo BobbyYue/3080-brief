@@ -44,6 +44,7 @@ Do not preload references. Read only resources whose condition is true.
 | Resolve output format or conversion | [output-format-rules.md](references/output-format-rules.md) |
 | Create Feishu output or diagnose dependencies | `scripts/check_dependencies.py --mode feishu --json`; read [dependency-and-installation.md](references/dependency-and-installation.md) only on BLOCKED/SKIP/FAIL |
 | Inventory sources and claims | [source-inventory-template.md](references/source-inventory-template.md), [claim-ledger.schema.json](references/claim-ledger.schema.json); add [evidence-and-risk-rules.md](references/evidence-and-risk-rules.md) for material data, experiment, causal, metric, or risk claims |
+| Plan batch execution and review readiness | [execution-efficiency.md](references/execution-efficiency.md); run `scripts/validate_review_readiness.py` before independent review |
 | Draft/revise reader-facing content | [source-faithful-expression.md](references/source-faithful-expression.md); add [reader-optimization.md](references/reader-optimization.md) for clarity/jargon failures and [expression-anti-patterns.md](references/expression-anti-patterns.md) only for a concrete wording signal |
 | Plan the cross-section reading path | [reading-layout-contract.md](references/reading-layout-contract.md); create the required `reading_path` object before rendering any format |
 | Plan the brief and visual | [brief.schema.json](references/brief.schema.json), [visual-spec.schema.json](references/visual-spec.schema.json), [visual-pattern-library.md](references/visual-pattern-library.md), [theme-selection.md](references/theme-selection.md); add [semantic-color-system.md](references/semantic-color-system.md) for directional values/statuses |
@@ -55,12 +56,12 @@ Do not preload references. Read only resources whose condition is true.
 
 Use `standard` by default. Use `fast` only when the user explicitly prioritizes speed or skips independent review; hard source, language, relation, assertion, TLDR, coverage, and visual gates still apply, while audit/replay are skipped and disclosed. Use `strict` when requested or when conclusions affect material resources, policy/rules, causal claims, risk, or broad rollout; it adds exact P0/P1 relation replay and configured reader escalation. Mode details and retry limits are in [review-loop.md](references/review-loop.md).
 
-1. **Route**: determine source/output type, explicit language override, scope, and constraints. For Feishu, check dependencies before fetch/write. Installation or authentication requires separate approval; follow the dependency reference and stop that action when approval is required.
-2. **Ground**: inspect all material non-appendix evidence, including embedded P0/P1/chartable content. Build `source_inventory.md`, untranslated `source_non_appendix.md`, and `claim_ledger.json`; record language basis, exclusions, sufficiency, stable claim/source identity, evidence ceilings, exact protected relations, chartable data, risks/actions, mappings, and omissions. Reopen the source only to resolve a missing fact or dispute.
+1. **Route**: determine source/output type, language override, scope, constraints, and artifact lanes. For multiple briefs, follow the efficiency contract. For Feishu, check dependencies before fetch/write; installation or authentication needs separate approval.
+2. **Ground**: before rendering, inspect all material non-appendix evidence. Build `source_inventory.md`, untranslated `source_non_appendix.md`, P0/P1 excerpts, and `claim_ledger.json`; record language basis, exclusions, sufficiency, source identity, evidence ceilings, protected relations, chartable data, risks/actions, mappings, and omissions. Reopen the source only for a missing fact or dispute.
 3. **Clarify**: before drafting, ask up to three blocking questions only when ambiguity can change the main conclusion, metric meaning/scope, risk boundary, audience, next action, language, or protected relation. For non-blocking gaps, use explicit missing-source/inference labels. Shorten thin-source output instead of making it appear rich.
 4. **Draft**: create one `brief.json` conforming to [brief.schema.json](references/brief.schema.json), used by every renderer. Before rendering, create its mandatory `reading_path`: one reader decision plus exactly one reader question and density level for each body section. Build a Pyramid opening and a source-shaped reader path with short judgment headings. Apply source-faithful expression only after the first draft; keep each assertion below its evidence ceiling and preserve valid terms, uncertainty, neutral tone, and necessary boundaries.
 5. **Visualize**: create `visual_spec.json` before drawing and map every block to claim IDs. Choose the smallest content-fit relationship and exactly one allowed theme, with no fixed/silent default. Reach configured weighted coverage without omitting P0 claims. When three or more quantitative claims exist, or the conclusion depends on quantitative evidence, use a real quantitative encoding beyond boxes/prose; show a truthful boundary when extraction is unreliable. Keep semantic colors consistent across visual and body. Image generation is private-safe inspiration only, never the final evidence carrier. For HTML, also create reviewed `html_design.json` and preserve an auditable native-SVG fallback.
-6. **Gate and audit**: run deterministic checks before human-like review:
+6. **Gate and readiness**: run deterministic checks before human-like review:
 
 ```bash
 scripts/validate_claim_ledger.py claim_ledger.json
@@ -71,13 +72,17 @@ scripts/validate_visual_spec.py visual_spec.json claim_ledger.json
 scripts/validate_brief.py brief.json visual_spec.json
 ```
 
-Validate the target render with `scripts/validate_whiteboard.sh` or `scripts/validate_html_output.py OUTPUT --visual-spec visual_spec.json --design-plan html_design.json`. Fix deterministic failures first. In standard/strict, run isolated Visual Blind Replay on the cropped one-picture render before audit; the reader sees no TLDR, body, source, spec, alt text, expected answer, or prior feedback. A failure returns to visual design and deterministic gates. Only after it passes, send hash-locked role-specific packets to Reader, Source, and Visualization reviewers independently; expose no replay/reviewer feedback to another reviewer before all return. Any blocker/FAIL requires revision and all three rerun. Aggregate only matching roles, rounds, and hashes. Fast mode uses a disclosed visual self-check. Never claim unavailable independent review.
+Validate the target render with `validate_whiteboard.sh` or `validate_html_output.py`. Fix deterministic failures, rerun checks by change impact, then run `validate_review_readiness.py`. A blocked or stale receipt blocks review.
 
-### 7. Replay Reader Understanding
+### 7. Stabilize Comprehension Before Audit
 
-After all three reviewers pass the same artifact, run Blind Reader Replay using [blind-reader-replay.md](references/blind-reader-replay.md): Primary first with rendered artifact only and exactly three document-specific question-answer replays; add Technical/Decision readers only under the configured escalation conditions. A blocking comprehension failure restarts gates, all three reviews, and Primary replay.
+In standard/strict, run Visual Blind Replay on the cropped picture, then Blind Reader Replay on the full render. Start with Primary and escalate only when configured. Resolve blocking comprehension issues before audit; fast mode uses disclosed self-checks.
 
-### 8. Create And Verify
+### 8. Run The Final Independent Audit
+
+After readiness and both replays pass, send one hash-locked batch to Reader, Source, and Visualization reviewers concurrently. Wait for all results. On failure, merge fixes, revise once, rerun affected pre-audit gates, then start the next complete batch for the new hash. Extra batches require a prior failure and remain capped at three; external blockers require a stop, not a retry.
+
+### 9. Create And Verify
 
 Create the new output only after applicable gates pass. Render Feishu with native XML and inspect the live board; build HTML with `scripts/build_html_brief.py brief.json visual_spec.json OUTPUT --design-plan html_design.json`, inspect rich/fallback views, and revalidate. Verify source unchanged, format/language, source citation, TLDR, claim coverage, theme/colors, accessibility, artifact hashes, and dependency status.
 

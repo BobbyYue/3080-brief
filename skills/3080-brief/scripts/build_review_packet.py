@@ -71,6 +71,33 @@ def digest(path):
     return hashlib.sha256(candidate.read_bytes()).hexdigest()
 
 
+def validate_readiness(args):
+    receipt_path = Path(args.readiness_receipt)
+    if not receipt_path.is_file():
+        raise SystemExit(f"missing review readiness receipt: {receipt_path}")
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    if receipt.get("schema_version") != 1 or receipt.get("status") != "ready" or receipt.get("errors") not in ([], None):
+        raise SystemExit("review readiness receipt is not ready")
+    current = {
+        "source_snapshot": digest(args.source_snapshot),
+        "inventory": digest(args.inventory),
+        "claim_ledger": digest(args.claim_ledger),
+        "tldr": digest(args.tldr),
+        "body": digest(args.body),
+        "draft": digest(args.draft),
+        "source_outline": digest(args.source_outline),
+        "source_excerpts": digest(args.source_excerpts),
+        "validation_notes": digest(args.validation_notes),
+        "document_preview": digest(args.document_preview),
+        "visual_spec": digest(args.visual_spec),
+        "html_design_plan": digest(args.html_design_plan),
+        "visual_preview": digest(args.whiteboard_preview),
+    }
+    current = {key: value for key, value in current.items() if value}
+    if current != receipt.get("files"):
+        raise SystemExit("review inputs changed after readiness validation")
+
+
 def packet_for(role, args):
     hashes = {
         "source_snapshot": digest(args.source_snapshot),
@@ -84,6 +111,9 @@ def packet_for(role, args):
         "validation_notes": digest(args.validation_notes),
         "whiteboard_preview": digest(args.whiteboard_preview),
         "document_preview": digest(args.document_preview),
+        "source_outline": digest(args.source_outline),
+        "source_excerpts": digest(args.source_excerpts),
+        "readiness_receipt": digest(args.readiness_receipt),
     }
     hashes = {k: v for k, v in hashes.items() if v}
     artifact_set_id = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode("utf-8")).hexdigest()
@@ -224,9 +254,11 @@ def main():
     parser.add_argument("--whiteboard-summary", default="")
     parser.add_argument("--whiteboard-preview", default="")
     parser.add_argument("--document-preview", default="")
+    parser.add_argument("--readiness-receipt", required=True)
     parser.add_argument("--round", type=int, default=1)
     parser.add_argument("--output", required=True, help="Output file for one role, or directory for --role all")
     args = parser.parse_args()
+    validate_readiness(args)
 
     roles = list(ROLE_NAMES) if args.role == "all" else [args.role]
     output = Path(args.output)

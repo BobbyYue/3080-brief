@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-20
+
+### Added
+
+- Added a mandatory execution-efficiency contract that completes source and review inputs before rendering, keeps multiple briefs in isolated lanes, and reruns deterministic checks by change impact.
+- Added a hash-bound review-readiness validator; incomplete or changed source, draft, render, or validation inputs now block independent review packet creation.
+
+### Changed
+
+- Moved full-artifact Blind Reader Replay before the final three-reviewer audit so known comprehension problems are resolved before an expensive audit batch.
+- The normal path now uses one complete parallel audit batch per stable artifact. When it fails, all feedback is merged into one revision before the next hash-locked batch.
+
 ## [0.4.0] - 2026-08-20
 
 ### Added

@@ -1,6 +1,8 @@
 # Review Packet Contract
 
-Use `scripts/build_review_packet.py --role all` to build three independent packets from one artifact set. Do not manually reuse one generic packet for all roles.
+Run `scripts/validate_review_readiness.py` first, then pass its unchanged receipt
+to `scripts/build_review_packet.py --role all` to build three independent
+packets from one artifact set. Do not manually reuse one generic packet.
 
 ## Shared Integrity
 

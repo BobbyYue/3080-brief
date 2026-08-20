@@ -4,9 +4,16 @@ Use Blind Reader Replay to test what readers actually understand, not what an au
 
 ## Entry Gate
 
-Run Blind Reader Replay only after the deterministic preflight passes and all three audit reviewers return `PASS` for the same artifact-set ID. Start with the Primary Blind Reader alone against that reviewer-approved rendered artifact. Launch the Technical and Decision blind readers in parallel only when an escalation condition is met. Do not run blind readers in parallel with the audit reviewers by default.
+Run Blind Reader Replay after deterministic preflight and Visual Blind Replay
+pass, but before the complete three-reviewer audit. Start with the Primary Blind
+Reader against the stable rendered candidate. Launch Technical and Decision in
+parallel only when an escalation condition is met. Do not overlap blind readers
+with audit reviewers.
 
-If any replay exposes a blocking comprehension failure, revise the artifact and restart from deterministic preflight and all three audit reviewers. Run Blind Reader Replay again only after the revised artifact passes all three audit reviewers.
+If a replay exposes a blocking comprehension failure, revise the artifact,
+rerun affected deterministic and visual gates, then replay the revised candidate
+before building audit packets. This order prevents a comprehension defect from
+invalidating a completed audit.
 
 ## Isolation
 
@@ -54,7 +61,7 @@ After the Primary replay returns, launch both the Technical and Decision blind r
 - The Primary reader cannot judge whether the document's conclusion is feasible or infeasible.
 - The conclusion affects resources, risk, or broad rollout.
 
-Escalation is not itself a document failure. Evaluate the additional independent replays before deciding whether the issue is a comprehension defect, a source-information gap, or an appropriate role boundary. The Technical and Decision readers must receive only their role definitions and the same reviewer-approved artifact; do not include the Primary reader's replay or the condition that triggered escalation.
+Escalation is not itself a document failure. Evaluate the additional independent replays before deciding whether the issue is a comprehension defect, a source-information gap, or an appropriate role boundary. The Technical and Decision readers must receive only their role definitions and the same rendered candidate; do not include the Primary reader's replay or the condition that triggered escalation.
 
 ## Replay Output
 
@@ -78,4 +85,10 @@ Return the role, artifact-set ID, and three question-answer pairs. For each answ
 
 After all replays arrive, the main agent compares them with the hidden P0/P1 claim ledger and user intent. A replay exposes a blocking comprehension failure when it reverses or misses a decision-changing P0 claim, invents a material causal/quantitative/action claim, cannot identify the document's central value, or reveals that a required action/boundary is materially ambiguous.
 
-Revise only the document defects revealed by the replay. Do not add unsupported information, satisfy every reader preference, or expand the brief merely because a secondary detail was not recalled. After a blocking replay-driven revision, re-run preflight and all three audit reviewers. Once they all pass, restart with the Primary Blind Reader; apply the escalation gate again rather than automatically launching all three roles.
+Revise only document defects revealed by replay. Do not add unsupported content
+or expand the brief because a secondary detail was not recalled. After a
+blocking revision, rerun affected preflight gates and restart with Primary;
+apply escalation again rather than automatically launching all roles. Build the
+complete audit packets only after the final replay passes. Any later
+reader-facing audit fix creates a new candidate and requires the affected
+preflight and replay gates again.

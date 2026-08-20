@@ -5,7 +5,9 @@ Use this reference whenever a source has ambiguity, unclear data, undefined term
 ## Contents
 
 - Clarification gate and ambiguity handling
+- Review readiness before rendering and delegation
 - Isolated Visual Blind Replay before audit
+- Full-artifact Blind Reader Replay before audit
 - Three independent reviewer roles and packets
 - Role-specific PASS criteria
 - Revision loop, review tiers, and final release rule
@@ -83,9 +85,24 @@ The main agent compares the replay with the hidden ledger/spec and validates the
 
 Fast mode may use the same criteria as a self-check and must disclose that independent Visual Blind Replay was skipped.
 
+## Review Readiness Gate
+
+Follow [execution-efficiency.md](execution-efficiency.md). Before delegation,
+run `scripts/validate_review_readiness.py` against the final source snapshot,
+inventory, ledger, P0/P1 outline and excerpts, draft components, validation
+notes, and actual renders. Pass its unchanged receipt to
+`scripts/build_review_packet.py`. Missing or stale evidence blocks audit.
+
+After Visual Blind Replay passes, run [blind-reader-replay.md](blind-reader-replay.md)
+on the full rendered candidate. Resolve blocking comprehension defects before
+building audit packets.
+
 ## Three-Reviewer Subagent Protocol
 
-Before final output, create three role-specific, hash-locked packets using [review-packet-template.md](review-packet-template.md) and `scripts/build_review_packet.py --role all`, then send them to three reviewer subagents at the same time. They must evaluate independently and must not see each other's comments before submitting their own verdicts.
+After readiness and both replay gates pass, create three role-specific,
+hash-locked packets using [review-packet-template.md](review-packet-template.md)
+and `scripts/build_review_packet.py --role all`, then send them to three reviewer
+subagents at the same time. The normal path uses one complete audit batch.
 
 The main agent must not expose, quote, summarize, hint at, or use any reviewer's comments in prompts to the other reviewers before all three reviews have been submitted.
 
@@ -206,22 +223,26 @@ The Visualization And Expression Reviewer must return `FAIL` when a decision-rel
 
 The final draft passes only when all three reviewers return `PASS`.
 
-If one or more reviewers fail, the main agent must merge required fixes across all reviewers, deduplicate conflicts, revise the draft, and re-run all three reviewers. Do not only re-run the reviewer that failed; fixes in one area can break another.
+If one or more reviewers fail, wait for all reports, merge and deduplicate every
+required fix, make one coherent revision, rerun affected pre-audit checks and
+replays, then re-run all three reviewers for the new artifact hash. Additional
+complete batches are exceptional retries after a complete failure.
 
 ### Revision Loop
 
 Use this loop:
 
-1. Draft and render v1; pass deterministic gates.
-2. Run isolated Visual Blind Replay on the cropped one-picture render.
-3. If replay fails, revise the visual and repeat deterministic gates plus the isolated replay.
-4. After replay PASS, build three role-specific, hash-locked reviewer packets without replay feedback.
-5. Three reviewers evaluate independently in parallel from their role-specific evidence.
-6. Do not aggregate, summarize, or share any review until all three reports are complete.
-7. Run `scripts/aggregate_reviews.py` to verify roles, artifact-set ID, round, verdicts, and blockers; then aggregate the three reports.
-8. If all three return `PASS`, proceed to full-artifact Blind Reader Replay using `blind-reader-replay.md`.
-9. If any reviewer returns `FAIL`, revise the required failing areas, rerun deterministic gates and Visual Blind Replay when the picture changed, then rerun all three reviewers.
-10. Repeat up to 3 audit rounds.
+1. Complete source, claim, excerpt, and reviewer-input readiness.
+2. Draft and render; pass deterministic gates.
+3. Run Visual Blind Replay, then full-artifact Blind Reader Replay.
+4. Fix blocking replay issues and rerun only affected pre-audit gates.
+5. Run `validate_review_readiness.py` and lock its passing receipt.
+6. Build one three-role packet set and launch all reviewers concurrently.
+7. Wait for all reports, then aggregate matching roles, round, and hashes.
+8. If all pass, freeze the artifact and proceed to creation and verification.
+9. If any fail, merge all fixes, revise once, rerun affected gates and replays,
+   then start the next complete batch for the new hash.
+10. Repeat only after a complete failed batch, up to 3 audit rounds.
 
 If any reviewer still fails after 3 rounds, or if a blocker depends on missing user/source information, stop and ask the user for the required clarification instead of publishing a final version.
 
@@ -237,21 +258,23 @@ Use this wording:
 
 ## Runtime Profiles
 
-- **Standard (default)**: run every deterministic hard gate, one cluster-based expression scan, independent Visual Blind Replay, all three independent reviewers, and Primary Blind Reader Replay. Escalate additional readers only under the configured conditions.
+- **Standard (default)**: run every deterministic hard gate, one expression scan, independent Visual and Primary Blind Reader replays, then one complete three-reviewer audit batch. Escalate readers and repeat audit only under configured conditions.
 - **Strict**: use when explicitly requested or when conclusions affect material resources, policy/rules, causal claims, risk, or broad rollout. Before reviewer packets are built, replay every non-appendix P0/P1 protected relation against its source excerpt and confirm output assertion does not exceed evidence ceiling. Then run the independent Visual Blind Replay, Standard audit, and configured reader escalation.
 - **Fast**: use only when the user explicitly prioritizes speed or asks to skip independent review. Still run every deterministic hard gate and one expression scan. Replace Visual Blind Replay and the three independent reviewers with lightweight self-checks, skip Blind Reader Replay, and disclose all omissions. Never describe Fast output as independently reviewed.
 
 No profile may bypass source grounding, blocking clarification, relation/claim-strength gates, source language, appendix exclusion, the new-doc-only rule, TLDR structure, visual coverage, or format validation.
 
-## Post-Review Reader Replay
+## Pre-Audit Reader Replay
 
-Audit review and Blind Reader Replay are sequential quality gates, not parallel substitutes. After all three audit reviewers pass the same artifact set, follow [blind-reader-replay.md](blind-reader-replay.md): run Primary first, conditionally escalate to Technical and Decision, and restart preflight plus all three reviewers after any blocking replay-driven revision.
+Blind Reader Replay is a pre-audit comprehension gate, not a substitute for the
+final audit. Run Primary first and escalate only when configured. Audit starts
+after the selected replays pass.
 
 ## Final Output Rule
 
 Do not present a generated doc as final until either:
 
-- Visual Blind Replay passes, all three reviewers return `PASS`, and the required full-artifact Blind Reader Replay completes without a blocking comprehension failure, or
+- readiness passes, Visual and full-artifact Blind Reader replays have no blocking failure, and all three reviewers return `PASS` for the unchanged artifact, or
 - The user explicitly asks to publish despite known unresolved issues.
 
 Fast output follows the explicit exception above; Standard and Strict output require reviewer PASS plus the applicable replay before final delivery.
