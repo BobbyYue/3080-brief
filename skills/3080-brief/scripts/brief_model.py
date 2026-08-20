@@ -56,18 +56,61 @@ def validate_document(document, visual_spec=None, config=None):
             else:
                 validate_rich_text(question[field], f"question {index} {field}", errors)
 
+    body_sections = document.get("body") or []
+    path_config = (config or {}).get("reading_path_contract", {})
+    reading_path = document.get("reading_path")
+    if path_config.get("required", True):
+        if not isinstance(reading_path, dict):
+            errors.append("reading_path is required for every rendered brief")
+            reading_path = {}
+        expected_version = str(path_config.get("contract_version", "1.0"))
+        if str(reading_path.get("contract_version", "")) != expected_version:
+            errors.append(f"reading_path.contract_version must be {expected_version}")
+        reader_decision = str(reading_path.get("reader_decision", "")).strip()
+        minimum_decision = int(path_config.get("minimum_reader_decision_characters", 8))
+        if len(reader_decision) < minimum_decision:
+            errors.append("reading_path.reader_decision must state the judgment the reader needs to make")
+        section_questions = reading_path.get("section_questions") or []
+        section_density = reading_path.get("section_density") or []
+        if len(section_questions) != len(body_sections):
+            errors.append("reading_path.section_questions must map every body section exactly once")
+        if len(section_density) != len(body_sections):
+            errors.append("reading_path.section_density must map every body section exactly once")
+        allowed_density = set(path_config.get("allowed_section_density") or ["light", "balanced", "dense"])
+        for index, density in enumerate(section_density, 1):
+            if density not in allowed_density:
+                errors.append(f"reading_path.section_density {index} has unsupported value {density}")
+        minimum_question = int(path_config.get("minimum_section_question_characters", 4))
+        for index, question in enumerate(section_questions, 1):
+            if len(str(question).strip()) < minimum_question:
+                errors.append(f"reading_path.section_questions {index} must name the reader question")
+
     callout_count = 0
     body_block_types = []
     body_text_length = 0
-    for section_index, section in enumerate(document.get("body") or [], 1):
+    for section_index, section in enumerate(body_sections, 1):
         if not section.get("heading") or not isinstance(section.get("blocks"), list):
             errors.append(f"body section {section_index} requires heading and blocks")
             continue
         validate_rich_text(section["heading"], f"body section {section_index} heading", errors)
         blocks = section["blocks"]
-        dense_positions = [index for index, block in enumerate(blocks) if block.get("type") in {"table", "figure"}]
+        dense_types = set(path_config.get("dense_block_types") or ["table", "figure"])
+        dense_positions = [index for index, block in enumerate(blocks) if block.get("type") in dense_types]
         if dense_positions and dense_positions[0] == 0:
             errors.append(f"body section {section_index} must explain the judgment before its first table or figure")
+        if blocks and path_config.get("require_takeaway_before_dense_evidence", True):
+            allowed_openings = set(path_config.get("allowed_section_opening_types") or ["paragraph", "bullets", "callout"])
+            if blocks[0].get("type") not in allowed_openings:
+                errors.append(f"body section {section_index} must open with a reader-facing takeaway")
+        maximum_dense = int(path_config.get("maximum_consecutive_dense_blocks", 1))
+        dense_run = 0
+        for block in blocks:
+            dense_run = dense_run + 1 if block.get("type") in dense_types else 0
+            if dense_run > maximum_dense:
+                errors.append(
+                    f"body section {section_index} has consecutive dense evidence without an explanatory bridge"
+                )
+                break
         for block_index, block in enumerate(blocks, 1):
             block_type = block.get("type")
             body_block_types.append(block_type)
@@ -124,8 +167,9 @@ def validate_document(document, visual_spec=None, config=None):
         errors.append(f"body uses {callout_count} callouts; maximum is {max_callouts}")
     if body_block_types and set(body_block_types) <= {"table", "callout"}:
         errors.append("body cannot consist only of tables and callouts")
-    if any(first == second == "table" for first, second in zip(body_block_types, body_block_types[1:])):
-        errors.append("body cannot contain consecutive tables without explanatory prose")
+    dense_types = set(path_config.get("dense_block_types") or ["table", "figure"])
+    if any(first in dense_types and second in dense_types for first, second in zip(body_block_types, body_block_types[1:])):
+        errors.append("body cannot contain consecutive dense evidence blocks without explanatory prose")
 
     if visual_spec:
         if str(document.get("language", "")).casefold() != str(visual_spec.get("language", "")).casefold():

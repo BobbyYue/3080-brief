@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "3080 Brief Structured Document",
   "type": "object",
-  "required": ["title", "language", "source", "opening", "questions", "body"],
+  "required": ["title", "language", "source", "opening", "questions", "reading_path", "body"],
   "$defs": {
     "rich_text": {
       "oneOf": [
@@ -59,6 +59,23 @@
         },
         "additionalProperties": false
       }
+    },
+    "reading_path": {
+      "type": "object",
+      "required": ["contract_version", "reader_decision", "section_questions", "section_density"],
+      "properties": {
+        "contract_version": {"const": "1.0"},
+        "reader_decision": {"type": "string", "minLength": 8},
+        "section_questions": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 4}
+        },
+        "section_density": {
+          "type": "array",
+          "items": {"enum": ["light", "balanced", "dense"]}
+        }
+      },
+      "additionalProperties": false
     },
     "body": {
       "type": "array",

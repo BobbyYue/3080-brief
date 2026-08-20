@@ -201,9 +201,15 @@ def build_html(document, visual_spec, config, css, base_dir, design_plan=None):
     question_rows = [[item["question"], item["conclusion"], item["why"]] for item in document["questions"]]
     question_table = render_table(headers, question_rows, "key-questions")
     body = []
-    for section in document.get("body") or []:
+    section_density = (document.get("reading_path") or {}).get("section_density") or []
+    section_questions = (document.get("reading_path") or {}).get("section_questions") or []
+    for section_index, section in enumerate(document.get("body") or []):
+        density = section_density[section_index]
+        reader_question = section_questions[section_index]
         body.append(
-            f'<section class="story-section"><h2>{rich_text(section["heading"])}</h2>'
+            f'<section class="story-section story-section--{esc(density)}" '
+            f'data-reading-density="{esc(density)}" data-reader-question="{esc(reader_question)}">'
+            f'<h2>{rich_text(section["heading"])}</h2>'
             f'{render_blocks(section["blocks"], base_dir, visual_spec, config, design_plan=design_plan, runtime_items=runtime_items, figure_counter=figure_counter)}</section>'
         )
     visual_title = rich_text(visual_spec.get("title", ""))

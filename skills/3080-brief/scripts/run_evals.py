@@ -338,6 +338,34 @@ def main():
     with tempfile.TemporaryDirectory(prefix="3080-brief-eval-") as tmp:
         tmp_path = Path(tmp)
 
+        valid_brief = json.loads((FIXTURES / "html-brief.json").read_text(encoding="utf-8"))
+        reading_path_mutations = []
+
+        missing_path = json.loads(json.dumps(valid_brief))
+        missing_path.pop("reading_path", None)
+        reading_path_mutations.append(("missing-reading-path", missing_path, "reading_path is required"))
+
+        incomplete_path = json.loads(json.dumps(valid_brief))
+        incomplete_path["reading_path"]["section_questions"] = incomplete_path["reading_path"]["section_questions"][:1]
+        reading_path_mutations.append(("incomplete-section-map", incomplete_path, "must map every body section"))
+
+        adjacent_dense = json.loads(json.dumps(valid_brief))
+        adjacent_dense["body"][0]["blocks"].append(json.loads(json.dumps(adjacent_dense["body"][0]["blocks"][1])))
+        reading_path_mutations.append(("adjacent-dense-evidence", adjacent_dense, "consecutive dense evidence"))
+
+        for case_id, payload, expected_message in reading_path_mutations:
+            candidate_path = tmp_path / f"{case_id}.json"
+            candidate_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+            result = run(
+                sys.executable,
+                str(SCRIPTS / "validate_brief.py"),
+                str(candidate_path),
+                str(FIXTURES / "visual-spec.json"),
+                expect=1,
+            )
+            if expected_message not in result.stdout:
+                raise SystemExit(f"reading-layout gate did not reject {case_id}")
+
         missing_token_ledger = json.loads((FIXTURES / "claim-ledger.json").read_text(encoding="utf-8"))
         missing_token_ledger["claims"][0]["visual_required_tokens"] = ["不可见对象"]
         missing_token_path = tmp_path / "missing-visible-token-ledger.json"

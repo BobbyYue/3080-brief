@@ -118,9 +118,24 @@ def validate(skill_dir):
     for required_term in (
         "specific object -> source-backed action or change -> reader-observable result",
         "Record the object-action/result map for each value-bearing title, heading, and lead",
+        "Every rendered brief must carry the mandatory `reading_path` contract",
+        "create its mandatory `reading_path`",
     ):
         if required_term not in text:
             errors.append(f"SKILL.md is missing the executable value-expression rule: {required_term}")
+    reading_layout = skill_dir / "references" / "reading-layout-contract.md"
+    if not reading_layout.is_file():
+        errors.append("mandatory reading-layout contract reference is missing")
+    else:
+        reading_text = reading_layout.read_text(encoding="utf-8")
+        for required_term in (
+            "Failure is blocking",
+            "reading_path",
+            "validate_brief.py",
+            "consecutive dense evidence",
+        ):
+            if required_term not in reading_text:
+                errors.append(f"reading-layout contract is missing required rule: {required_term}")
     for filename in sorted(FORBIDDEN_ROOT_DOCS):
         if (skill_dir / filename).exists():
             errors.append(f"installable skill contains auxiliary root document: {filename}")

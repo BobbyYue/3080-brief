@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-20
+
+### Added
+
+- Added a mandatory reading-path contract to every generated brief, including the reader decision, the question each section answers, and a declared density level for each section.
+- Added permanent regression cases for missing reading paths, incomplete section maps, and consecutive dense evidence blocks without an explanatory bridge.
+
+### Changed
+
+- HTML generation now carries the validated reading path into section attributes and stable light, balanced, or dense spacing classes.
+- Brief and HTML validation now block evidence-first sections, incomplete reading paths, and unregistered dense-block sequences instead of treating layout as optional guidance.
+
 ## [0.3.0] - 2026-08-20
 
 ### Added

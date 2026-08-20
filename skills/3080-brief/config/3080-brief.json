@@ -1,5 +1,19 @@
 {
-  "version": 16,
+  "version": 17,
+  "reading_path_contract": {
+    "required": true,
+    "contract_version": "1.0",
+    "allowed_section_density": ["light", "balanced", "dense"],
+    "dense_block_types": ["table", "figure"],
+    "allowed_section_opening_types": ["paragraph", "bullets", "callout"],
+    "require_section_question": true,
+    "require_takeaway_before_dense_evidence": true,
+    "require_prose_bridge_between_dense_blocks": true,
+    "maximum_consecutive_dense_blocks": 1,
+    "heading_only_readback_required": true,
+    "minimum_reader_decision_characters": 8,
+    "minimum_section_question_characters": 4
+  },
   "language_policy": {
     "default_output_basis": "source_primary_language",
     "allowed_override_basis": "explicit_user_request",

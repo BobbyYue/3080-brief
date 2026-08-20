@@ -31,6 +31,15 @@
     {"question": "哪个发现最重要？", "conclusion": "高价值信号集中在特定分层。", "why": "汇总指标会掩盖这一差异。"},
     {"question": "下一步做什么？", "conclusion": "先验证分层稳定性。", "why": "当前证据不足以直接扩大为通用规则。"}
   ],
+  "reading_path": {
+    "contract_version": "1.0",
+    "reader_decision": "判断分层信号是否足以支持扩大使用范围",
+    "section_questions": [
+      "汇总结果遗漏了什么关键信号？",
+      "还需要满足什么条件才能扩大使用？"
+    ],
+    "section_density": ["dense", "light"]
+  },
   "body": [
     {
       "heading": "汇总指标掩盖了真正差异",

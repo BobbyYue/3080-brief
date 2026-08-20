@@ -61,6 +61,8 @@ class BriefParser(HTMLParser):
         self.html_fonts = {}
         self.rich_visuals = 0
         self.rich_block_ids = set()
+        self.story_sections = 0
+        self.story_sections_with_reading_path = 0
 
     def handle_starttag(self, tag, attrs_list):
         attrs = dict(attrs_list)
@@ -73,6 +75,13 @@ class BriefParser(HTMLParser):
                 "display": attrs.get("data-font-display", ""),
                 "body": attrs.get("data-font-body", ""),
             }
+        if tag == "section" and "story-section" in class_set:
+            self.story_sections += 1
+            if (
+                attrs.get("data-reading-density") in {"light", "balanced", "dense"}
+                and attrs.get("data-reader-question", "").strip()
+            ):
+                self.story_sections_with_reading_path += 1
         if tag not in VOID_TAGS:
             self.stack.append(tag)
         if tag == "script":
@@ -242,6 +251,8 @@ def main():
         errors.append("key-question table headers must be Question/Conclusion/Why or the configured Chinese equivalent")
     if parsed.source_citations != 1:
         errors.append("TLDR requires one compact source citation")
+    if parsed.story_sections != parsed.story_sections_with_reading_path:
+        errors.append("every HTML story section must carry its validated reading-path density and reader question")
     if parsed.scripts != parsed.authorized_scripts:
         errors.append("HTML output contains an unauthorized executable script")
     if parsed.external_resources:

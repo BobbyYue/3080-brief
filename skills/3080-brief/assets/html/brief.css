@@ -133,6 +133,9 @@ tr:last-child td { border-bottom: 0; }
 
 .story-section { margin: 0 0 var(--section-gap); }
 .story-section > h2 { padding-bottom: 9px; border-bottom: 1px solid var(--rule); }
+.story-section--light { margin-bottom: calc(var(--section-gap) * 0.85); }
+.story-section--balanced { margin-bottom: var(--section-gap); }
+.story-section--dense { margin-bottom: calc(var(--section-gap) * 1.25); }
 
 .callout {
   margin: 20px 0;
