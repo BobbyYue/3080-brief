@@ -1,5 +1,5 @@
 {
-  "version": 18,
+  "version": 19,
   "reading_path_contract": {
     "required": true,
     "contract_version": "1.0",
@@ -89,6 +89,10 @@
     "consecutive_tables_allowed": false
   },
   "html_render": {
+    "runtime_contract_required": true,
+    "generator": "3080-brief-html-composer",
+    "generator_contract_version": "1.0",
+    "build_receipt_required": true,
     "offline_required": true,
     "external_runtime_resources_allowed": false,
     "rich_design_plan_required": true,
@@ -103,7 +107,10 @@
     "minimum_caption_font_px": 12,
     "one_picture_min_width_height_ratio": 1.2,
     "one_picture_max_width_height_ratio": 2.0,
-    "visual_spec_required_for_validation": true
+    "visual_spec_required_for_validation": true,
+    "full_page_preview_required": true,
+    "geometry_report_required": true,
+    "full_page_visual_replay_required": true
   },
   "tldr": {
     "default_title": "TLDR",
@@ -332,6 +339,27 @@
       "primary_cannot_judge_conclusion_value",
       "primary_cannot_judge_conclusion_feasibility",
       "conclusion_affects_resources_risk_or_broad_rollout"
+    ]
+  },
+  "full_page_visual_replay": {
+    "position": "after_visual_replay_before_blind_reader",
+    "input": "full_page_desktop_screenshot_only",
+    "forbidden_inputs": [
+      "source",
+      "brief_json",
+      "visual_spec",
+      "html_design",
+      "implementation_notes",
+      "prior_reviews",
+      "author_explanation"
+    ],
+    "required_gates": [
+      "title_hierarchy_clear",
+      "tldr_is_distinct_opening_unit",
+      "heading_path_restates_story",
+      "no_overlap_or_clipping",
+      "not_a_component_wall",
+      "one_picture_is_dominant"
     ]
   },
   "execution_efficiency": {

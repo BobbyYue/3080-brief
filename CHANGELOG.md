@@ -4,6 +4,24 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-20
+
+### Added
+
+- Added a signed canonical HTML composer contract, input hashes, and a build receipt so hand-authored or post-build-modified HTML cannot reuse a passing review state.
+- Added browser geometry evidence and an isolated Full-page Visual Replay covering title hierarchy, TLDR distinction, heading narrative, page rhythm, one-picture dominance, overlap, and clipping.
+- Added an `HTMLPAGE-01` capability contract and regression coverage that locks full-page evidence into review readiness, reviewer packets, and final artifact verification.
+
+### Changed
+
+- Reworked the HTML shell into a report-level composition with a stronger title field, readable prose measure, deliberate section rhythm, integrated figures, and layout families that materially affect the page.
+- Updated Standard and Strict flow documentation to run applicable visual replays and Blind Reader Replay before the final three-reviewer audit.
+- Public CI now executes the canonical offline suite directly instead of maintaining a second runtime implementation.
+
+### Removed
+
+- Removed the obsolete public-only `run_3080.py` state-machine wrapper and its duplicate acceptance/runtime tests; canonical skill scripts are now the only behavior source.
+
 ## [0.5.0] - 2026-08-20
 
 ### Added

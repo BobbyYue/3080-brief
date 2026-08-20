@@ -48,9 +48,9 @@ Do not preload references. Read only resources whose condition is true.
 | Draft/revise reader-facing content | [source-faithful-expression.md](references/source-faithful-expression.md); add [reader-optimization.md](references/reader-optimization.md) for clarity/jargon failures and [expression-anti-patterns.md](references/expression-anti-patterns.md) only for a concrete wording signal |
 | Plan the cross-section reading path | [reading-layout-contract.md](references/reading-layout-contract.md); create the required `reading_path` object before rendering any format |
 | Plan the brief and visual | [brief.schema.json](references/brief.schema.json), [visual-spec.schema.json](references/visual-spec.schema.json), [visual-pattern-library.md](references/visual-pattern-library.md), [theme-selection.md](references/theme-selection.md); add [semantic-color-system.md](references/semantic-color-system.md) for directional values/statuses |
-| Build target-specific visuals | Feishu: [whiteboard-patterns.md](references/whiteboard-patterns.md), [feishu-doc-output.md](references/feishu-doc-output.md); HTML: [html-visualization.md](references/html-visualization.md), [html-design.schema.json](references/html-design.schema.json), [font-catalog.json](assets/html-kit/font-catalog.json) |
+| Build target-specific visuals | Feishu: [whiteboard-patterns.md](references/whiteboard-patterns.md), [feishu-doc-output.md](references/feishu-doc-output.md); HTML: [html-visualization.md](references/html-visualization.md) |
 | Consider bitmap/image generation | Read [image2-auxiliary-rules.md](references/image2-auxiliary-rules.md) before sending any content |
-| Run visual, audit, and comprehension review | [visual-blind-replay.md](references/visual-blind-replay.md), [review-packet-template.md](references/review-packet-template.md), [review-loop.md](references/review-loop.md); after all three audit reviewers pass, read [blind-reader-replay.md](references/blind-reader-replay.md) |
+| Run review | [visual-blind-replay.md](references/visual-blind-replay.md), HTML-only [full-page-visual-replay.md](references/full-page-visual-replay.md), [blind-reader-replay.md](references/blind-reader-replay.md), then [review-loop.md](references/review-loop.md) audit |
 
 ## Runtime
 
@@ -72,11 +72,11 @@ scripts/validate_visual_spec.py visual_spec.json claim_ledger.json
 scripts/validate_brief.py brief.json visual_spec.json
 ```
 
-Validate the target render with `validate_whiteboard.sh` or `validate_html_output.py`. Fix deterministic failures, rerun checks by change impact, then run `validate_review_readiness.py`. A blocked or stale receipt blocks review.
+Validate with `validate_whiteboard.sh` or `validate_html_output.py`. HTML requires the canonical composer, locked contract, build receipt, and geometry audit; unsigned HTML cannot be final. Fix failures, rerun affected checks, then run `validate_review_readiness.py`; blocked/stale receipts block review.
 
 ### 7. Stabilize Comprehension Before Audit
 
-In standard/strict, run Visual Blind Replay on the cropped picture, then Blind Reader Replay on the full render. Start with Primary and escalate only when configured. Resolve blocking comprehension issues before audit; fast mode uses disclosed self-checks.
+In standard/strict, run cropped-picture Visual Blind Replay; HTML then adds isolated full-page replay plus geometry validation. Run Blind Reader on the full render, starting with Primary and escalating only when configured. Resolve blockers before audit; fast mode uses disclosed self-checks.
 
 ### 8. Run The Final Independent Audit
 
@@ -84,8 +84,8 @@ After readiness and both replays pass, send one hash-locked batch to Reader, Sou
 
 ### 9. Create And Verify
 
-Create the new output only after applicable gates pass. Render Feishu with native XML and inspect the live board; build HTML with `scripts/build_html_brief.py brief.json visual_spec.json OUTPUT --design-plan html_design.json`, inspect rich/fallback views, and revalidate. Verify source unchanged, format/language, source citation, TLDR, claim coverage, theme/colors, accessibility, artifact hashes, and dependency status.
+Create the new output only after applicable gates pass. Render Feishu with native XML and inspect the live board. For HTML, initialize `html_runtime_contract.py`, build only with `build_html_brief.py ... --design-plan html_design.json --contract ... --receipt ...`, then validate the HTML, receipt, geometry report, rich/fallback views, and full-page replay. Verify source unchanged, format/language, source citation, TLDR, claim coverage, theme/colors, accessibility, artifact hashes, and dependency status.
 
 ## Delivery
 
-Return the generated link or absolute path, the source link/path, and concise verification notes: source unchanged; format/language basis; dependency/clarification status when relevant; Visual Blind Replay, three-review, and Blind Reader status or limitation; visual validation; and Feishu live-preview status when applicable. If `lark-cli` returns `_notice.update`, mention `lark-cli update` only after completing the task.
+Return the generated link or absolute path, the source link/path, and concise verification notes: source unchanged; format/language basis; dependency/clarification status when relevant; applicable visual/full-page/Blind Reader replays and three-review status; visual validation; and Feishu live-preview status when applicable. If `lark-cli` returns `_notice.update`, mention `lark-cli update` only after completing the task.

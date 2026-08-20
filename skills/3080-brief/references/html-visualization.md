@@ -14,14 +14,17 @@ Read this reference only when HTML is the selected output. It defines the 3080-o
 
 Create one self-contained `.html` file by default. Embed only the selected local fonts and required runtime library into the artifact; never reference a CDN, remote font, local absolute path, or another skill at viewing time. The native SVG remains in the file as the no-script evidence fallback.
 
-Build from three reviewed inputs:
+Build through the locked composer path. The contract binds the three reviewed inputs to the output; the receipt binds the finished bytes back to that contract:
 
 ```bash
 scripts/validate_brief.py brief.json visual_spec.json
-scripts/build_html_brief.py brief.json visual_spec.json output.html --design-plan html_design.json
+scripts/html_runtime_contract.py init --brief brief.json --visual-spec visual_spec.json --design-plan html_design.json --output-html output.html --contract output.contract.json
+scripts/build_html_brief.py brief.json visual_spec.json output.html --design-plan html_design.json --contract output.contract.json --receipt output.build-receipt.json
 scripts/preflight_check.py output.html --format html --source-inventory source_inventory.md --claim-ledger claim_ledger.json
-scripts/validate_html_output.py output.html --visual-spec visual_spec.json --design-plan html_design.json
+scripts/validate_html_output.py output.html --visual-spec visual_spec.json --design-plan html_design.json --contract output.contract.json --build-receipt output.build-receipt.json
 ```
+
+The final HTML must carry the current composer signature, runtime contract ID, and input hashes. A visually plausible hand-authored page, copied template, or modified post-build file fails validation. Do not repair the signature manually; rebuild from the reviewed inputs.
 
 `html_design.json` follows `html-design.schema.json`. Select it from the source's document type, dominant relationship, reader, tone, and density after `brief.json` and `visual_spec.json` are stable. Do not choose a style before understanding the content, and do not use a silent default.
 
@@ -61,6 +64,8 @@ Select exactly one layout family and explain why it fits the source:
 
 Choose display, body, and mono families from `font-catalog.json`. Body must use a readable sans or serif family; expressive display faces require a source-fit rationale and must never carry dense body text. Set density, prose measure, section treatment, one-picture anchor, renderer, and support position explicitly. Keep motion `none` and asset mode `inline`.
 
+These choices must materially change the report shell, not merely add CSS labels. The composer provides a strong title field, a readable prose measure, generous section rhythm, integrated figures, argument-bearing headings, and restrained callouts. Layout families may change header treatment, section rhythm, opening composition, and technical/editorial emphasis; they may not turn the body into a component gallery.
+
 The renderer choice follows the relationship:
 
 - quantitative comparison, trend, distribution, threshold, matrix, or funnel -> ECharts;
@@ -94,7 +99,7 @@ Before HTML generation:
 3. Reject title-only blocks, annotation blocks whose metric items are not visibly rendered, repeated full-width stage panels, and vertical canvases that make the first-screen visual feel sparse.
 4. Build the HTML from the same reviewed spec, then compare the embedded SVG against the standalone preview.
 
-After deterministic render checks, crop the one-picture figure at normal document width and run [Visual Blind Replay](visual-blind-replay.md) before audit review. The replay reader receives only that image, not this plan, the surrounding TLDR/body, alt text, claim mapping, or expected conclusion. A validator PASS does not replace this comprehension gate.
+After deterministic render checks, crop the one-picture figure at normal document width and run [Visual Blind Replay](visual-blind-replay.md). Then capture one full-page desktop screenshot, collect `window.__3080GeometryAudit`, validate it with `validate_html_geometry_report.py`, and run [Full-page Visual Replay](full-page-visual-replay.md). A validator PASS does not replace either comprehension gate.
 
 `anchor_support` must render a visibly dominant first-row anchor, not four equal full-width panels. `comparison_grid` must render peer blocks on a shared grid. If the output DOM lacks the declared `data-layout` or block role groups, validation fails instead of accepting a composition label that did not affect layout.
 
@@ -168,7 +173,9 @@ Validate the rendered artifact:
 - figures preserve aspect ratio;
 - semantic meaning survives grayscale and color-vision differences through redundant cues;
 - every figure has alt text and every table has headers;
+- the full page reads as one report: title hierarchy is clear, TLDR is a distinct opening unit, headings alone carry the argument, the one-picture summary is dominant, and the body is not a wall of repeated components;
+- the runtime contract, generator signature, build receipt, geometry report, and full-page replay all bind to the same unchanged HTML artifact;
 
-FAIL when no allowed content-fit theme or HTML design plan was selected, HTML and the visual disagree on theme, layout/font/density differs from the approved design plan, chartable evidence is rendered primarily as prose/cards, the visual form does not match the source relationship, the figure title is merely a topic label, scope is lost, missing data is shown as zero, critical information is interaction-only, semantic colors conflict, selected fonts/runtime assets are not embedded, an external resource is required, or the delivered render is clipped.
+FAIL when the canonical composer/receipt chain is absent; no allowed content-fit theme or HTML design plan was selected; HTML and the visual disagree on theme; layout/font/density differs from the approved design plan; chartable evidence is rendered primarily as prose/cards; the visual form does not match the source relationship; the figure title is merely a topic label; scope is lost; missing data is shown as zero; critical information is interaction-only; semantic colors conflict; selected fonts/runtime assets are not embedded; an external resource is required; or the delivered render is clipped.
 
 Also FAIL when the SVG omits any title, label, or display value declared in the approved visual spec; a block has only a title and empty space; the final composition differs from the spec; or the one-picture canvas falls outside the configured compact width/height range.

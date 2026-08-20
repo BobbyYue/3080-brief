@@ -569,11 +569,11 @@ def check_html(text, config, errors, warnings):
         (match.group(1).casefold(), html_visible_text(match.group(2)))
         for match in re.finditer(r"<h([1-6])\b[^>]*>(.*?)</h\1>", text, re.I | re.S)
     ]
-    if not headings or headings[0] != ("1", "TLDR"):
-        errors.append((1, "first HTML heading must be H1 TLDR", headings[0][1] if headings else ""))
+    if len(headings) < 2 or headings[0][0] != "1" or not headings[0][1] or headings[1] != ("2", "TLDR"):
+        errors.append((1, "HTML heading order must be H1 document title followed by H2 TLDR", headings[:2]))
     forbidden = {normalize(item) for item in config["forbidden_headings"]}
     fragments = [normalize(item) for item in config.get("forbidden_heading_fragments", [])]
-    for _, heading in headings[1:]:
+    for _, heading in headings[2:]:
         if is_forbidden_heading(heading, forbidden, fragments):
             errors.append((1, "forbidden or audience-labeled heading", heading))
 

@@ -16,6 +16,16 @@ from html_design_kit import (
     runtime_scripts,
     validate_design_plan,
 )
+from html_runtime_contract import (
+    CONTRACT_VERSION,
+    GENERATOR,
+    GENERATOR_COMMENT,
+    create_contract,
+    load_json as load_contract_json,
+    validate_contract,
+    write_contract,
+    write_receipt,
+)
 from render_visual_spec import render_svg
 from theme_registry import resolve_visual_theme, theme_css
 
@@ -175,15 +185,14 @@ def semantic_css(config):
     return ":root { " + " ".join(declarations) + " }"
 
 
-def build_html(document, visual_spec, config, css, base_dir, design_plan=None):
+def build_html(document, visual_spec, config, css, base_dir, design_plan, runtime_contract):
     warnings = validate_brief_document(document, visual_spec, config)
     theme = resolve_visual_theme(visual_spec, config)
     svg = validate_svg(render_svg(visual_spec, config, include_header=False), "rendered one-picture visual")
-    if design_plan:
-        design_errors = validate_design_plan(design_plan, visual_spec)
-        if design_errors:
-            raise ValueError("; ".join(design_errors))
-        css = f"{css}\n{embedded_font_css(design_plan)}\n{design_css(design_plan)}"
+    design_errors = validate_design_plan(design_plan, visual_spec)
+    if design_errors:
+        raise ValueError("; ".join(design_errors))
+    css = f"{css}\n{embedded_font_css(design_plan)}\n{design_css(design_plan)}"
     runtime_items = []
     figure_counter = [0]
     language = str(document["language"])
@@ -217,41 +226,54 @@ def build_html(document, visual_spec, config, css, base_dir, design_plan=None):
     coverage = esc(visual_spec.get("coverage_percent", ""))
     source_note = visual_spec.get("source_note")
     visual_note = f'<p class="figure-note">{rich_text(source_note)}</p>' if source_note else ""
-    if design_plan:
-        visual_markup, visual_runtime = render_rich_visual(
-            visual_spec,
-            svg,
-            design_plan,
-            config,
-            "one-picture-visual",
-            full_picture=True,
-        )
-        runtime_items.extend(visual_runtime)
-        html_attributes = (
-            f' data-html-layout="{esc(design_plan["layout"])}"'
-            f' data-density="{esc(design_plan["density"])}"'
-            f' data-font-display="{esc(design_plan["typography"]["display"])}"'
-            f' data-font-body="{esc(design_plan["typography"]["body"])}"'
-        )
-    else:
-        visual_markup = f'<div class="visual-canvas">{svg}</div>'
-        html_attributes = ""
-    scripts = runtime_scripts(runtime_items, visual_spec, config) if design_plan else ""
-    output = f'''<!doctype html>
+    visual_markup, visual_runtime = render_rich_visual(
+        visual_spec,
+        svg,
+        design_plan,
+        config,
+        "one-picture-visual",
+        full_picture=True,
+    )
+    runtime_items.extend(visual_runtime)
+    body_plan = design_plan.get("body") or {}
+    html_attributes = (
+        f' data-html-layout="{esc(design_plan["layout"])}"'
+        f' data-density="{esc(design_plan["density"])}"'
+        f' data-font-display="{esc(design_plan["typography"]["display"])}"'
+        f' data-font-body="{esc(design_plan["typography"]["body"])}"'
+        f' data-prose-measure="{esc(body_plan.get("prose_measure", "medium"))}"'
+        f' data-section-treatment="{esc(body_plan.get("section_treatment", "ruled"))}"'
+        f' data-figure-treatment="{esc(body_plan.get("figure_treatment", "integrated"))}"'
+        f' data-generator="{GENERATOR}"'
+        f' data-contract-version="{CONTRACT_VERSION}"'
+        f' data-contract-id="{esc(runtime_contract["contract_id"])}"'
+        f' data-brief-sha256="{esc(runtime_contract["inputs"]["brief"]["sha256"])}"'
+        f' data-visual-spec-sha256="{esc(runtime_contract["inputs"]["visual_spec"]["sha256"])}"'
+        f' data-html-design-sha256="{esc(runtime_contract["inputs"]["html_design"]["sha256"])}"'
+    )
+    scripts = runtime_scripts(runtime_items, visual_spec, config)
+    visible_title = re.sub(r"^3080\s+Brief\s*[｜|]\s*", "", str(document["title"]), flags=re.I).strip()
+    visible_title = visible_title or str(document["title"])
+    output = f'''{GENERATOR_COMMENT}
+<!doctype html>
 <html lang="{esc(language)}" data-theme="{esc(theme['slug'])}"{html_attributes}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="{GENERATOR}">
   <title>{esc(document["title"])}</title>
   <style>{css}\n{theme_css(theme)}\n{semantic_css(config)}</style>
 </head>
 <body>
   <main class="page">
-    <p class="artifact-label">{esc(document["title"])}</p>
+    <header class="report-header">
+      <p class="artifact-label">3080 Brief</p>
+      <h1 class="report-title">{esc(visible_title)}</h1>
+    </header>
     <section class="tldr" data-section="tldr">
-      <h1>TLDR</h1>
+      <h2 class="tldr-heading">TLDR</h2>
       <div class="opening-unit" data-opening-lines="{len(document["opening"]["lines"])}">{opening}</div>
-      <figure class="one-picture" data-coverage="{coverage}" aria-label="{visual_alt}">
+      <figure class="one-picture" data-coverage="{coverage}" data-geometry-scope="one-picture" aria-label="{visual_alt}">
         <figcaption>{visual_title}</figcaption>
         {visual_markup}
         {visual_note}
@@ -260,7 +282,7 @@ def build_html(document, visual_spec, config, css, base_dir, design_plan=None):
       <p class="source-citation">{source_label}: {source_html}</p>
     </section>
     {''.join(body)}
-    <footer>3080 Brief</footer>
+    <footer class="artifact-footer">3080 Brief</footer>
   </main>
   {scripts}
 </body>
@@ -276,7 +298,9 @@ def main():
     parser.add_argument("output", help="Output .html path")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG))
     parser.add_argument("--css", default=str(DEFAULT_CSS))
-    parser.add_argument("--design-plan", default="", help="Reviewed HTML design plan JSON; enables the bundled rich renderer")
+    parser.add_argument("--design-plan", required=True, help="Reviewed HTML design plan JSON")
+    parser.add_argument("--contract", default="", help="Locked HTML runtime contract JSON")
+    parser.add_argument("--receipt", default="", help="Build receipt path; defaults beside the HTML")
     args = parser.parse_args()
 
     document_path = Path(args.document).resolve()
@@ -284,19 +308,53 @@ def main():
     visual_spec = json.loads(Path(args.visual_spec).read_text(encoding="utf-8"))
     config = json.loads(Path(args.config).read_text(encoding="utf-8"))
     css = Path(args.css).read_text(encoding="utf-8")
-    design_plan = json.loads(Path(args.design_plan).read_text(encoding="utf-8")) if args.design_plan else None
-    try:
-        output_html, warnings = build_html(document, visual_spec, config, css, document_path.parent, design_plan=design_plan)
-    except ValueError as exc:
-        print(f"FAIL\nERROR {exc}")
-        return 1
-    target = Path(args.output)
+    design_plan_path = Path(args.design_plan).resolve()
+    design_plan = json.loads(design_plan_path.read_text(encoding="utf-8"))
+    target = Path(args.output).resolve()
     if target.suffix.casefold() != ".html":
         print("FAIL\nERROR output path must end in .html")
         return 1
+    contract_path = Path(args.contract).resolve() if args.contract else Path(str(target) + ".contract.json")
+    receipt_path = Path(args.receipt).resolve() if args.receipt else Path(str(target) + ".build-receipt.json")
+    visual_spec_path = Path(args.visual_spec).resolve()
+    try:
+        if contract_path.is_file():
+            runtime_contract = load_contract_json(contract_path, "HTML runtime contract")
+            contract_errors = validate_contract(
+                runtime_contract,
+                document_path,
+                visual_spec_path,
+                design_plan_path,
+                target,
+            )
+            if contract_errors:
+                raise ValueError("; ".join(contract_errors))
+        else:
+            runtime_contract = create_contract(
+                document_path,
+                visual_spec_path,
+                design_plan_path,
+                target,
+            )
+            write_contract(contract_path, runtime_contract)
+        output_html, warnings = build_html(
+            document,
+            visual_spec,
+            config,
+            css,
+            document_path.parent,
+            design_plan,
+            runtime_contract,
+        )
+    except ValueError as exc:
+        print(f"FAIL\nERROR {exc}")
+        return 1
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(output_html, encoding="utf-8")
+    write_receipt(receipt_path, runtime_contract, target, warnings)
     print(target)
+    print(f"CONTRACT {contract_path}")
+    print(f"RECEIPT {receipt_path}")
     for warning in warnings:
         print(f"WARN {warning}")
     return 0

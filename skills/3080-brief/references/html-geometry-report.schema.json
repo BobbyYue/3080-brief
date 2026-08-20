@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "3080 HTML Render Geometry Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "contract_id", "viewport", "status", "issues", "checked_scopes"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "contract_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "viewport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": {"type": "number", "minimum": 1000},
+        "height": {"type": "number", "minimum": 500}
+      }
+    },
+    "status": {"const": "PASS"},
+    "issues": {"type": "array", "maxItems": 0},
+    "checked_scopes": {"type": "integer", "minimum": 1}
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "3080 Brief Full-page Visual Replay",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "reviewer_role",
+    "contract_id",
+    "preview_sha256",
+    "verdict",
+    "heading_path",
+    "first_screen_judgment",
+    "rhythm_assessment",
+    "gates",
+    "blocking_issues"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "reviewer_role": {"const": "full_page_visual"},
+    "contract_id": {"type": "string", "minLength": 8},
+    "preview_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "verdict": {"enum": ["PASS", "FAIL"]},
+    "heading_path": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}},
+    "first_screen_judgment": {"type": "string", "minLength": 1},
+    "rhythm_assessment": {"type": "string", "minLength": 1},
+    "dense_regions": {"type": "array", "items": {"type": "string"}},
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title_hierarchy_clear",
+        "tldr_is_distinct_opening_unit",
+        "heading_path_restates_story",
+        "no_overlap_or_clipping",
+        "not_a_component_wall",
+        "one_picture_is_dominant"
+      ],
+      "properties": {
+        "title_hierarchy_clear": {"type": "boolean"},
+        "tldr_is_distinct_opening_unit": {"type": "boolean"},
+        "heading_path_restates_story": {"type": "boolean"},
+        "no_overlap_or_clipping": {"type": "boolean"},
+        "not_a_component_wall": {"type": "boolean"},
+        "one_picture_is_dominant": {"type": "boolean"}
+      }
+    },
+    "blocking_issues": {"type": "array", "items": {"type": "string"}}
+  }
+}

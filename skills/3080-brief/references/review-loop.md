@@ -97,6 +97,11 @@ After Visual Blind Replay passes, run [blind-reader-replay.md](blind-reader-repl
 on the full rendered candidate. Resolve blocking comprehension defects before
 building audit packets.
 
+For HTML, first run [full-page-visual-replay.md](full-page-visual-replay.md) on a
+source-isolated full-page screenshot and validate the geometry report. Both
+files are hash-locked by readiness and the final review packet. This gate sits
+between the one-picture replay and Blind Reader Replay.
+
 ## Three-Reviewer Subagent Protocol
 
 After readiness and both replay gates pass, create three role-specific,
@@ -130,7 +135,7 @@ All packets share user constraints, source inventory, claim ledger, TLDR, review
 
 - Reader Comprehension: full reader-facing draft or rendered document and document preview. Body summaries alone are insufficient to judge readability.
 - Source Coverage And Grounding: complete non-appendix source outline, P0/P1 source excerpts with locations, claim ledger, and body claim mapping. The reviewer must fail when it cannot independently verify coverage or grounding.
-- Visualization And Expression: `visual_spec.json`, value-weighted coverage result, validation summary, selected style, local/live previews, rendered document preview, and the ledger's semantic directions/display values. For HTML, add `html_design.json`, selected local assets, runtime/fallback status, and a browser render preview. Do not paste full SVG/XML unless debugging a specific defect. Do not provide the Visual Blind Replay transcript, expected answer, failure reason, or prior revision rationale.
+- Visualization And Expression: `visual_spec.json`, value-weighted coverage result, validation summary, selected style, local/live previews, rendered document preview, and the ledger's semantic directions/display values. For HTML, add `html_design.json`, selected local assets, runtime/fallback status, full-page screenshot, validated geometry report, and full-page replay record. Do not paste full SVG/XML unless debugging a specific defect. Do not provide replay transcripts, expected answers, failure reasons, or prior revision rationale.
 
 Independence means reviewers do not see each other's opinions; it does not require identical evidence packets.
 
@@ -234,7 +239,7 @@ Use this loop:
 
 1. Complete source, claim, excerpt, and reviewer-input readiness.
 2. Draft and render; pass deterministic gates.
-3. Run Visual Blind Replay, then full-artifact Blind Reader Replay.
+3. Run Visual Blind Replay; for HTML, run geometry validation and Full-page Visual Replay; then run full-artifact Blind Reader Replay.
 4. Fix blocking replay issues and rerun only affected pre-audit gates.
 5. Run `validate_review_readiness.py` and lock its passing receipt.
 6. Build one three-role packet set and launch all reviewers concurrently.
@@ -258,7 +263,7 @@ Use this wording:
 
 ## Runtime Profiles
 
-- **Standard (default)**: run every deterministic hard gate, one expression scan, independent Visual and Primary Blind Reader replays, then one complete three-reviewer audit batch. Escalate readers and repeat audit only under configured conditions.
+- **Standard (default)**: run every deterministic hard gate, one expression scan, applicable one-picture/full-page visual replays, Primary Blind Reader Replay, then one complete three-reviewer audit batch. Escalate readers and repeat audit only under configured conditions.
 - **Strict**: use when explicitly requested or when conclusions affect material resources, policy/rules, causal claims, risk, or broad rollout. Before reviewer packets are built, replay every non-appendix P0/P1 protected relation against its source excerpt and confirm output assertion does not exceed evidence ceiling. Then run the independent Visual Blind Replay, Standard audit, and configured reader escalation.
 - **Fast**: use only when the user explicitly prioritizes speed or asks to skip independent review. Still run every deterministic hard gate and one expression scan. Replace Visual Blind Replay and the three independent reviewers with lightweight self-checks, skip Blind Reader Replay, and disclose all omissions. Never describe Fast output as independently reviewed.
 
@@ -274,7 +279,7 @@ after the selected replays pass.
 
 Do not present a generated doc as final until either:
 
-- readiness passes, Visual and full-artifact Blind Reader replays have no blocking failure, and all three reviewers return `PASS` for the unchanged artifact, or
+- readiness passes, applicable one-picture/full-page visual and full-artifact Blind Reader replays have no blocking failure, and all three reviewers return `PASS` for the unchanged artifact, or
 - The user explicitly asks to publish despite known unresolved issues.
 
 Fast output follows the explicit exception above; Standard and Strict output require reviewer PASS plus the applicable replay before final delivery.

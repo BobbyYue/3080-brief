@@ -48,6 +48,7 @@ ROLE_GATES = {
         "Missing values remain N/A rather than zero; scatter points, funnel stages, area, size, and flow magnitude are used only when source data supports them.",
         "For HTML, critical information is visible without interaction, the rendered document is readable, and no runtime resource is external.",
         "For HTML, the design plan fits the source, the dominant chartable/structural relationship uses the planned rich renderer, selected fonts support the reading task, and the native-SVG fallback preserves the full evidence payload.",
+        "For HTML, a source-isolated full-page replay confirms that title hierarchy, TLDR distinction, heading narrative, page rhythm, and one-picture dominance are visible in the rendered page; deterministic geometry evidence reports no overlap, clipping, or horizontal overflow.",
         "For Feishu, body figures use editable native shapes, judgment titles, compact captions, and readable table widths/alignment.",
     ],
 }
@@ -92,6 +93,9 @@ def validate_readiness(args):
         "visual_spec": digest(args.visual_spec),
         "html_design_plan": digest(args.html_design_plan),
         "visual_preview": digest(args.whiteboard_preview),
+        "full_page_preview": digest(args.full_page_preview),
+        "geometry_report": digest(args.geometry_report),
+        "full_page_replay": digest(args.full_page_replay),
     }
     current = {key: value for key, value in current.items() if value}
     if current != receipt.get("files"):
@@ -111,6 +115,9 @@ def packet_for(role, args):
         "validation_notes": digest(args.validation_notes),
         "whiteboard_preview": digest(args.whiteboard_preview),
         "document_preview": digest(args.document_preview),
+        "full_page_preview": digest(args.full_page_preview),
+        "geometry_report": digest(args.geometry_report),
+        "full_page_replay": digest(args.full_page_replay),
         "source_outline": digest(args.source_outline),
         "source_excerpts": digest(args.source_excerpts),
         "readiness_receipt": digest(args.readiness_receipt),
@@ -209,6 +216,9 @@ def packet_for(role, args):
 ## Body Visual Evidence
 
 - Rendered document preview/path: {args.document_preview or 'Not provided; FAIL semantic-color consistency when it cannot be verified.'}
+- Full-page screenshot/path: {args.full_page_preview or 'Not provided; FAIL HTML page-level hierarchy and rhythm.'}
+- Geometry report/path: {args.geometry_report or 'Not provided; FAIL HTML overlap and clipping evidence.'}
+- Blind full-page replay/path: {args.full_page_replay or 'Not provided; FAIL HTML report-level visual comprehension.'}
 - Use the claim ledger's `semantic_direction` and `display_values` as the cross-artifact comparison map.
 """
 
@@ -254,6 +264,9 @@ def main():
     parser.add_argument("--whiteboard-summary", default="")
     parser.add_argument("--whiteboard-preview", default="")
     parser.add_argument("--document-preview", default="")
+    parser.add_argument("--full-page-preview", default="")
+    parser.add_argument("--geometry-report", default="")
+    parser.add_argument("--full-page-replay", default="")
     parser.add_argument("--readiness-receipt", required=True)
     parser.add_argument("--round", type=int, default=1)
     parser.add_argument("--output", required=True, help="Output file for one role, or directory for --role all")

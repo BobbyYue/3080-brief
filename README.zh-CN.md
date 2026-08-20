@@ -115,12 +115,12 @@ Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-
 | 宿主状态 | 能说明什么 |
 | --- | --- |
 | 可安装 | Agent 能发现完整 Skill 目录，尚不能说明产出质量。 |
-| 核心流程已验证 | Agent 能运行可恢复流程和 Markdown/docx、自包含 HTML 的离线检查。 |
+| 核心流程已验证 | Agent 能运行基于原文证据的流程，以及 Markdown/docx、自包含 HTML 的离线检查。 |
 | 飞书流程已验证 | 当前运行真实完成文档读写、原生可编辑白板插入与查询、线上预览和最终验收。 |
 
-固定生产流程为：初始化 → 冻结非附录来源证据 → 预检 → 渲染完整初稿 → 独立执行一张图盲读 → 三位 Reviewer 独立审稿并全部通过 → Primary Blind Reader 复述，按条件升级 Technical/Decision Reader → 重新读取源文档和产物 → 验收。确认收到或执行计划不算最终交付。
+生产流程为：冻结非附录来源证据 → 预检 → 渲染完整初稿 → 独立执行一张图盲读 → HTML 额外执行几何检查与整页视觉复述 → Primary Blind Reader 复述，按条件升级 Technical/Decision Reader → 三位 Reviewer 独立审稿并全部通过 → 重新读取源文档和产物 → 验收。确认收到或执行计划不算最终交付。
 
-Standard 和 Strict 必须按顺序完成一张图盲读、三次独立审稿和适用的全文盲读。只有用户明确要求 Fast 时，才允许以披露限制的自检代替独立盲读/审稿，并跳过全文 Blind Reader Replay。
+Standard 和 Strict 必须先完成适用的视觉复述和 Blind Reader Replay，再执行三次独立审稿。只有用户明确要求 Fast 时，才允许以披露限制的自检代替独立盲读/审稿，并跳过全文 Blind Reader Replay。
 
 <details>
 <summary><strong>飞书/Lark 依赖与安装行为</strong></summary>
@@ -144,7 +144,6 @@ Standard 和 Strict 必须按顺序完成一张图盲读、三次独立审稿和
 
 ```bash
 bash skills/3080-brief/scripts/self_test.sh
-python3 skills/3080-brief/scripts/test_public_runtime.py
 ```
 
 单独检查运行上下文和飞书依赖：

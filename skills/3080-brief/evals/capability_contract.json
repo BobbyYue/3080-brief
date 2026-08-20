@@ -31,6 +31,7 @@
     "FSH-01",
     "HTML-01",
     "HTMLKIT-01",
+    "HTMLPAGE-01",
     "DEP-01",
     "EFF-01",
     "REV-01",
@@ -141,12 +142,13 @@
     },
     {
       "id": "HTML-01",
-      "requirement": "HTML output is independently implemented, offline, source-grounded, interaction-independent for critical content, readable in its rendered form, and driven by the same approved visual spec, composition, theme, and visible payload as Feishu.",
+      "requirement": "HTML output is built by the signed canonical composer, bound to reviewed inputs and a verified build receipt, offline, source-grounded, interaction-independent for critical content, and driven by the same approved visual spec, composition, theme, and visible payload as Feishu.",
       "owner": {"file": "references/html-visualization.md", "marker": "## Ownership Boundary"},
       "enforced_by": [
         "references/brief.schema.json",
         "references/html-design.schema.json",
         "assets/html/brief.css",
+        "scripts/html_runtime_contract.py",
         "scripts/build_html_brief.py",
         "scripts/preflight_check.py",
         "scripts/validate_html_output.py",
@@ -167,6 +169,23 @@
         "scripts/build_review_packet.py",
         "scripts/verify_reviewed_artifacts.py",
         "evals/fixtures/html-design.json",
+        "scripts/run_evals.py"
+      ]
+    },
+    {
+      "id": "HTMLPAGE-01",
+      "requirement": "HTML is evaluated as a complete report: its title hierarchy, TLDR distinction, heading narrative, page rhythm, one-picture dominance, and rendered geometry must pass on the unchanged full-page artifact.",
+      "owner": {"file": "references/full-page-visual-replay.md", "marker": "## Replay task"},
+      "enforced_by": [
+        "assets/html/brief.css",
+        "scripts/html_design_kit.py",
+        "scripts/validate_html_geometry_report.py",
+        "scripts/validate_full_page_replay.py",
+        "references/html-geometry-report.schema.json",
+        "references/full-page-replay.schema.json",
+        "scripts/validate_review_readiness.py",
+        "scripts/build_review_packet.py",
+        "scripts/verify_reviewed_artifacts.py",
         "scripts/run_evals.py"
       ]
     },

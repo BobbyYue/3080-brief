@@ -9,6 +9,14 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 from html_design_kit import CHART_TYPES, DIAGRAM_TYPES, validate_design_plan
+from html_runtime_contract import (
+    CONTRACT_VERSION,
+    GENERATOR,
+    GENERATOR_COMMENT,
+    load_json as load_contract_json,
+    validate_contract,
+    verify_receipt,
+)
 from theme_registry import resolve_visual_theme
 
 
@@ -59,6 +67,13 @@ class BriefParser(HTMLParser):
         self.html_layout = ""
         self.html_density = ""
         self.html_fonts = {}
+        self.generator = ""
+        self.contract_version = ""
+        self.contract_id = ""
+        self.input_hashes = {}
+        self.prose_measure = ""
+        self.section_treatment = ""
+        self.figure_treatment = ""
         self.rich_visuals = 0
         self.rich_block_ids = set()
         self.story_sections = 0
@@ -75,6 +90,17 @@ class BriefParser(HTMLParser):
                 "display": attrs.get("data-font-display", ""),
                 "body": attrs.get("data-font-body", ""),
             }
+            self.generator = attrs.get("data-generator", "")
+            self.contract_version = attrs.get("data-contract-version", "")
+            self.contract_id = attrs.get("data-contract-id", "")
+            self.input_hashes = {
+                "brief": attrs.get("data-brief-sha256", ""),
+                "visual_spec": attrs.get("data-visual-spec-sha256", ""),
+                "html_design": attrs.get("data-html-design-sha256", ""),
+            }
+            self.prose_measure = attrs.get("data-prose-measure", "")
+            self.section_treatment = attrs.get("data-section-treatment", "")
+            self.figure_treatment = attrs.get("data-figure-treatment", "")
         if tag == "section" and "story-section" in class_set:
             self.story_sections += 1
             if (
@@ -186,22 +212,33 @@ def main():
     parser.add_argument("html")
     parser.add_argument("--visual-spec", default="")
     parser.add_argument("--design-plan", default="")
+    parser.add_argument("--contract", default="")
+    parser.add_argument("--build-receipt", default="")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG))
     args = parser.parse_args()
 
-    text = Path(args.html).read_text(encoding="utf-8")
+    html_path = Path(args.html).resolve()
+    text = html_path.read_text(encoding="utf-8")
     config = json.loads(Path(args.config).read_text(encoding="utf-8"))
     spec = json.loads(Path(args.visual_spec).read_text(encoding="utf-8")) if args.visual_spec else None
     design_plan = json.loads(Path(args.design_plan).read_text(encoding="utf-8")) if args.design_plan else None
+    contract_path = Path(args.contract).resolve() if args.contract else Path(str(html_path) + ".contract.json")
+    receipt_path = Path(args.build_receipt).resolve() if args.build_receipt else Path(str(html_path) + ".build-receipt.json")
     parsed = BriefParser()
     parsed.feed(text)
     errors = []
 
+    if not text.startswith(GENERATOR_COMMENT + "\n"):
+        errors.append("HTML output is missing the 3080 composer signature")
+    if parsed.generator != GENERATOR or parsed.contract_version != CONTRACT_VERSION:
+        errors.append("HTML output is not bound to the current 3080 HTML composer")
     title = " ".join("".join(parsed.title_parts).split())
     if not title.casefold().startswith("3080 brief"):
         errors.append("HTML <title> must start with 3080 Brief")
-    if not parsed.headings or parsed.headings[0] != ("h1", "TLDR"):
-        errors.append("the first visible heading must be H1 TLDR")
+    if len(parsed.headings) < 2 or parsed.headings[0][0] != "h1" or parsed.headings[0][1] == "TLDR":
+        errors.append("the first visible heading must be the document-title H1")
+    if len(parsed.headings) < 2 or parsed.headings[1] != ("h2", "TLDR"):
+        errors.append("the document title must be followed by the TLDR H2")
     if not 2 <= parsed.opening_paragraphs <= 4:
         errors.append("opening unit must contain one judgment plus 1-3 support paragraphs")
     if parsed.one_picture_count != 1:
@@ -257,6 +294,9 @@ def main():
         errors.append("HTML output contains an unauthorized executable script")
     if parsed.external_resources:
         errors.append("HTML output contains external runtime resources: " + ", ".join(parsed.external_resources))
+    external_css = re.findall(r"@import\s+(?:url\()?['\"]?(https?:|//|file:)|url\(\s*['\"]?(https?:|//|file:)", text, re.I)
+    if external_css:
+        errors.append("HTML output contains an external CSS import or URL")
     for index, figure in enumerate(parsed.figures, 1):
         if not figure["aria_label"]:
             errors.append(f"figure {index} is missing aria-label")
@@ -269,6 +309,8 @@ def main():
     for required_css in ("overflow: auto", "--favorable", "--unfavorable", "--accent-2", "--section-gap"):
         if required_css not in text:
             errors.append(f"HTML output is missing required responsive/semantic CSS: {required_css}")
+    if "__3080GeometryAudit" not in text or "data-geometry-status" not in text:
+        errors.append("HTML output is missing the rendered geometry audit")
     if spec:
         try:
             theme = resolve_visual_theme(spec, config)
@@ -322,6 +364,13 @@ def main():
             for role in ("display", "body"):
                 if parsed.html_fonts.get(role) != typography.get(role):
                     errors.append(f"rendered HTML {role} font differs from the approved design plan")
+            body_plan = design_plan.get("body") or {}
+            if parsed.prose_measure != body_plan.get("prose_measure", "medium"):
+                errors.append("rendered HTML prose measure differs from the approved design plan")
+            if parsed.section_treatment != body_plan.get("section_treatment", "ruled"):
+                errors.append("rendered HTML section treatment differs from the approved design plan")
+            if parsed.figure_treatment != body_plan.get("figure_treatment", "integrated"):
+                errors.append("rendered HTML figure treatment differs from the approved design plan")
             if "@font-face" not in text or "data:font/ttf;base64," not in text:
                 errors.append("rich HTML output must embed its selected local fonts")
             renderer = (design_plan.get("one_picture") or {}).get("renderer")
@@ -337,8 +386,40 @@ def main():
                 errors.append("rich HTML output omitted the bundled ECharts runtime for its anchor chart")
             if anchor and renderer in {"auto", "mermaid"} and anchor.get("type") in DIAGRAM_TYPES and "mermaid" not in parsed.runtime_kinds:
                 errors.append("rich HTML output omitted the bundled Mermaid runtime for its anchor diagram")
-    elif parsed.runtime_kinds or parsed.rich_visuals:
-        errors.append("rich HTML runtime output requires an approved design plan")
+    else:
+        errors.append("3080 HTML validation requires an approved design plan")
+
+    if not contract_path.is_file():
+        errors.append(f"HTML runtime contract is missing: {contract_path}")
+    elif not args.visual_spec or not args.design_plan:
+        errors.append("HTML runtime contract verification requires visual spec and design plan paths")
+    else:
+        try:
+            contract = load_contract_json(contract_path, "HTML runtime contract")
+            brief_path = Path((contract.get("inputs") or {}).get("brief", {}).get("path", ""))
+            if brief_path.is_file():
+                contract_errors = validate_contract(
+                    contract,
+                    brief_path,
+                    Path(args.visual_spec).resolve(),
+                    Path(args.design_plan).resolve(),
+                    html_path,
+                )
+            else:
+                contract_errors = [f"locked brief input is missing: {brief_path}"]
+            errors.extend(contract_errors)
+            if parsed.contract_id != contract.get("contract_id"):
+                errors.append("rendered HTML contract ID differs from the locked contract")
+            expected_hashes = {key: value.get("sha256", "") for key, value in (contract.get("inputs") or {}).items()}
+            if parsed.input_hashes != expected_hashes:
+                errors.append("rendered HTML input hashes differ from the locked contract")
+            if not receipt_path.is_file():
+                errors.append(f"HTML build receipt is missing: {receipt_path}")
+            else:
+                receipt = load_contract_json(receipt_path, "HTML build receipt")
+                errors.extend(verify_receipt(receipt, contract, html_path))
+        except ValueError as exc:
+            errors.append(str(exc))
 
     print("FAIL" if errors else "PASS")
     for error in errors:

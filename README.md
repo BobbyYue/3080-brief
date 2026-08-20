@@ -116,12 +116,12 @@ Download the [latest release](https://github.com/BobbyYue/3080-brief/releases/la
 | Host status | What it proves |
 | --- | --- |
 | Installable | The agent can discover the complete Skill folder. No output-quality claim yet. |
-| Core verified | The agent can run the resumable workflow and offline checks for local Markdown/docx and self-contained HTML work. |
+| Core verified | The agent can run the source-grounded workflow and offline checks for local Markdown/docx and self-contained HTML work. |
 | Feishu verified | The current run proves document read/create, native editable whiteboard insert/query, live preview, and final verification. |
 
-The fixed production path is: initialize → freeze non-appendix source evidence → preflight → render the full draft → run isolated one-picture Visual Blind Replay → pass three independent audit reviews → run Primary Blind Reader Replay with conditional Technical/Decision escalation → re-fetch source and output → finalize. A plan or acknowledgement is never the final deliverable.
+The production path is: freeze non-appendix source evidence → preflight → render the full draft → run isolated one-picture Visual Blind Replay → for HTML, validate geometry and run Full-page Visual Replay → run Primary Blind Reader Replay with conditional Technical/Decision escalation → pass three independent audit reviews → re-fetch source and output → finalize. A plan or acknowledgement is never the final deliverable.
 
-Standard and Strict require the visual replay, three independent review executions, and the applicable Blind Reader Replay in that order. Fast may replace the independent replay/reviews with disclosed self-checks and skip full-document Blind Reader Replay only when the user explicitly requests Fast.
+Standard and Strict require the applicable visual replays and Blind Reader Replay before the three independent audit reviews. Fast may replace independent replay/reviews with disclosed self-checks and skip full-document Blind Reader Replay only when the user explicitly requests Fast.
 
 <details>
 <summary><strong>Feishu/Lark requirements and dependency behavior</strong></summary>
@@ -145,7 +145,6 @@ Run the complete offline suite:
 
 ```bash
 bash skills/3080-brief/scripts/self_test.sh
-python3 skills/3080-brief/scripts/test_public_runtime.py
 ```
 
 Useful focused checks:

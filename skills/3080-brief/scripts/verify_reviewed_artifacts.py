@@ -27,6 +27,9 @@ def main():
     parser.add_argument("--validation-notes", default="")
     parser.add_argument("--whiteboard-preview", default="")
     parser.add_argument("--document-preview", default="")
+    parser.add_argument("--full-page-preview", default="")
+    parser.add_argument("--geometry-report", default="")
+    parser.add_argument("--full-page-replay", default="")
     parser.add_argument("--source-outline", required=True)
     parser.add_argument("--source-excerpts", required=True)
     parser.add_argument("--readiness-receipt", required=True)
@@ -45,6 +48,9 @@ def main():
         "validation_notes": digest(args.validation_notes),
         "whiteboard_preview": digest(args.whiteboard_preview),
         "document_preview": digest(args.document_preview),
+        "full_page_preview": digest(args.full_page_preview),
+        "geometry_report": digest(args.geometry_report),
+        "full_page_replay": digest(args.full_page_replay),
         "source_outline": digest(args.source_outline),
         "source_excerpts": digest(args.source_excerpts),
         "readiness_receipt": digest(args.readiness_receipt),

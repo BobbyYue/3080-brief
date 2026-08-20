@@ -127,7 +127,7 @@ def design_css(plan):
     measure = {"narrow": "700px", "medium": "780px", "wide": "900px"}.get(
         (plan.get("body") or {}).get("prose_measure", "medium"), "780px"
     )
-    density_gap = {"compact": "30px", "balanced": "44px", "deep": "56px"}[plan["density"]]
+    density_gap = {"compact": "48px", "balanced": "64px", "deep": "78px"}[plan["density"]]
     return f"""
 html {{ font-family: var(--font-body); }}
 body {{ font-family: var(--font-body); }}
@@ -135,7 +135,7 @@ h1, h2, h3, figcaption {{ font-family: var(--font-display); }}
 code, pre, .metric-scope {{ font-family: var(--font-mono); }}
 .page {{ --prose-measure: {measure}; --design-gap: {density_gap}; }}
 .story-section > p, .story-section > ul, .story-section > .callout, .story-section > details {{ max-width: var(--prose-measure); }}
-.rich-visual {{ display: none; min-height: 360px; gap: 22px; align-items: stretch; }}
+.rich-visual {{ display: none; gap: 26px; align-items: stretch; }}
 .rich-visual[data-support-position="right"] {{ grid-template-columns: minmax(0, 2.15fr) minmax(220px, 0.85fr); }}
 .rich-visual[data-support-position="below"] {{ grid-template-columns: 1fr; }}
 .rich-visual[data-support-position="none"] {{ grid-template-columns: minmax(0, 1fr); }}
@@ -144,12 +144,12 @@ code, pre, .metric-scope {{ font-family: var(--font-mono); }}
 .js-rich-ready .rich-visual {{ display: grid; visibility: visible; }}
 .js-rich-ready .visual-fallback {{ display: none; }}
 .rich-anchor, .rich-support-block {{ min-width: 0; }}
-.rich-anchor {{ min-height: 350px; }}
+.rich-anchor {{ min-height: 320px; }}
 .rich-support {{ display: flex; flex-direction: column; gap: 16px; border-left: 1px solid var(--rule); padding-left: 20px; }}
 .rich-visual[data-support-position="below"] .rich-support {{ border-left: 0; border-top: 1px solid var(--rule); padding: 18px 0 0; }}
 .rich-block-title {{ margin: 0 0 6px; font: 700 0.95rem/1.35 var(--font-display); }}
-.metric-scope {{ margin: 0 0 10px; color: var(--muted); font-size: 0.72rem; line-height: 1.45; }}
-.chart-runtime {{ width: 100%; height: 310px; }}
+.metric-scope {{ margin: 0 0 10px; color: var(--muted); font-size: 0.78rem; line-height: 1.45; }}
+.chart-runtime {{ width: 100%; height: 320px; }}
 .rich-support-block .chart-runtime {{ height: 190px; }}
 .mermaid {{ display: flex; min-height: 280px; align-items: center; justify-content: center; margin: 0; overflow: auto; background: transparent; }}
 .rich-anchor[data-renderer="mermaid"] {{ min-height: 270px; }}
@@ -162,18 +162,32 @@ code, pre, .metric-scope {{ font-family: var(--font-mono); }}
 .rich-annotation strong {{ min-width: 0; max-width: 50%; text-align: right; overflow-wrap: anywhere; }}
 .rich-annotation strong:not([data-semantic]) {{ color: var(--ink); }}
 .rich-note {{ margin: 8px 0 0; color: var(--muted); font-size: 0.78rem; line-height: 1.5; }}
-html[data-html-layout="editorial-research"] .artifact-label {{ text-transform: uppercase; border-bottom: 1px solid var(--rule); padding-bottom: 9px; }}
-html[data-html-layout="editorial-research"] .opening-unit {{ border-left: 0; border-top: 3px solid var(--accent); border-bottom: 1px solid var(--rule); background: transparent; padding-left: 0; }}
-html[data-html-layout="decision-dashboard"] .page {{ --content-width: 1080px; }}
+html[data-html-layout="editorial-research"] .report-header {{ background: var(--ink); color: var(--surface); }}
+html[data-html-layout="editorial-research"] .opening-unit {{ border-left: 0; border-top: 4px solid var(--accent); padding: 20px 0 0; }}
+html[data-html-layout="editorial-research"] .story-section > h2 {{ font-size: 2.15rem; }}
+
+html[data-html-layout="decision-dashboard"] .page {{ --content-width: 1120px; }}
+html[data-html-layout="decision-dashboard"] .report-header {{ border-top-width: 12px; background: var(--surface); color: var(--ink); }}
+html[data-html-layout="decision-dashboard"] .artifact-label {{ color: var(--accent); }}
 html[data-html-layout="decision-dashboard"] .opening-unit {{ display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.6fr); column-gap: 22px; }}
 html[data-html-layout="decision-dashboard"] .opening-unit p:first-child {{ grid-row: 1 / span 3; }}
+
+html[data-html-layout="technical-analysis"] .report-header {{ border-top: 0; border-left: 10px solid var(--accent); background: var(--surface); color: var(--ink); }}
 html[data-html-layout="technical-analysis"] h2 {{ border-bottom-style: dashed; }}
 html[data-html-layout="technical-analysis"] .artifact-label {{ font-family: var(--font-mono); }}
-html[data-html-layout="narrative-longform"] .page {{ --content-width: 860px; }}
+
+html[data-html-layout="narrative-longform"] .page {{ --content-width: 940px; }}
+html[data-html-layout="narrative-longform"] .report-header {{ padding-left: 0; padding-right: 0; border-top: 0; border-bottom: 1px solid var(--rule); background: transparent; color: var(--ink); }}
+html[data-html-layout="narrative-longform"] .artifact-label {{ color: var(--accent); }}
+html[data-html-layout="narrative-longform"] .report-title {{ max-width: 860px; font-size: 4rem; }}
 html[data-html-layout="narrative-longform"] p, html[data-html-layout="narrative-longform"] li {{ font-size: 1.02rem; line-height: 1.78; }}
-html[data-html-layout="product-brief"] .story-section > h2 {{ border-left: 4px solid var(--accent); border-bottom: 0; padding: 3px 0 3px 12px; }}
-html[data-density="compact"] .story-section {{ margin-bottom: 30px; }}
-html[data-density="deep"] .story-section {{ margin-bottom: 58px; }}
+
+html[data-html-layout="product-brief"] .report-header {{ background: var(--accent); color: var(--surface); }}
+html[data-html-layout="product-brief"] .artifact-label {{ color: var(--surface); opacity: 0.82; }}
+html[data-html-layout="product-brief"] .story-section > h2 {{ border-left: 4px solid var(--accent); border-bottom: 0; padding: 3px 0 3px 14px; }}
+
+html[data-density="compact"] .story-section {{ margin-bottom: 48px; }}
+html[data-density="deep"] .story-section {{ margin-bottom: 78px; }}
 @media (max-width: 760px) {{
   .rich-visual[data-support-position] {{ grid-template-columns: 1fr; }}
   .rich-support, .rich-visual[data-support-position="right"] .rich-support {{ border-left: 0; border-top: 1px solid var(--rule); padding: 18px 0 0; }}
@@ -211,9 +225,9 @@ def echarts_option(block, visual_spec, config, font_family="Instrument Sans"):
     body_font = f"{font_family}, PingFang SC, Microsoft YaHei, sans-serif"
     common = {
         "animation": False,
-        "textStyle": {"fontFamily": body_font, "color": palette["text"]},
+        "textStyle": {"fontFamily": body_font, "fontSize": 12, "color": palette["text"]},
         "tooltip": {"show": False},
-        "grid": {"left": 18, "right": 28, "top": 18, "bottom": 34, "containLabel": True},
+        "grid": {"left": 24, "right": 72, "top": 24, "bottom": 42, "containLabel": True},
     }
     items = block.get("items") or []
     block_type = block.get("type")
@@ -221,8 +235,8 @@ def echarts_option(block, visual_spec, config, font_family="Instrument Sans"):
 
     if block_type in {"bar", "diverging_bar"}:
         common.update({
-            "xAxis": {"type": "value", "axisLine": {"lineStyle": {"color": palette["rule"]}}, "splitLine": {"lineStyle": {"color": palette["rule"]}}},
-            "yAxis": {"type": "category", "inverse": True, "data": [str(item.get("label", "")) for item in items], "axisTick": {"show": False}, "axisLine": {"show": False}},
+            "xAxis": {"type": "value", "axisLabel": {"fontSize": 12}, "axisLine": {"lineStyle": {"color": palette["rule"]}}, "splitLine": {"lineStyle": {"color": palette["rule"]}}},
+            "yAxis": {"type": "category", "inverse": True, "data": [str(item.get("label", "")) for item in items], "axisLabel": {"fontSize": 12, "width": 150, "overflow": "break", "lineHeight": 16}, "axisTick": {"show": False}, "axisLine": {"show": False}},
             "series": [{"type": "bar", "barMaxWidth": 24, "data": [
                 {"value": item.get("value", 0), "itemStyle": {"color": color}, "label": {"show": True, "position": "right" if item.get("value", 0) >= 0 else "left", "formatter": _display(item)}}
                 for item, color in zip(items, colors)
@@ -268,8 +282,8 @@ def echarts_option(block, visual_spec, config, font_family="Instrument Sans"):
         return common
     if block_type == "dot":
         common.update({
-            "xAxis": {"type": "value", "splitLine": {"lineStyle": {"color": palette["rule"]}}},
-            "yAxis": {"type": "category", "inverse": True, "data": [str(item.get("label", "")) for item in items], "axisLine": {"show": False}, "axisTick": {"show": False}},
+            "xAxis": {"type": "value", "axisLabel": {"fontSize": 12}, "splitLine": {"lineStyle": {"color": palette["rule"]}}},
+            "yAxis": {"type": "category", "inverse": True, "data": [str(item.get("label", "")) for item in items], "axisLabel": {"fontSize": 12, "width": 150, "overflow": "break", "lineHeight": 16}, "axisLine": {"show": False}, "axisTick": {"show": False}},
             "series": [{"type": "scatter", "symbolSize": 14, "data": [
                 {"value": [item.get("value", 0), index], "itemStyle": {"color": color}, "label": {"show": True, "position": "right", "formatter": _display(item)}}
                 for index, (item, color) in enumerate(zip(items, colors))
@@ -278,7 +292,7 @@ def echarts_option(block, visual_spec, config, font_family="Instrument Sans"):
         return common
     if block_type == "line":
         common.update({
-            "xAxis": {"type": "category", "boundaryGap": False, "data": [str(item.get("label", "")) for item in items], "axisLine": {"lineStyle": {"color": palette["rule"]}}},
+            "xAxis": {"type": "category", "boundaryGap": False, "data": [str(item.get("label", "")) for item in items], "axisLabel": {"fontSize": 12, "width": 110, "overflow": "break", "lineHeight": 16}, "axisLine": {"lineStyle": {"color": palette["rule"]}}},
             "yAxis": {"type": "value", "splitLine": {"lineStyle": {"color": palette["rule"]}}},
             "series": [{"type": "line", "smooth": False, "symbolSize": 9, "lineStyle": {"width": 3, "color": palette["primary"]}, "itemStyle": {"color": palette["primary"]}, "data": [
                 {"value": item.get("value", 0), "label": {"show": index in {0, len(items) - 1} or bool(item.get("annotate")), "position": "top", "formatter": _display(item)}}
@@ -316,7 +330,7 @@ def echarts_option(block, visual_spec, config, font_family="Instrument Sans"):
         value = block.get("value", 0)
         threshold = block.get("threshold", 0)
         common.update({
-            "grid": {"left": 18, "right": 28, "top": 38, "bottom": 20, "containLabel": True},
+            "grid": {"left": 24, "right": 78, "top": 42, "bottom": 28, "containLabel": True},
             "xAxis": {"type": "value", "min": block.get("minimum", 0), "max": block.get("maximum", 100), "splitLine": {"lineStyle": {"color": palette["rule"]}}},
             "yAxis": {"type": "category", "data": [str(block.get("value_label", "Current"))], "axisLine": {"show": False}, "axisTick": {"show": False}},
             "series": [{"type": "bar", "barWidth": 28, "data": [{"value": value, "itemStyle": {"color": _semantic_color(block, block, config, palette["primary"])}, "label": {"show": True, "position": "right", "formatter": str(block.get("display", value))}}], "markLine": {"silent": True, "symbol": "none", "label": {"show": True, "formatter": f'{block.get("threshold_label", "Threshold")} {threshold}'}, "lineStyle": {"color": config["semantic_colors"]["warning"]["svg"], "width": 2, "type": "dashed"}, "data": [{"xAxis": threshold}]}}],
@@ -329,7 +343,7 @@ def echarts_option(block, visual_spec, config, font_family="Instrument Sans"):
                 for item in items
             ]
             common.update({
-                "xAxis": {"type": "category", "data": [str(item.get("label", "")) for item in items], "axisLabel": {"interval": 0, "fontSize": 10, "overflow": "truncate", "width": 92}},
+                "xAxis": {"type": "category", "data": [str(item.get("label", "")) for item in items], "axisLabel": {"interval": 0, "fontSize": 12, "overflow": "break", "width": 110, "lineHeight": 16}},
                 "yAxis": {"type": "value", "splitLine": {"lineStyle": {"color": palette["rule"]}}},
                 "series": [
                     {"type": "candlestick", "data": [
@@ -501,8 +515,6 @@ def render_rich_visual(visual_spec, fallback_svg, design_plan, config, figure_id
 
 
 def runtime_scripts(runtime_items, visual_spec, config):
-    if not runtime_items:
-        return ""
     kinds = {item["kind"] for item in runtime_items}
     scripts = []
     if "echarts" in kinds:
@@ -558,6 +570,57 @@ def runtime_scripts(runtime_items, visual_spec, config):
         node.parentElement.classList.add('js-rich-ready');
       }}
     }}
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    await new Promise(function(resolve){{ requestAnimationFrame(function(){{ requestAnimationFrame(resolve); }}); }});
+    const geometryIssues = [];
+    const rounded = function(value){{ return Math.round(value * 10) / 10; }};
+    const outside = function(child, parent, tolerance){{
+      return child.left < parent.left - tolerance || child.right > parent.right + tolerance ||
+        child.top < parent.top - tolerance || child.bottom > parent.bottom + tolerance;
+    }};
+    for (const scope of document.querySelectorAll('[data-geometry-scope], .body-figure')) {{
+      const scopeRect = scope.getBoundingClientRect();
+      for (const node of scope.querySelectorAll('svg text, .rich-block-title, .metric-scope, .rich-note')) {{
+        const rect = node.getBoundingClientRect();
+        if (rect.width && rect.height && outside(rect, scopeRect, 3)) {{
+          geometryIssues.push({{type:'out-of-scope', text:(node.textContent || '').trim().slice(0,80)}});
+        }}
+        if (node.matches('svg text') && rect.height > 0 && rect.height < 11.5) {{
+          geometryIssues.push({{type:'small-load-bearing-text', text:(node.textContent || '').trim().slice(0,80), height:rounded(rect.height)}});
+        }}
+      }}
+      for (const svg of scope.querySelectorAll('svg')) {{
+        const labels = Array.from(svg.querySelectorAll('text')).map(function(node){{
+          return {{node:node, rect:node.getBoundingClientRect(), text:(node.textContent || '').trim()}};
+        }}).filter(function(item){{ return item.text && item.rect.width && item.rect.height; }});
+        for (let i = 0; i < labels.length; i += 1) {{
+          for (let j = i + 1; j < labels.length; j += 1) {{
+            const a = labels[i].rect;
+            const b = labels[j].rect;
+            const overlapX = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+            const overlapY = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+            if (overlapX > 2 && overlapY > 2) {{
+              geometryIssues.push({{type:'text-overlap', first:labels[i].text.slice(0,60), second:labels[j].text.slice(0,60), overlap:[rounded(overlapX),rounded(overlapY)]}});
+            }}
+          }}
+        }}
+      }}
+    }}
+    for (const node of document.querySelectorAll('.report-header, .report-title, .opening-unit, .one-picture, .story-section, .rich-anchor, .rich-support-block')) {{
+      const style = getComputedStyle(node);
+      if (node.scrollWidth > node.clientWidth + 2 && !['auto','scroll'].includes(style.overflowX)) {{
+        geometryIssues.push({{type:'horizontal-overflow', element:node.className || node.tagName, overflow:node.scrollWidth-node.clientWidth}});
+      }}
+    }}
+    window.__3080GeometryAudit = {{
+      schema_version: 1,
+      contract_id: document.documentElement.dataset.contractId || '',
+      viewport: {{width: window.innerWidth, height: window.innerHeight}},
+      status: geometryIssues.length ? 'FAIL' : 'PASS',
+      issues: geometryIssues,
+      checked_scopes: document.querySelectorAll('[data-geometry-scope], .body-figure').length
+    }};
+    document.documentElement.setAttribute('data-geometry-status', window.__3080GeometryAudit.status.toLowerCase());
     window.addEventListener('resize', function(){{ for (const chart of instances) chart.resize(); }});
   }} catch (error) {{
     for (const node of document.querySelectorAll('.js-rich-loading')) node.classList.remove('js-rich-loading');

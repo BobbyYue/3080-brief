@@ -40,6 +40,9 @@ def main() -> int:
     parser.add_argument("--visual-spec", default="")
     parser.add_argument("--html-design-plan", default="")
     parser.add_argument("--visual-preview", default="")
+    parser.add_argument("--full-page-preview", default="")
+    parser.add_argument("--geometry-report", default="")
+    parser.add_argument("--full-page-replay", default="")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
@@ -60,6 +63,9 @@ def main() -> int:
         "visual_spec": args.visual_spec,
         "html_design_plan": args.html_design_plan,
         "visual_preview": args.visual_preview,
+        "full_page_preview": args.full_page_preview,
+        "geometry_report": args.geometry_report,
+        "full_page_replay": args.full_page_replay,
     }
     paths = {key: require_file(value, key, errors) for key, value in required.items()}
     for key, value in optional.items():
@@ -68,6 +74,15 @@ def main() -> int:
 
     if args.visual_spec and not args.visual_preview:
         errors.append("visual_spec requires visual_preview")
+    if args.html_design_plan:
+        html_evidence = {
+            "full_page_preview": args.full_page_preview,
+            "geometry_report": args.geometry_report,
+            "full_page_replay": args.full_page_replay,
+        }
+        for label, value in html_evidence.items():
+            if not value:
+                errors.append(f"html_design_plan requires {label}")
 
     p01_ids: list[str] = []
     ledger_path = paths.get("claim_ledger")
