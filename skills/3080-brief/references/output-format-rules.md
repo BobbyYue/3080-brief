@@ -46,7 +46,7 @@ Implementation differs by output:
 - Feishu / Lark output: insert the one-picture summary as editable Feishu whiteboard SVG.
 - Word output: insert the one-picture summary as a rendered visual in the `.docx`; keep the source SVG or chart data as an auditable companion artifact when practical.
 - Markdown output: embed or link the rendered visual and keep source SVG/chart data nearby.
-- HTML output: render the approved visual spec as one inline SVG figure; keep all critical information visible without interaction and package CSS/assets inline by default.
+- HTML output: render the approved spec through the reviewed HTML design plan, selectively embed local fonts/ECharts/Mermaid, and retain one complete inline SVG fallback; keep critical information visible without interaction.
 
 The visual must remain source-grounded even when the output format cannot preserve Feishu-style editability.
 
@@ -57,7 +57,7 @@ Feishu and HTML render from the same reviewed `brief.json` and `visual_spec.json
 - For Feishu / Lark sources and outputs, use `lark-doc`; use `lark-whiteboard` to query live previews.
 - For Word `.docx` sources and outputs, use `documents:documents`; preserve professional document rendering and verify the generated file.
 - For local files, create the new file beside the source or in the working output directory unless the user specifies a destination.
-- For HTML, read `html-visualization.md`; use `build_html_brief.py` and do not depend on another report skill, remote fonts, scripts, or CDNs.
+- For HTML, read `html-visualization.md`; build with `html_design.json` and the 3080-owned Design Kit. Do not depend on another report skill, remote fonts, external scripts, or CDNs.
 - Do not upload or convert formats solely for convenience. Convert only when the user requests it or the source format cannot support the required output.
 
 ## Verification By Output Type
@@ -65,7 +65,7 @@ Feishu and HTML render from the same reviewed `brief.json` and `visual_spec.json
 - Feishu / Lark: verify created doc link, source unchanged, whiteboard block written, live preview inspected.
 - Word `.docx`: verify the new `.docx` exists, opens/renders, source unchanged, one-picture summary is visible, and source citation/reference is included without a standalone source heading.
 - Markdown: verify file exists, visual link/path works, source unchanged, and source citation/reference is included without a standalone source heading.
-- HTML: run HTML preflight and `validate_html_output.py`; verify the file is self-contained, the inline visual is nonblank, critical information is interaction-independent, semantic colors match the visual spec, and desktop/mobile/print layouts are readable.
+- HTML: run HTML preflight and `validate_html_output.py --design-plan html_design.json`; verify the file is self-contained, rich render and SVG fallback are nonblank, critical information is interaction-independent, semantic colors match the visual spec, and the rendered document is readable.
 
 ## Final Response
 

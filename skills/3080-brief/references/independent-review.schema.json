@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "3080 Brief Independent Review Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reviewer_role",
+    "artifact_set_id",
+    "review_round",
+    "verdict",
+    "checks",
+    "blocking_issues",
+    "unsupported_claims",
+    "missing_coverage",
+    "required_fixes"
+  ],
+  "properties": {
+    "reviewer_role": {"type": "string", "enum": ["reader", "source", "visual"]},
+    "artifact_set_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "review_round": {"type": "integer", "minimum": 1},
+    "verdict": {"type": "string", "enum": ["PASS", "FAIL"]},
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "result", "reason"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "result": {"type": "string", "enum": ["PASS", "FAIL"]},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "blocking_issues": {"type": "array", "items": {"type": "string"}},
+    "unsupported_claims": {"type": "array", "items": {"type": "string"}},
+    "missing_coverage": {"type": "array", "items": {"type": "string"}},
+    "required_fixes": {"type": "array", "items": {"type": "string"}}
+  }
+}

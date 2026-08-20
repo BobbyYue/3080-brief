@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "3080 Brief HTML Design Plan",
+  "type": "object",
+  "required": ["schema_version", "layout", "density", "typography", "one_picture", "rationale"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "layout": {"enum": ["editorial-research", "decision-dashboard", "technical-analysis", "narrative-longform", "product-brief"]},
+    "density": {"enum": ["compact", "balanced", "deep"]},
+    "typography": {
+      "type": "object",
+      "required": ["display", "body", "mono"],
+      "properties": {
+        "display": {"type": "string"},
+        "body": {"type": "string"},
+        "mono": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "one_picture": {
+      "type": "object",
+      "required": ["renderer", "anchor_block_id", "support_position", "fallback"],
+      "properties": {
+        "renderer": {"enum": ["auto", "echarts", "mermaid", "native-svg"]},
+        "anchor_block_id": {"type": "string", "minLength": 1},
+        "support_position": {"enum": ["right", "below"]},
+        "fallback": {"const": "native-svg"}
+      },
+      "additionalProperties": false
+    },
+    "body": {
+      "type": "object",
+      "properties": {
+        "prose_measure": {"enum": ["narrow", "medium", "wide"]},
+        "section_treatment": {"enum": ["ruled", "numbered", "plain"]},
+        "figure_treatment": {"enum": ["integrated", "framed"]}
+      },
+      "additionalProperties": false
+    },
+    "asset_mode": {"const": "inline"},
+    "motion": {"const": "none"},
+    "rationale": {"type": "string", "minLength": 20}
+  },
+  "additionalProperties": false
+}

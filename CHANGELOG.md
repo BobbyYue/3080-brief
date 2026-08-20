@@ -4,6 +4,32 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-20
+
+### Added
+
+- Bundled an offline HTML Design Kit with local fonts, ECharts, Mermaid, semantic HTML, and a native-SVG fallback; self-contained HTML no longer depends on external runtime assets.
+- Added an isolated one-picture Visual Blind Replay before audit review, including a hash-bound replay packet, validator, schema, and regression coverage.
+- Added a public Standard-profile state-machine smoke test that exercises HTML generation, stage ordering, review, reader replay, and final delivery receipts.
+
+### Changed
+
+- Expanded the shared visual specification and HTML renderer so Feishu and HTML use the same composition, theme, semantic colors, visible values, metric scope, and evidence mapping.
+- Enforced the runtime order `visual replay → three audit reviewers → Blind Reader Replay`; the public runner now blocks reader replay before audit PASS and records Fast-mode omissions explicitly.
+- Added content-fit HTML layout, typography, density, renderer, anchor, and fallback planning with deterministic validation.
+- Extended acceptance receipts to require Visual Blind Replay and Blind Reader Replay PASS for Standard host certification.
+
+### Fixed
+
+- Replaced sparse or text-heavy HTML one-picture layouts with richer quantitative and structural encodings when the source supports them.
+- Aligned the public resumable runner with the current validator CLIs, HTML design plan, one-picture preview, reviewer packet hashes, and conditional reader escalation.
+
+## [0.2.2] - 2026-08-19
+
+### Fixed
+
+- Enforced source-language parity across the title, TLDR, table, body, and one-picture visual unless the user explicitly requests a different language.
+
 ## [0.2.1] - 2026-08-19
 
 ### Fixed

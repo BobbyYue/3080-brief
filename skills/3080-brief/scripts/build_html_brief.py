@@ -9,6 +9,13 @@ import sys
 from pathlib import Path
 
 from brief_model import BLOCK_TYPES, SEMANTIC_DIRECTIONS, subset_visual_spec, validate_document as validate_brief_document
+from html_design_kit import (
+    design_css,
+    embedded_font_css,
+    render_rich_visual,
+    runtime_scripts,
+    validate_design_plan,
+)
 from render_visual_spec import render_svg
 from theme_registry import resolve_visual_theme, theme_css
 
@@ -70,17 +77,28 @@ def render_table(headers, rows, class_name=""):
 def resolve_svg(block, base_dir, visual_spec, config):
     if block.get("visual_block_ids"):
         subset = subset_visual_spec(visual_spec, block["visual_block_ids"], block.get("title", ""), block.get("alt_text", ""))
-        return validate_svg(render_svg(subset, config, include_header=False), "rendered body figure")
+        return validate_svg(render_svg(subset, config, include_header=False), "rendered body figure"), subset
     raw_path = block.get("svg")
     if not raw_path:
         raise ValueError("figure block requires svg")
     candidate = (base_dir / raw_path).resolve() if not Path(raw_path).is_absolute() else Path(raw_path).resolve()
     if not candidate.is_file() or candidate.suffix.casefold() != ".svg":
         raise ValueError(f"figure SVG not found: {raw_path}")
-    return validate_svg(candidate.read_text(encoding="utf-8"), str(candidate))
+    return validate_svg(candidate.read_text(encoding="utf-8"), str(candidate)), None
 
 
-def render_blocks(blocks, base_dir, visual_spec, config, allow_details=True):
+def render_blocks(
+    blocks,
+    base_dir,
+    visual_spec,
+    config,
+    allow_details=True,
+    design_plan=None,
+    runtime_items=None,
+    figure_counter=None,
+):
+    runtime_items = runtime_items if runtime_items is not None else []
+    figure_counter = figure_counter if figure_counter is not None else [0]
     output = []
     for block in blocks:
         block_type = block.get("type")
@@ -100,15 +118,29 @@ def render_blocks(blocks, base_dir, visual_spec, config, allow_details=True):
         elif block_type == "table":
             output.append(render_table(block.get("headers") or [], block.get("rows") or [], "body-table"))
         elif block_type == "figure":
-            svg = resolve_svg(block, base_dir, visual_spec, config)
+            svg, figure_spec = resolve_svg(block, base_dir, visual_spec, config)
             title = rich_text(block.get("title", ""))
             alt_text = esc(block.get("alt_text", ""))
             if not title or not alt_text:
                 raise ValueError("body figure requires a judgment title and alt_text")
             note = f'<p class="figure-note">{rich_text(block["note"])}</p>' if block.get("note") else ""
+            figure_counter[0] += 1
+            figure_id = f"body-visual-{figure_counter[0]}"
+            if design_plan and figure_spec:
+                visual_markup, visual_runtime = render_rich_visual(
+                    figure_spec,
+                    svg,
+                    design_plan,
+                    config,
+                    figure_id,
+                    full_picture=False,
+                )
+                runtime_items.extend(visual_runtime)
+            else:
+                visual_markup = f'<div class="visual-canvas">{svg}</div>'
             output.append(
                 f'<figure class="body-figure" aria-label="{alt_text}"><figcaption>{title}</figcaption>'
-                f'<div class="visual-canvas">{svg}</div>{note}</figure>'
+                f'{visual_markup}{note}</figure>'
             )
         elif block_type == "details":
             if not allow_details or block.get("priority") != "P2":
@@ -116,7 +148,16 @@ def render_blocks(blocks, base_dir, visual_spec, config, allow_details=True):
             detail_blocks = block.get("blocks") or [
                 {"type": "paragraph", "text": paragraph} for paragraph in block.get("paragraphs", [])
             ]
-            nested = render_blocks(detail_blocks, base_dir, visual_spec, config, allow_details=False)
+            nested = render_blocks(
+                detail_blocks,
+                base_dir,
+                visual_spec,
+                config,
+                allow_details=False,
+                design_plan=design_plan,
+                runtime_items=runtime_items,
+                figure_counter=figure_counter,
+            )
             output.append(
                 f'<details data-priority="P2"><summary>{rich_text(block.get("summary", ""))}</summary>'
                 f'<div class="details-body">{nested}</div></details>'
@@ -134,10 +175,17 @@ def semantic_css(config):
     return ":root { " + " ".join(declarations) + " }"
 
 
-def build_html(document, visual_spec, config, css, base_dir):
+def build_html(document, visual_spec, config, css, base_dir, design_plan=None):
     warnings = validate_brief_document(document, visual_spec, config)
     theme = resolve_visual_theme(visual_spec, config)
     svg = validate_svg(render_svg(visual_spec, config, include_header=False), "rendered one-picture visual")
+    if design_plan:
+        design_errors = validate_design_plan(design_plan, visual_spec)
+        if design_errors:
+            raise ValueError("; ".join(design_errors))
+        css = f"{css}\n{embedded_font_css(design_plan)}\n{design_css(design_plan)}"
+    runtime_items = []
+    figure_counter = [0]
     language = str(document["language"])
     is_zh = language.casefold().startswith("zh")
     headers = ["问题", "结论", "为什么"] if is_zh else ["Question", "Conclusion", "Why"]
@@ -156,15 +204,35 @@ def build_html(document, visual_spec, config, css, base_dir):
     for section in document.get("body") or []:
         body.append(
             f'<section class="story-section"><h2>{rich_text(section["heading"])}</h2>'
-            f'{render_blocks(section["blocks"], base_dir, visual_spec, config)}</section>'
+            f'{render_blocks(section["blocks"], base_dir, visual_spec, config, design_plan=design_plan, runtime_items=runtime_items, figure_counter=figure_counter)}</section>'
         )
     visual_title = rich_text(visual_spec.get("title", ""))
     visual_alt = esc(visual_spec.get("alt_text") or f'{visual_spec.get("title", "")}: {visual_spec.get("reading_path", "")}')
     coverage = esc(visual_spec.get("coverage_percent", ""))
     source_note = visual_spec.get("source_note")
     visual_note = f'<p class="figure-note">{rich_text(source_note)}</p>' if source_note else ""
+    if design_plan:
+        visual_markup, visual_runtime = render_rich_visual(
+            visual_spec,
+            svg,
+            design_plan,
+            config,
+            "one-picture-visual",
+            full_picture=True,
+        )
+        runtime_items.extend(visual_runtime)
+        html_attributes = (
+            f' data-html-layout="{esc(design_plan["layout"])}"'
+            f' data-density="{esc(design_plan["density"])}"'
+            f' data-font-display="{esc(design_plan["typography"]["display"])}"'
+            f' data-font-body="{esc(design_plan["typography"]["body"])}"'
+        )
+    else:
+        visual_markup = f'<div class="visual-canvas">{svg}</div>'
+        html_attributes = ""
+    scripts = runtime_scripts(runtime_items, visual_spec, config) if design_plan else ""
     output = f'''<!doctype html>
-<html lang="{esc(language)}" data-theme="{esc(theme['slug'])}">
+<html lang="{esc(language)}" data-theme="{esc(theme['slug'])}"{html_attributes}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -179,7 +247,7 @@ def build_html(document, visual_spec, config, css, base_dir):
       <div class="opening-unit" data-opening-lines="{len(document["opening"]["lines"])}">{opening}</div>
       <figure class="one-picture" data-coverage="{coverage}" aria-label="{visual_alt}">
         <figcaption>{visual_title}</figcaption>
-        <div class="visual-canvas">{svg}</div>
+        {visual_markup}
         {visual_note}
       </figure>
       {question_table}
@@ -188,6 +256,7 @@ def build_html(document, visual_spec, config, css, base_dir):
     {''.join(body)}
     <footer>3080 Brief</footer>
   </main>
+  {scripts}
 </body>
 </html>
 '''
@@ -201,6 +270,7 @@ def main():
     parser.add_argument("output", help="Output .html path")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG))
     parser.add_argument("--css", default=str(DEFAULT_CSS))
+    parser.add_argument("--design-plan", default="", help="Reviewed HTML design plan JSON; enables the bundled rich renderer")
     args = parser.parse_args()
 
     document_path = Path(args.document).resolve()
@@ -208,8 +278,9 @@ def main():
     visual_spec = json.loads(Path(args.visual_spec).read_text(encoding="utf-8"))
     config = json.loads(Path(args.config).read_text(encoding="utf-8"))
     css = Path(args.css).read_text(encoding="utf-8")
+    design_plan = json.loads(Path(args.design_plan).read_text(encoding="utf-8")) if args.design_plan else None
     try:
-        output_html, warnings = build_html(document, visual_spec, config, css, document_path.parent)
+        output_html, warnings = build_html(document, visual_spec, config, css, document_path.parent, design_plan=design_plan)
     except ValueError as exc:
         print(f"FAIL\nERROR {exc}")
         return 1

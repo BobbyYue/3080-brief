@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "3080 Visual Blind Replay Evaluation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["reader_role", "visual_artifact_id", "review_round", "replay", "evaluation"],
+  "properties": {
+    "reader_role": {"const": "visual_blind"},
+    "visual_artifact_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "review_round": {"type": "integer", "minimum": 1},
+    "replay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["main_judgment", "supporting_evidence", "next_action_or_boundary", "reading_path", "unresolved_confusion"],
+      "properties": {
+        "main_judgment": {"type": "string", "minLength": 1},
+        "supporting_evidence": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "next_action_or_boundary": {"type": "string", "minLength": 1},
+        "reading_path": {"type": "string", "minLength": 1},
+        "unresolved_confusion": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "main_judgment_claim_ids", "evidence_claim_ids", "action_or_boundary_claim_ids", "reading_path_clear", "unresolved_confusion_blocks_decision", "blocking_issues", "required_fixes"],
+      "properties": {
+        "verdict": {"enum": ["PASS", "FAIL"]},
+        "main_judgment_claim_ids": {"type": "array", "items": {"type": "string"}},
+        "evidence_claim_ids": {"type": "array", "items": {"type": "string"}},
+        "action_or_boundary_claim_ids": {"type": "array", "items": {"type": "string"}},
+        "reading_path_clear": {"type": "boolean"},
+        "unresolved_confusion_blocks_decision": {"type": "boolean"},
+        "blocking_issues": {"type": "array", "items": {"type": "string"}},
+        "required_fixes": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

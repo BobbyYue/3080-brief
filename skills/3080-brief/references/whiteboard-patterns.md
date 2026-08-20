@@ -30,7 +30,7 @@ Start from `claim_ledger.json` and `visual_spec.json`:
 
 1. Confirm the visual pattern and reader question were selected in `visual-pattern-library.md`.
 2. Map every board block to claim IDs.
-3. Run `scripts/check_coverage.py`; do not draw before the claim spine reaches the configured threshold.
+3. Record the decision-bearing names, values, and labels that must be visible in each covered P0/P1 claim as `visual_required_tokens`, then run `scripts/check_coverage.py claim_ledger.json --visual-spec visual_spec.json`; do not draw before the claim spine reaches the configured threshold and every token is visibly rendered.
 4. Run `scripts/validate_visual_spec.py visual_spec.json claim_ledger.json` to verify claim-to-block mapping and style eligibility.
 5. Use `scripts/render_visual_spec.py` for supported bar, dot, threshold, matrix, timeline, or flow anchors when useful.
 6. Compose the complete board with one dominant reading path.

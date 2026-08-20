@@ -13,8 +13,8 @@
       "title": "分层比较揭示有效差异",
       "metric_scope": {"metric": "synthetic score", "unit": "points", "period": "evaluation fixture"},
       "items": [
-        {"label": "汇总", "value": 42, "display": "42", "semantic_direction": "neutral"},
-        {"label": "分层", "value": 68, "display": "68", "semantic_direction": "favorable"}
+        {"label": "汇总", "value": 42, "display": "42", "semantic_direction": "neutral", "metric_scope": {"metric": "synthetic score", "unit": "points", "period": "evaluation fixture", "denominator": "eligible observations", "segment": "aggregate"}},
+        {"label": "分层", "value": 68, "display": "68", "semantic_direction": "favorable", "metric_scope": {"metric": "synthetic score", "unit": "points", "period": "evaluation fixture", "denominator": "eligible observations", "segment": "layer"}}
       ]
     },
     {

@@ -32,6 +32,7 @@
         }
       ],
       "board_status": "covered",
+      "visual_required_tokens": ["broad launch"],
       "appendix": false,
       "inference": false
     }

@@ -69,7 +69,7 @@ cover the core logic in one picture, and answer the reader's key questions in on
 - **Core-value extraction:** separates decision-critical conclusions, evidence, risks, and actions from background noise.
 - **Clear storyline:** turns fragmented or technical source logic into a coherent argument.
 - **Concrete expression:** value-bearing titles, headings, and leads state the actual object and source-supported result instead of relying on method labels or generic claims.
-- **Visual reasoning:** Feishu and HTML share one explicit composition, visible evidence values, theme, and semantic colors, so the one-picture argument does not drift between formats.
+- **Visual reasoning:** Feishu and HTML share one explicit composition, visible evidence values, theme, and semantic colors. HTML adds a bundled offline chart/diagram kit with an auditable native-SVG fallback, so the one-picture argument does not collapse into boxes plus prose.
 - **Reliable delivery:** preserves the source, traces important claims, matches the output format, and verifies the final artifact.
 
 ## Installation options
@@ -116,17 +116,17 @@ Download the [latest release](https://github.com/BobbyYue/3080-brief/releases/la
 | Host status | What it proves |
 | --- | --- |
 | Installable | The agent can discover the complete Skill folder. No output-quality claim yet. |
-| Core verified | The agent can run the resumable workflow and offline checks for local Markdown/docx work. |
+| Core verified | The agent can run the resumable workflow and offline checks for local Markdown/docx and self-contained HTML work. |
 | Feishu verified | The current run proves document read/create, native editable whiteboard insert/query, live preview, and final verification. |
 
-The fixed production path is: initialize → freeze source evidence → preflight → create the full draft → review the recorded artifact → re-fetch source and output → finalize. A plan or acknowledgement is never the final deliverable.
+The fixed production path is: initialize → freeze non-appendix source evidence → preflight → render the full draft → run isolated one-picture Visual Blind Replay → pass three independent audit reviews → run Primary Blind Reader Replay with conditional Technical/Decision escalation → re-fetch source and output → finalize. A plan or acknowledgement is never the final deliverable.
 
-Standard and Strict require three independent review executions. Fast may use three role-separated self-checks only when the user explicitly requests Fast.
+Standard and Strict require the visual replay, three independent review executions, and the applicable Blind Reader Replay in that order. Fast may replace the independent replay/reviews with disclosed self-checks and skip full-document Blind Reader Replay only when the user explicitly requests Fast.
 
 <details>
 <summary><strong>Feishu/Lark requirements and dependency behavior</strong></summary>
 
-Core offline validation requires Python 3.9+ and no third-party Python packages. Feishu/Lark output additionally requires:
+Core offline validation requires Python 3.9+ and no third-party Python packages. Self-contained HTML uses only bundled fonts and renderer assets at runtime; it does not load external scripts, fonts, or styles. Feishu/Lark output additionally requires:
 
 - executable `lark-doc` read/create and `lark-whiteboard` query/update workflows;
 - Node.js 20+;
@@ -145,6 +145,7 @@ Run the complete offline suite:
 
 ```bash
 bash skills/3080-brief/scripts/self_test.sh
+python3 skills/3080-brief/scripts/test_public_runtime.py
 ```
 
 Useful focused checks:

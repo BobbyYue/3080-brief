@@ -27,7 +27,9 @@
     "output_distinct_and_accessible",
     "grounding_frozen",
     "deterministic_preflight",
+    "visual_blind_replay",
     "review",
+    "blind_reader_replay",
     "live_output_verification"
   ]
 }

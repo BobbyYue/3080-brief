@@ -64,27 +64,43 @@ def semantic_color(node, block, palette, tint=False, fallback=None):
     return mapping.get(key, fallback or palette["primary"])
 
 
+def metric_scope_text(block):
+    scope = block.get("metric_scope") or {}
+    ordered = [scope.get(key) for key in ("metric", "unit", "period", "denominator", "segment", "filter")]
+    return " · ".join(str(value) for value in ordered if value not in (None, ""))
+
+
 def block_height(block):
     block_type = block.get("type")
     if block_type == "annotation":
-        return 220 if block.get("items") else 150
-    compact = {"bar", "diverging_bar", "stacked_bar", "dot", "slope", "threshold", "range", "funnel", "timeline", "flow", "sequence"}
-    return 250 if block_type in compact else 300
+        base = 220 if block.get("items") else 150
+    elif block_type in {"matrix", "heatmap"}:
+        base = max(220, min(340, 110 + 48 * len(block.get("rows", []))))
+    elif block_type in {"bar", "diverging_bar", "dot", "funnel"}:
+        base = max(180, min(280, 90 + 32 * len(block.get("items", []))))
+    else:
+        compact = {"stacked_bar", "slope", "threshold", "range", "timeline", "flow", "sequence"}
+        base = 250 if block_type in compact else 300
+    note_space = 45 if block.get("note") and block_type in {"range", "distribution", "stacked_bar"} else 0
+    return base + note_space + (54 if metric_scope_text(block) else 0)
 
 
 def render_bar(block, x, y, width, palette):
     items = block.get("items", [])[:6]
     values = [float(item.get("value", 0)) for item in items]
     maximum = max(values) if values else 1
+    longest_label = max((len(str(item.get("label", ""))) for item in items), default=0)
+    label_width = min(width * 0.42, max(150, longest_label * 9 + 18))
+    bar_area = max(80, width - label_width - 70)
     output = [text(x, y, block.get("title", ""), 24, 700, palette["text"])]
     for index, item in enumerate(items):
         row_y = y + 45 + index * 32
         value = float(item.get("value", 0))
-        bar_w = max(2, (width - 220) * value / maximum) if maximum else 2
+        bar_w = max(2, bar_area * value / maximum) if maximum else 2
         output.append(text(x, row_y + 18, item.get("label", ""), 17, 600, palette["text"]))
         mark_color = semantic_color(item, block, palette)
-        output.append(f'<rect x="{x + 150}" y="{row_y}" width="{bar_w:.1f}" height="22" rx="3" fill="{mark_color}"/>')
-        output.append(text(x + 160 + bar_w, row_y + 18, item.get("display", value), 17, 700, mark_color))
+        output.append(f'<rect x="{x + label_width:.1f}" y="{row_y}" width="{bar_w:.1f}" height="22" rx="3" fill="{mark_color}"/>')
+        output.append(text(x + label_width + bar_w + 10, row_y + 18, item.get("display", value), 17, 700, mark_color))
     return output
 
 
@@ -112,6 +128,41 @@ def render_diverging_bar(block, x, y, width, palette):
 
 def render_stacked_bar(block, x, y, width, palette):
     items = block.get("items", [])[:8]
+    groups = list(dict.fromkeys(str(item.get("series", "")) for item in items if item.get("series")))
+    if groups:
+        labels = list(dict.fromkeys(str(item.get("label", "")) for item in items))
+        item_map = {(str(item.get("series", "")), str(item.get("label", ""))): item for item in items}
+        maximum = float(block.get("maximum", 100)) or 100
+        label_width = min(170, width * 0.24)
+        start = x + label_width
+        usable = width - label_width - 30
+        output = [text(x, y, block.get("title", ""), 24, 700, palette["text"])]
+        for row_index, group in enumerate(groups):
+            row_y = y + 58 + row_index * 58
+            output.append(text(x, row_y + 26, group, 17, 700, palette["text"]))
+            cursor = start
+            for label in labels:
+                item = item_map.get((group, label))
+                if not item:
+                    continue
+                value = max(0, float(item.get("value", 0)))
+                segment_width = usable * value / maximum
+                mark_color = semantic_color(item, block, palette)
+                output.append(f'<rect x="{cursor:.1f}" y="{row_y}" width="{segment_width:.1f}" height="38" fill="{mark_color}"/>')
+                if segment_width >= 48:
+                    output.append(text(cursor + segment_width / 2, row_y + 25, item.get("display", item.get("value", "")), 15, 700, "#FFFFFF", "middle"))
+                cursor += segment_width
+        legend_y = y + 58 + len(groups) * 58 + 18
+        legend_x = start
+        for label in labels:
+            sample = next((item for item in items if str(item.get("label", "")) == label), {})
+            mark_color = semantic_color(sample, block, palette)
+            output.append(f'<circle cx="{legend_x + 7}" cy="{legend_y - 5}" r="7" fill="{mark_color}"/>')
+            output.append(text(legend_x + 20, legend_y, label, 15, 600, palette["text"]))
+            legend_x += max(130, usable / max(1, len(labels)))
+        if block.get("note"):
+            output.extend(wrapped_text(x, legend_y + 32, block["note"], 14, 500, palette["muted"], max_chars=max(28, int(width / 8)), line_height=18))
+        return output
     values = [max(0, float(item.get("value", 0))) for item in items]
     total = sum(values) or 1
     start = x + 40
@@ -134,6 +185,8 @@ def render_stacked_bar(block, x, y, width, palette):
         output.append(f'<circle cx="{legend_x + 7}" cy="{legend_y - 5}" r="7" fill="{mark_color}"/>')
         output.append(text(legend_x + 20, legend_y, item.get("label", ""), 15, 600, palette["text"]))
         legend_x += usable / 4
+    if block.get("note"):
+        output.extend(wrapped_text(x, y + 215, block["note"], 14, 500, palette["muted"], max_chars=max(28, int(width / 8)), line_height=18))
     return output
 
 
@@ -276,8 +329,8 @@ def render_threshold(block, x, y, width, palette):
 def render_range(block, x, y, width, palette):
     items = block.get("items", [])[:6]
     values = [float(item.get(key, 0)) for item in items for key in ("low", "high")]
-    low = min(values) if values else 0
-    high = max(values) if values else 1
+    low = float(block.get("minimum", min(values) if values else 0))
+    high = float(block.get("maximum", max(values) if values else 1))
     span = high - low or 1
     start = x + 170
     end = x + width - 70
@@ -294,12 +347,29 @@ def render_range(block, x, y, width, palette):
         output.append(f'<line x1="{low_x:.1f}" y1="{row_y}" x2="{high_x:.1f}" y2="{row_y}" stroke="{mark_color}" stroke-width="10" stroke-linecap="round"/>')
         output.append(f'<circle cx="{low_x:.1f}" cy="{row_y}" r="6" fill="{mark_color}"/>')
         output.append(f'<circle cx="{high_x:.1f}" cy="{row_y}" r="6" fill="{mark_color}"/>')
-        output.append(text(high_x + 12, row_y + 6, item.get("display", f"{item_low:g}-{item_high:g}"), 15, 700, mark_color))
+        output.append(text(high_x + 12, row_y - 10, item.get("display", f"{item_low:g}-{item_high:g}"), 16, 700, mark_color))
+    if "minimum" in block or "maximum" in block:
+        axis_y = y + 70 + len(items) * 34
+        output.append(text(start, axis_y, block.get("minimum_label", f"{low:g}"), 16, 500, palette["muted"], "middle"))
+        output.append(text(end, axis_y, block.get("maximum_label", f"{high:g}"), 16, 500, palette["muted"], "middle"))
+    if block.get("note"):
+        output.extend(
+            wrapped_text(
+                x,
+                y + 175,
+                block["note"],
+                14,
+                500,
+                palette["muted"],
+                max_chars=max(28, int(width / 8)),
+                line_height=18,
+            )
+        )
     return output
 
 
 def render_matrix(block, x, y, width, palette):
-    rows = block.get("rows", [])[:4]
+    rows = block.get("rows", [])[:6]
     columns = block.get("columns", [])[:4]
     cells = {(cell.get("row"), cell.get("column")): cell for cell in block.get("cells", [])}
     left = x + 150
@@ -318,7 +388,7 @@ def render_matrix(block, x, y, width, palette):
             cell_x = left + col_index * cell_w
             cell_y = top + row_index * cell_h
             output.append(f'<rect x="{cell_x:.1f}" y="{cell_y:.1f}" width="{cell_w - 6:.1f}" height="{cell_h - 6}" rx="4" fill="{fill}" stroke="{palette["rule"]}"/>')
-            output.append(text(cell_x + (cell_w - 6) / 2, cell_y + 28, cell.get("label", ""), 15, 700, label_color, "middle"))
+            output.append(text(cell_x + (cell_w - 6) / 2, cell_y + 28, cell.get("label", ""), 16, 700, label_color, "middle"))
     return output
 
 
@@ -384,8 +454,17 @@ def render_sequence(block, x, y, width, palette):
     items = block.get("items", [])[:6]
     count = max(1, len(items))
     gap = width / count
-    output = [text(x, y, block.get("title", ""), 24, 700, palette["text"])]
-    cy = y + 105
+    title_nodes = wrapped_text(
+        x,
+        y,
+        block.get("title", ""),
+        24,
+        700,
+        palette["text"],
+        max_chars=max(24, int(width / 13)),
+    )
+    output = list(title_nodes)
+    cy = y + 105 + max(0, len(title_nodes) - 1) * 30
     for index, item in enumerate(items):
         cx = x + gap * index + gap / 2
         mark_color = semantic_color(item, block, palette)
@@ -405,7 +484,7 @@ def render_sequence(block, x, y, width, palette):
 
 def render_annotation(block, x, y, width, palette):
     output = [text(x, y, block.get("title", ""), 24, 700, palette["text"])]
-    items = block.get("items", [])[:4]
+    items = block.get("items", [])[:5]
     if items:
         gap = 16
         card_width = (width - gap * (len(items) - 1)) / len(items)
@@ -413,7 +492,7 @@ def render_annotation(block, x, y, width, palette):
             card_x = x + index * (card_width + gap)
             tint = semantic_color(item, block, palette, tint=True, fallback=palette["background_alt"])
             mark_color = semantic_color(item, block, palette, fallback=palette["text"])
-            output.append(f'<rect x="{card_x:.1f}" y="{y + 42}" width="{card_width:.1f}" height="105" rx="6" fill="{tint}" stroke="{palette["rule"]}"/>')
+            output.append(f'<rect x="{card_x:.1f}" y="{y + 42}" width="{card_width:.1f}" height="130" rx="6" fill="{tint}" stroke="{palette["rule"]}"/>')
             display = item.get("display", item.get("value", ""))
             output.append(text(card_x + 18, y + 82, display, 28, 800, mark_color))
             output.extend(wrapped_text(card_x + 18, y + 116, item.get("label", ""), 16, 600, palette["text"], max_chars=max(10, int(card_width / 12))))
@@ -433,10 +512,88 @@ def panel_fill(block, palette):
 
 
 def render_panel(block, x, y, width, height, palette, renderers):
-    output = [f'<rect x="{x}" y="{y}" width="{width}" height="{height}" rx="8" fill="{panel_fill(block, palette)}" stroke="{palette["rule"]}"/>']
+    role = block.get("visual_role", "support")
+    block_id = block.get("id", "")
+    output = [
+        f'<g data-block-id="{esc(block_id)}" data-visual-role="{esc(role)}">',
+        f'<rect x="{x}" y="{y}" width="{width}" height="{height}" rx="8" fill="{panel_fill(block, palette)}" stroke="{palette["rule"]}"/>',
+    ]
     renderer = renderers.get(block.get("type"), render_annotation)
-    output.extend(renderer(block, x + 28, y + 40, width - 56, palette))
+    if width < 900:
+        compact_block = dict(block)
+        compact_block["title"] = ""
+        output.extend(wrapped_text(x + 24, y + 38, block.get("title", ""), 21, 750, palette["text"], max_chars=max(18, int((width - 48) / 12))))
+        output.extend(renderer(compact_block, x + 24, y + 92, width - 48, palette))
+    else:
+        output.extend(renderer(block, x + 28, y + 40, width - 56, palette))
+    scope = metric_scope_text(block)
+    if scope:
+        output.extend(
+            wrapped_text(
+                x + 24,
+                y + height - 34,
+                scope,
+                13,
+                500,
+                palette["muted"],
+                max_chars=max(28, int((width - 48) / 7)),
+                line_height=17,
+            )
+        )
+    output.append("</g>")
     return output
+
+
+def anchor_support_layout(blocks, start_y, palette, renderers):
+    anchor = next(block for block in blocks if block.get("visual_role") == "anchor")
+    supports = [block for block in blocks if block.get("visual_role") == "support"]
+    caveats = [block for block in blocks if block.get("visual_role") == "caveat"]
+    output = ['<g data-layout="anchor_support">']
+    y = start_y
+
+    anchor_height = block_height(anchor)
+    output.extend(render_panel(anchor, 60, y, 1480, anchor_height, palette, renderers))
+    y += anchor_height + 28
+
+    if supports:
+        gap = 28
+        columns = 2 if len(supports) == 2 else 1
+        panel_width = (1480 - gap) / 2 if columns == 2 else 1180
+        support_height = max(block_height(block) + (60 if columns == 2 else 0) for block in supports)
+        start_x = 60 if columns == 2 else 360
+        for index, block in enumerate(supports):
+            x = start_x + index * (panel_width + gap)
+            output.extend(render_panel(block, x, y, panel_width, support_height, palette, renderers))
+        y += support_height + 28
+
+    for block in caveats:
+        caveat_height = block_height(block)
+        output.extend(render_panel(block, 210, y, 1180, caveat_height, palette, renderers))
+        y += caveat_height + 28
+    output.append("</g>")
+    return output, y
+
+
+def comparison_grid_layout(blocks, start_y, palette, renderers):
+    primary = [block for block in blocks if block.get("visual_role") != "caveat"]
+    caveats = [block for block in blocks if block.get("visual_role") == "caveat"]
+    output = ['<g data-layout="comparison_grid">']
+    y = start_y
+    gap = 28
+    panel_width = (1480 - gap) / 2
+    for row_start in range(0, len(primary), 2):
+        row = primary[row_start:row_start + 2]
+        row_height = max(block_height(block) + 60 for block in row)
+        for column, block in enumerate(row):
+            x = 60 + column * (panel_width + gap)
+            output.extend(render_panel(block, x, y, panel_width, row_height, palette, renderers))
+        y += row_height + 28
+    for block in caveats:
+        caveat_height = block_height(block)
+        output.extend(render_panel(block, 210, y, 1180, caveat_height, palette, renderers))
+        y += caveat_height + 28
+    output.append("</g>")
+    return output, y
 
 
 def render_stage_story(blocks, start_y, palette, renderers):
@@ -495,14 +652,36 @@ def render_svg(spec, config, include_header=True):
     palette["semantic"] = config.get("semantic_colors", {})
     blocks = spec.get("blocks", [])
     width = 1600
-    header_height = 170 if include_header else 55
+    title_value = spec.get("title", "3080 Visual")
+    title_max_chars = 34 if re.search(r"[\u3400-\u9fff]", str(title_value)) else 68
+    title_nodes = wrapped_text(70, 72, title_value, 38, 800, palette["text"], max_chars=title_max_chars, line_height=46) if include_header else []
+    header_extra = max(0, len(title_nodes) - 1) * 46
+    header_height = (170 + header_extra) if include_header else 55
     composition = spec.get("composition", "vertical_story")
     stage_count = sum(block.get("type") in {"flow", "sequence", "timeline"} for block in blocks)
     if composition == "stage_story" and 3 <= stage_count <= 4:
         estimated_content_height = header_height + 350 + sum(block_height(block) + 28 for block in blocks if block.get("type") not in {"flow", "sequence", "timeline"}) + 60
+    elif composition == "anchor_support":
+        anchor = [block for block in blocks if block.get("visual_role") == "anchor"]
+        supports = [block for block in blocks if block.get("visual_role") == "support"]
+        caveats = [block for block in blocks if block.get("visual_role") == "caveat"]
+        estimated_content_height = header_height + (block_height(anchor[0]) if anchor else 0)
+        if supports:
+            estimated_content_height += 28 + max(block_height(block) + (60 if len(supports) == 2 else 0) for block in supports)
+        estimated_content_height += sum(block_height(block) + 28 for block in caveats) + 60
+    elif composition == "comparison_grid":
+        primary = [block for block in blocks if block.get("visual_role") != "caveat"]
+        caveats = [block for block in blocks if block.get("visual_role") == "caveat"]
+        row_heights = [max(block_height(block) + 60 for block in primary[index:index + 2]) for index in range(0, len(primary), 2)]
+        estimated_content_height = header_height + sum(row_heights) + max(0, len(row_heights) - 1) * 28
+        estimated_content_height += sum(block_height(block) + 28 for block in caveats) + 60
     else:
         estimated_content_height = header_height + sum(block_height(block) for block in blocks) + max(0, len(blocks) - 1) * 28 + 60
-    max_aspect = float(config.get("whiteboard_render", {}).get("max_viewbox_aspect_ratio", 1.7))
+    if spec.get("source_note") and not spec.get("body_figure"):
+        estimated_content_height += 72
+    render_config = config.get("whiteboard_render", {})
+    aspect_key = "body_figure_max_viewbox_aspect_ratio" if spec.get("body_figure") else "max_viewbox_aspect_ratio"
+    max_aspect = float(render_config.get(aspect_key, 3.0 if spec.get("body_figure") else 1.7))
     height = max(estimated_content_height, math.ceil(width / max_aspect))
     output = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" data-composition="{esc(composition)}">',
@@ -510,11 +689,9 @@ def render_svg(spec, config, include_header=True):
         f'<rect x="0" y="0" width="{width}" height="{height}" fill="{palette["background"]}"/>',
     ]
     if include_header:
-        output.extend([
-            text(70, 72, spec.get("title", "3080 Visual"), 38, 800, palette["text"]),
-            text(70, 112, spec.get("reading_path", ""), 19, 500, palette["text"]),
-        ])
-    y = 165 if include_header else 50
+        output.extend(title_nodes)
+        output.append(text(70, 112 + header_extra, spec.get("reading_path", ""), 19, 500, palette["text"]))
+    y = (165 + header_extra) if include_header else 50
     renderers = {
         "bar": render_bar,
         "diverging_bar": render_diverging_bar,
@@ -539,11 +716,30 @@ def render_svg(spec, config, include_header=True):
     if composition == "stage_story" and 3 <= stage_count <= 4:
         story_output, y = render_stage_story(blocks, y - 36, palette, renderers)
         output.extend(story_output)
+    elif composition == "anchor_support":
+        layout_output, y = anchor_support_layout(blocks, y - 36, palette, renderers)
+        output.extend(layout_output)
+    elif composition == "comparison_grid":
+        layout_output, y = comparison_grid_layout(blocks, y - 36, palette, renderers)
+        output.extend(layout_output)
     else:
         for block in blocks:
             height_item = block_height(block)
             output.extend(render_panel(block, 60, y - 36, 1480, height_item, palette, renderers))
             y += height_item + 28
+    if spec.get("source_note") and not spec.get("body_figure"):
+        output.extend(
+            wrapped_text(
+                70,
+                y + 8,
+                spec["source_note"],
+                14,
+                500,
+                palette["muted"],
+                max_chars=150,
+                line_height=19,
+            )
+        )
     output.append("</svg>")
     return "\n".join(output) + "\n"
 

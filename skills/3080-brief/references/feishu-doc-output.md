@@ -35,7 +35,7 @@ Before creating/updating docs, read the relevant lark references:
 - Put `<h1>TLDR</h1>` first by default, or a short source-language equivalent only when the user explicitly prefers localized wording.
 - Put `<callout>` immediately after that heading for the one-sentence summary; it must let readers get the source document's core value within 30 seconds.
 - Put `<whiteboard type="svg">...</whiteboard>` immediately after the first callout; it must cover at least 80% of value-weighted non-appendix claims in one visual.
-- Build `claim_ledger.json`, `brief.json`, and `visual_spec.json` first. Every board block must map to claim IDs; run `scripts/check_coverage.py`, `scripts/validate_visual_spec.py`, and `scripts/validate_brief.py` before rendering.
+- Build `claim_ledger.json`, `brief.json`, and `visual_spec.json` first. Every board block must map to claim IDs; run `scripts/check_coverage.py claim_ledger.json --visual-spec visual_spec.json`, `scripts/validate_visual_spec.py`, and `scripts/validate_brief.py` before rendering.
 - Put one compact key-question table immediately after the whiteboard. Use output-language headers (`问题 / 结论 / 为什么` for Chinese; `Question / Conclusion / Why` for English); make dense rows taller, split them, or move detail into the body.
 - Add the source link near the top as compact, low-emphasis citation metadata.
 - Select one content-fit theme through `theme-selection.md`. The main board, body figures, and any HTML counterpart use the same `visual_spec.style`; never print the theme name in the document.

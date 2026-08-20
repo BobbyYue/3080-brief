@@ -1,5 +1,5 @@
 {
-  "version": 11,
+  "version": 16,
   "language_policy": {
     "default_output_basis": "source_primary_language",
     "allowed_override_basis": "explicit_user_request",
@@ -23,7 +23,8 @@
       "P2": 1
     },
     "countable_statuses": ["covered", "partial", "omitted"],
-    "partial_credit": 0.5
+    "partial_credit": 0.5,
+    "require_visible_tokens": true
   },
   "semantic_colors": {
     "favorable": {
@@ -53,7 +54,8 @@
     }
   },
   "whiteboard_render": {
-    "max_viewbox_aspect_ratio": 1.7
+    "max_viewbox_aspect_ratio": 1.7,
+    "body_figure_max_viewbox_aspect_ratio": 4.0
   },
   "theme_policy": {
     "required": true,
@@ -75,15 +77,19 @@
   "html_render": {
     "offline_required": true,
     "external_runtime_resources_allowed": false,
+    "rich_design_plan_required": true,
+    "design_plan_schema": "references/html-design.schema.json",
+    "asset_manifest": "assets/html-kit/asset-manifest.json",
+    "asset_mode": "inline_selected_only",
+    "renderers": ["native-svg", "echarts", "mermaid", "semantic-html"],
+    "native_svg_fallback_required": true,
     "critical_information_may_require_interaction": false,
     "collapsed_priority_allowed": ["P2"],
     "minimum_body_font_px": 14,
     "minimum_caption_font_px": 12,
     "one_picture_min_width_height_ratio": 1.2,
     "one_picture_max_width_height_ratio": 2.0,
-    "visual_spec_required_for_validation": true,
-    "required_viewports_px": [390, 1440],
-    "print_validation_required": true
+    "visual_spec_required_for_validation": true
   },
   "tldr": {
     "default_title": "TLDR",
@@ -185,6 +191,7 @@
         "hard_gates": "all",
         "expression_scan": true,
         "review": "self_check_only",
+        "visual_blind_replay": "self_check_and_disclose",
         "blind_reader_replay": "skip_and_disclose",
         "audit_sequence_terminal": "after_self_check"
       },
@@ -193,6 +200,7 @@
         "hard_gates": "all",
         "expression_scan": true,
         "review": "three_independent_reviewers",
+        "visual_blind_replay": "independent_before_audit",
         "blind_reader_replay": "primary_then_configured_escalation"
       },
       "strict": {
@@ -201,6 +209,7 @@
         "expression_scan": true,
         "relation_replay": "all_non_appendix_p0_p1",
         "review": "three_independent_reviewers",
+        "visual_blind_replay": "independent_before_audit",
         "blind_reader_replay": "primary_then_configured_escalation"
       }
     },
@@ -267,6 +276,31 @@
     "reader": "Reader Comprehension Reviewer",
     "source": "Source Coverage And Grounding Reviewer",
     "visual": "Visualization And Expression Reviewer"
+  },
+  "visual_blind_replay": {
+    "reader_role": "visual_blind",
+    "position": "after_render_validation_before_audit",
+    "input": "cropped_one_picture_only",
+    "forbidden_inputs": [
+      "tldr_text",
+      "body",
+      "source",
+      "claim_ledger",
+      "visual_spec",
+      "html_design",
+      "alt_text",
+      "expected_answer",
+      "coverage_report",
+      "reviewer_comments"
+    ],
+    "required_replay_fields": [
+      "main_judgment",
+      "supporting_evidence",
+      "next_action_or_boundary",
+      "reading_path",
+      "unresolved_confusion"
+    ],
+    "failure_restart": "visualize_then_deterministic_gates"
   },
   "blind_reader_replay": {
     "question_count": 3,

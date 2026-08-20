@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "families": [
+    {"family": "Arsenal SC", "prefix": "ArsenalSC", "category": "display", "moods": ["formal", "editorial", "compact"]},
+    {"family": "Big Shoulders", "prefix": "BigShoulders", "category": "display", "moods": ["direct", "poster", "technical"]},
+    {"family": "Boldonse", "prefix": "Boldonse", "category": "display", "moods": ["expressive", "poster"]},
+    {"family": "Bricolage Grotesque", "prefix": "BricolageGrotesque", "category": "sans", "moods": ["product", "friendly", "modern"]},
+    {"family": "Crimson Pro", "prefix": "CrimsonPro", "category": "serif", "moods": ["research", "editorial", "longform"]},
+    {"family": "DM Mono", "prefix": "DMMono", "category": "mono", "moods": ["data", "technical", "compact"]},
+    {"family": "Erica One", "prefix": "EricaOne", "category": "display", "moods": ["expressive", "campaign"]},
+    {"family": "Geist Mono", "prefix": "GeistMono", "category": "mono", "moods": ["software", "data", "technical"]},
+    {"family": "Gloock", "prefix": "Gloock", "category": "display-serif", "moods": ["editorial", "premium", "formal"]},
+    {"family": "IBM Plex Mono", "prefix": "IBMPlexMono", "category": "mono", "moods": ["technical", "research", "data"]},
+    {"family": "IBM Plex Serif", "prefix": "IBMPlexSerif", "category": "serif", "moods": ["research", "formal", "longform"]},
+    {"family": "Instrument Sans", "prefix": "InstrumentSans", "category": "sans", "moods": ["general", "product", "analytical"]},
+    {"family": "Instrument Serif", "prefix": "InstrumentSerif", "category": "display-serif", "moods": ["editorial", "research", "narrative"]},
+    {"family": "Italiana", "prefix": "Italiana", "category": "display-serif", "moods": ["editorial", "formal"]},
+    {"family": "JetBrains Mono", "prefix": "JetBrainsMono", "category": "mono", "moods": ["code", "technical", "data"]},
+    {"family": "Jura", "prefix": "Jura", "category": "display", "moods": ["technical", "futurist"]},
+    {"family": "Libre Baskerville", "prefix": "LibreBaskerville", "category": "serif", "moods": ["institutional", "editorial", "formal"]},
+    {"family": "Lora", "prefix": "Lora", "category": "serif", "moods": ["longform", "human", "editorial"]},
+    {"family": "National Park", "prefix": "NationalPark", "category": "sans", "moods": ["friendly", "general", "product"]},
+    {"family": "Nothing You Could Do", "prefix": "NothingYouCouldDo", "category": "handwritten", "moods": ["informal", "annotation"]},
+    {"family": "Outfit", "prefix": "Outfit", "category": "sans", "moods": ["product", "modern", "direct"]},
+    {"family": "Pixelify Sans", "prefix": "PixelifySans", "category": "display", "moods": ["retro", "technical", "playful"]},
+    {"family": "Poiret One", "prefix": "PoiretOne", "category": "display", "moods": ["light", "editorial"]},
+    {"family": "Red Hat Mono", "prefix": "RedHatMono", "category": "mono", "moods": ["technical", "operations", "data"]},
+    {"family": "Silkscreen", "prefix": "Silkscreen", "category": "display", "moods": ["retro", "technical"]},
+    {"family": "Smooch Sans", "prefix": "SmoochSans", "category": "display", "moods": ["compact", "poster", "direct"]},
+    {"family": "Tektur", "prefix": "Tektur", "category": "display", "moods": ["technical", "futurist", "product"]},
+    {"family": "Work Sans", "prefix": "WorkSans", "category": "sans", "moods": ["general", "operations", "analytical"]},
+    {"family": "Young Serif", "prefix": "YoungSerif", "category": "display-serif", "moods": ["editorial", "narrative", "human"]}
+  ],
+  "guardrails": {
+    "body_categories": ["sans", "serif"],
+    "mono_categories": ["mono"],
+    "expressive_display_requires_rationale": true,
+    "cjk_fallback_required": true
+  }
+}

@@ -23,6 +23,8 @@ def main():
     parser.add_argument("--body", required=True)
     parser.add_argument("--draft", default="")
     parser.add_argument("--visual-spec", default="")
+    parser.add_argument("--html-design-plan", default="")
+    parser.add_argument("--validation-notes", default="")
     parser.add_argument("--whiteboard-preview", default="")
     parser.add_argument("--document-preview", default="")
     args = parser.parse_args()
@@ -36,6 +38,8 @@ def main():
         "body": digest(args.body),
         "draft": digest(args.draft),
         "visual_spec": digest(args.visual_spec),
+        "html_design_plan": digest(args.html_design_plan),
+        "validation_notes": digest(args.validation_notes),
         "whiteboard_preview": digest(args.whiteboard_preview),
         "document_preview": digest(args.document_preview),
     }

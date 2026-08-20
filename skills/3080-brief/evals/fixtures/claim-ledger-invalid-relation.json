@@ -32,6 +32,7 @@
         }
       ],
       "board_status": "covered",
+      "visual_required_tokens": ["分层差异"],
       "appendix": false,
       "inference": false
     }

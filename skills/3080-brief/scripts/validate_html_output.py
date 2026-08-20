@@ -8,6 +8,7 @@ import sys
 from html.parser import HTMLParser
 from pathlib import Path
 
+from html_design_kit import CHART_TYPES, DIAGRAM_TYPES, validate_design_plan
 from theme_registry import resolve_visual_theme
 
 
@@ -38,6 +39,8 @@ class BriefParser(HTMLParser):
         self.one_picture_svg_depth = 0
         self.one_picture_svg_attrs = {}
         self.one_picture_svg_text = []
+        self.one_picture_layouts = set()
+        self.one_picture_roles = {"anchor": 0, "support": 0, "caveat": 0}
         self.one_picture_caption_parts = []
         self.in_caption = False
         self.key_table_depth = 0
@@ -49,18 +52,41 @@ class BriefParser(HTMLParser):
         self.figures = []
         self.details_priorities = []
         self.scripts = 0
+        self.authorized_scripts = 0
+        self.runtime_kinds = set()
         self.external_resources = []
         self.theme_slug = ""
+        self.html_layout = ""
+        self.html_density = ""
+        self.html_fonts = {}
+        self.rich_visuals = 0
+        self.rich_block_ids = set()
 
     def handle_starttag(self, tag, attrs_list):
         attrs = dict(attrs_list)
         class_set = classes(attrs_list)
         if tag == "html":
             self.theme_slug = attrs.get("data-theme", "")
+            self.html_layout = attrs.get("data-html-layout", "")
+            self.html_density = attrs.get("data-density", "")
+            self.html_fonts = {
+                "display": attrs.get("data-font-display", ""),
+                "body": attrs.get("data-font-body", ""),
+            }
         if tag not in VOID_TAGS:
             self.stack.append(tag)
         if tag == "script":
             self.scripts += 1
+            runtime = attrs.get("data-3080-runtime", "")
+            if runtime in {"echarts", "mermaid"}:
+                self.authorized_scripts += 1
+                self.runtime_kinds.add(runtime)
+            elif attrs.get("data-3080-bootstrap") == "true":
+                self.authorized_scripts += 1
+        if attrs.get("data-rich-visual") == "true":
+            self.rich_visuals += 1
+        if attrs.get("data-visual-block"):
+            self.rich_block_ids.add(attrs["data-visual-block"])
         if tag in {"script", "img", "link", "iframe", "source", "video", "audio"}:
             location = attrs.get("src") or attrs.get("href") or ""
             if re.match(r"^(?:https?:|file:|//)", location, re.I):
@@ -91,6 +117,12 @@ class BriefParser(HTMLParser):
                 self.one_picture_svg += 1
                 self.one_picture_svg_depth = len(self.stack)
                 self.one_picture_svg_attrs = attrs
+        if self.one_picture_svg_depth:
+            if attrs.get("data-layout"):
+                self.one_picture_layouts.add(attrs["data-layout"])
+            role = attrs.get("data-visual-role")
+            if role in self.one_picture_roles:
+                self.one_picture_roles[role] += 1
         if tag == "table" and "key-questions" in class_set:
             self.key_table_count += 1
             self.key_table_depth = len(self.stack)
@@ -144,12 +176,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("html")
     parser.add_argument("--visual-spec", default="")
+    parser.add_argument("--design-plan", default="")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG))
     args = parser.parse_args()
 
     text = Path(args.html).read_text(encoding="utf-8")
     config = json.loads(Path(args.config).read_text(encoding="utf-8"))
     spec = json.loads(Path(args.visual_spec).read_text(encoding="utf-8")) if args.visual_spec else None
+    design_plan = json.loads(Path(args.design_plan).read_text(encoding="utf-8")) if args.design_plan else None
     parsed = BriefParser()
     parsed.feed(text)
     errors = []
@@ -208,8 +242,8 @@ def main():
         errors.append("key-question table headers must be Question/Conclusion/Why or the configured Chinese equivalent")
     if parsed.source_citations != 1:
         errors.append("TLDR requires one compact source citation")
-    if parsed.scripts:
-        errors.append("3080 HTML output must not require executable scripts for critical content")
+    if parsed.scripts != parsed.authorized_scripts:
+        errors.append("HTML output contains an unauthorized executable script")
     if parsed.external_resources:
         errors.append("HTML output contains external runtime resources: " + ", ".join(parsed.external_resources))
     for index, figure in enumerate(parsed.figures, 1):
@@ -221,7 +255,7 @@ def main():
             errors.append(f"figure {index} must contain exactly one inline SVG")
     if any(priority != "P2" for priority in parsed.details_priorities):
         errors.append("collapsed details may contain P2 supporting depth only")
-    for required_css in ("@media (max-width", "@media print", "overflow: auto", "--favorable", "--unfavorable", "--accent-2", "--section-gap"):
+    for required_css in ("overflow: auto", "--favorable", "--unfavorable", "--accent-2", "--section-gap"):
         if required_css not in text:
             errors.append(f"HTML output is missing required responsive/semantic CSS: {required_css}")
     if spec:
@@ -243,6 +277,14 @@ def main():
         rendered_composition = parsed.one_picture_svg_attrs.get("data-composition", "")
         if rendered_composition != spec.get("composition", ""):
             errors.append("rendered one-picture composition differs from visual spec")
+        if rendered_composition in {"anchor_support", "comparison_grid"}:
+            if rendered_composition not in parsed.one_picture_layouts:
+                errors.append(f"rendered one-picture does not implement the declared {rendered_composition} layout")
+            for role in ("anchor", "support", "caveat"):
+                expected = sum(block.get("visual_role") == role for block in spec.get("blocks", []))
+                actual = parsed.one_picture_roles[role]
+                if actual != expected:
+                    errors.append(f"rendered one-picture {role} role count differs from visual spec")
         for block in spec.get("blocks", []):
             required_tokens = [block.get("title", "")]
             if block.get("note"):
@@ -256,6 +298,36 @@ def main():
                 normalized = " ".join(str(token).split())
                 if normalized and re.sub(r"\s+", "", normalized) not in rendered_svg_compact:
                     errors.append(f"one-picture SVG omitted visible visual-spec payload: {normalized}")
+    if design_plan:
+        if not spec:
+            errors.append("HTML design-plan validation requires the approved visual spec")
+        else:
+            errors.extend(validate_design_plan(design_plan, spec))
+            if parsed.html_layout != design_plan.get("layout"):
+                errors.append("rendered HTML layout differs from the approved design plan")
+            if parsed.html_density != design_plan.get("density"):
+                errors.append("rendered HTML density differs from the approved design plan")
+            typography = design_plan.get("typography") or {}
+            for role in ("display", "body"):
+                if parsed.html_fonts.get(role) != typography.get(role):
+                    errors.append(f"rendered HTML {role} font differs from the approved design plan")
+            if "@font-face" not in text or "data:font/ttf;base64," not in text:
+                errors.append("rich HTML output must embed its selected local fonts")
+            renderer = (design_plan.get("one_picture") or {}).get("renderer")
+            if renderer != "native-svg" and any(block.get("type") in CHART_TYPES | DIAGRAM_TYPES for block in spec.get("blocks", [])):
+                if parsed.rich_visuals < 1:
+                    errors.append("rich HTML output omitted the planned one-picture runtime composition")
+                expected_ids = {block.get("id") for block in spec.get("blocks", [])}
+                if not expected_ids <= parsed.rich_block_ids:
+                    errors.append("rich HTML output omitted one or more visual-spec blocks")
+            anchor_id = (design_plan.get("one_picture") or {}).get("anchor_block_id")
+            anchor = next((block for block in spec.get("blocks", []) if block.get("id") == anchor_id), None)
+            if anchor and renderer in {"auto", "echarts"} and anchor.get("type") in CHART_TYPES and "echarts" not in parsed.runtime_kinds:
+                errors.append("rich HTML output omitted the bundled ECharts runtime for its anchor chart")
+            if anchor and renderer in {"auto", "mermaid"} and anchor.get("type") in DIAGRAM_TYPES and "mermaid" not in parsed.runtime_kinds:
+                errors.append("rich HTML output omitted the bundled Mermaid runtime for its anchor diagram")
+    elif parsed.runtime_kinds or parsed.rich_visuals:
+        errors.append("rich HTML runtime output requires an approved design plan")
 
     print("FAIL" if errors else "PASS")
     for error in errors:

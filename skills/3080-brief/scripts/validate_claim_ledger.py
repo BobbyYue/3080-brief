@@ -88,6 +88,13 @@ def validate(ledger, config):
         if not requires_contract:
             continue
 
+        if claim.get("board_status") in {"covered", "partial"}:
+            visual_tokens = claim.get("visual_required_tokens")
+            if not isinstance(visual_tokens, list) or not visual_tokens or any(not nonempty(token) for token in visual_tokens):
+                errors.append(f"{prefix}.visual_required_tokens must contain visible decision-bearing text for covered/partial P0/P1 claims")
+            elif len(visual_tokens) != len(set(visual_tokens)):
+                errors.append(f"{prefix}.visual_required_tokens must be unique")
+
         identity = claim.get("source_identity")
         if identity not in SOURCE_IDENTITIES:
             errors.append(f"{prefix}.source_identity is missing or invalid")

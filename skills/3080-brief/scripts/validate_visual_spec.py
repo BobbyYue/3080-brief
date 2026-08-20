@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -19,6 +20,21 @@ QUANTITATIVE_TYPES = {
 }
 ALLOWED_TARGETS = {"feishu", "html", "word", "markdown", "portable"}
 ALLOWED_COMPOSITIONS = {"vertical_story", "stage_story", "anchor_support", "comparison_grid"}
+CAUSAL_TITLE_PATTERN = re.compile(
+    r"\b(?:causes?|caused by|drives? (?:growth|decline|outcomes?|results?)|shapes? outcomes?|results? in)\b|"
+    r"(?:导致|造成|驱动(?:增长|下降|结果)|决定了?结果)",
+    re.I,
+)
+
+
+def normalized_scope(scope):
+    return tuple(str(scope.get(field, "")).strip().casefold() for field in ("metric", "unit", "period", "denominator"))
+
+
+def claim_ceiling_rank(claim):
+    order = ["unknown", "reported", "observed", "suggestive", "supported", "demonstrated", "causal"]
+    value = claim.get("evidence_ceiling", "unknown")
+    return order.index(value) if value in order else 0
 
 
 def has_visible_payload(block):
@@ -74,6 +90,11 @@ def main():
         errors.append(str(exc))
 
     claims = {claim.get("id"): claim for claim in ledger.get("claims", []) if claim.get("id")}
+    if CAUSAL_TITLE_PATTERN.search(str(spec.get("title", ""))):
+        mapped_claims = [claims.get(claim_id) for block in spec.get("blocks", []) for claim_id in block.get("claim_ids", [])]
+        mapped_claims = [claim for claim in mapped_claims if claim]
+        if mapped_claims and max(claim_ceiling_rank(claim) for claim in mapped_claims) < claim_ceiling_rank({"evidence_ceiling": "causal"}):
+            errors.append("visual title uses causal language but mapped source claims do not have a causal evidence ceiling")
     block_ids = set()
     block_claims = {}
     block_semantics = {}
@@ -103,6 +124,41 @@ def main():
             errors.append(f"{block_id}: HTML visual requires alt text")
         if block_type in QUANTITATIVE_TYPES and not block.get("metric_scope"):
             errors.append(f"{block_id}: quantitative visual requires metric_scope")
+        if block_type in QUANTITATIVE_TYPES and len(block.get("items") or []) > 1:
+            item_scopes = []
+            scoped_items = []
+            for index, item in enumerate(block.get("items") or [], 1):
+                item_scope = item.get("metric_scope")
+                if not isinstance(item_scope, dict):
+                    errors.append(f"{block_id}: multi-item quantitative visual requires item-level metric_scope for item {index}")
+                    continue
+                missing_scope = [field for field in ("metric", "unit", "period", "denominator", "segment") if not str(item_scope.get(field, "")).strip()]
+                if missing_scope:
+                    errors.append(f"{block_id}: item {index} metric_scope is missing {', '.join(missing_scope)}")
+                    continue
+                normalized = normalized_scope(item_scope)
+                item_scopes.append(normalized)
+                scoped_items.append((item, normalized))
+            grouped_stacked = block_type == "stacked_bar" and scoped_items and all(str(item.get("series", "")).strip() for item, _ in scoped_items)
+            if grouped_stacked:
+                shared_axis = {scope[:3] for _, scope in scoped_items}
+                denominators_by_group = {}
+                totals_by_group = {}
+                for item, scope in scoped_items:
+                    group = str(item["series"])
+                    denominators_by_group.setdefault(group, set()).add(scope[3])
+                    totals_by_group[group] = totals_by_group.get(group, 0.0) + float(item.get("value", 0))
+                if len(shared_axis) > 1 or any(len(values) > 1 for values in denominators_by_group.values()):
+                    errors.append(f"{block_id}: grouped stacked bars must share metric/unit/period and one denominator within each row")
+                expected_total = float(block.get("maximum", 100))
+                if any(abs(total - expected_total) > 0.001 for total in totals_by_group.values()):
+                    errors.append(f"{block_id}: each grouped stacked-bar row must total the declared maximum")
+            elif len(set(item_scopes)) > 1:
+                errors.append(f"{block_id}: one quantitative axis mixes different metrics, units, periods, or denominators; split into separate blocks")
+        if CAUSAL_TITLE_PATTERN.search(str(block.get("title", ""))):
+            block_claims_for_ceiling = [claims.get(claim_id) for claim_id in block.get("claim_ids", []) if claims.get(claim_id)]
+            if block_claims_for_ceiling and max(claim_ceiling_rank(claim) for claim in block_claims_for_ceiling) < claim_ceiling_rank({"evidence_ceiling": "causal"}):
+                errors.append(f"{block_id}: visual title uses causal language above its mapped evidence ceiling")
         if block_type == "scatter":
             for index, item in enumerate(block.get("items") or [], 1):
                 if not isinstance(item.get("x"), (int, float)) or not isinstance(item.get("y"), (int, float)):
@@ -151,6 +207,18 @@ def main():
         errors.append("HTML one-picture visual must declare exactly one anchor block")
     if render_target == "html" and len(explicit_roles) != len(spec.get("blocks", [])):
         errors.append("every HTML one-picture block must declare anchor, support, or caveat role")
+
+    role_counts = {role: sum(value == role for _, value in explicit_roles) for role in ("anchor", "support", "caveat")}
+    if composition == "anchor_support":
+        if role_counts["anchor"] != 1 or not 1 <= role_counts["support"] <= 2 or role_counts["caveat"] > 1:
+            errors.append("anchor_support requires exactly one anchor, one or two supports, and at most one caveat")
+        if len(explicit_roles) != len(spec.get("blocks", [])):
+            errors.append("anchor_support requires an explicit visual_role on every block")
+    if composition == "comparison_grid":
+        if not 2 <= len(spec.get("blocks", [])) <= 5 or role_counts["caveat"] > 1:
+            errors.append("comparison_grid requires 2-4 comparison blocks plus at most one caveat")
+        if len(explicit_roles) != len(spec.get("blocks", [])):
+            errors.append("comparison_grid requires an explicit visual_role on every block")
 
     stage_count = sum(block.get("type") in {"flow", "sequence", "timeline"} for block in spec.get("blocks", []))
     if composition == "stage_story" and not 3 <= stage_count <= 4:

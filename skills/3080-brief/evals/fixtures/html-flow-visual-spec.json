@@ -1,0 +1,30 @@
+{
+  "title": "验证路径决定是否扩大范围",
+  "language": "zh-CN",
+  "style": "Avocado Press",
+  "style_rationale": "流程型验证简报需要克制的线性结构和清晰的决策终点。",
+  "reading_path": "先提取信号，再验证稳定性，最后决定是否扩大范围",
+  "composition": "stage_story",
+  "render_target": "html",
+  "alt_text": "先提取分层信号，再验证稳定性，最后决定是否扩大范围。",
+  "coverage_percent": 90,
+  "source_note": "Synthetic evaluation fixture; labels are used only to validate the structural renderer.",
+  "blocks": [
+    {
+      "id": "B01",
+      "type": "flow",
+      "visual_role": "anchor",
+      "relationship": "flow",
+      "render_target": "html",
+      "interaction": "none",
+      "claim_ids": ["C01", "C02", "C03", "C04"],
+      "title": "三步验证后再决定是否扩大范围",
+      "alt_text": "提取分层信号，验证稳定性，再决定是否扩大范围。",
+      "items": [
+        {"label": "提取分层信号"},
+        {"label": "验证稳定性"},
+        {"label": "决定是否扩大范围", "semantic_direction": "warning"}
+      ]
+    }
+  ]
+}

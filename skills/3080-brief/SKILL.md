@@ -11,113 +11,74 @@ Create a new reader-first decision brief from a source document. Match the sourc
 
 ## Output Contract
 
-Open with `TLDR`, or a short source-language equivalent explicitly requested by the user. It contains exactly three core units:
+Open with `TLDR`, containing exactly three core units:
 
-1. **一句话 / one-sentence judgment**: the first line carries exactly one highest-level judgment; 1–3 short lines may follow only as evidence, action, or boundary support. Together they form one opening unit that works within 30 seconds.
+1. **一句话 / one-sentence judgment**: one highest-level judgment on the first line, followed only when needed by 1–3 short evidence, action, or boundary lines; the whole unit must work within 30 seconds.
 2. **一张图 / one-picture summary**: one auditable visual covering at least 80% of value-weighted non-appendix claims; Feishu/Lark uses an editable whiteboard.
-3. **一个表 / one key-question table**: 3–5 source-grounded questions using `问题 / 结论 / 为什么` or `Question / Conclusion / Why`.
+3. **一个表 / one key-question table**: 3–5 source-grounded questions with `问题 / 结论 / 为什么` or `Question / Conclusion / Why`.
 
 Title the new artifact `3080 Brief｜原文标题`. Put a compact source link near the top without a standalone source heading.
 
 ## Core Contract
 
-Apply this priority when goals conflict: source truth → explicit user requirements → reader comprehension → 30-second judgment → one-picture 80% understanding → visual polish.
+When goals conflict, apply: source truth → explicit user requirements → reader comprehension → 30-second judgment → one-picture 80% understanding → visual polish.
 
 - Create a new output. Never edit, overwrite, reorder, comment on, clean up, rename, move, or change permissions on the source.
-- Match output type to input type unless explicitly overridden: Feishu/Lark → new Feishu/Lark doc; Word/docx → new `.docx`; Markdown → new Markdown; HTML → new self-contained HTML. Ask only when type/support is genuinely ambiguous.
-- Follow the source primary language unless the user explicitly names another output language. Request/conversation/interface/locale language is not override evidence. Apply the selected language to title, TLDR, table, body, and visual.
+- Match output type to input type unless explicitly overridden: Feishu/Lark → new Feishu/Lark doc; Word/docx → new `.docx`; Markdown → new Markdown; HTML → new self-contained HTML. Ask only when type/support is materially ambiguous.
+- Use the source's primary language unless the user explicitly requests another output language. Conversation, interface, request, or locale language is not an override. Apply the decision to title, TLDR, table, body, and visual.
 - Exclude source appendix / 附录 / Appendix content unless the user explicitly includes it.
-- Source-back every number, conclusion, risk, and recommendation. Preserve denominator, period, sample, scope, significance, confidence, and metric definition when present. Mark unsupported gaps `原文未提供` / `not provided in the source` or `推断` / `inference`.
-- Rebuild the narrative around what readers must understand, trust, decide, or do. Put decision implication before implementation detail unless implementers are the explicit audience; do not impose a fixed body section order.
-- For every value-bearing title, heading, or lead, map `specific object -> source-backed action or change -> reader-observable result`, then write it naturally. Remove method, process, and generic benefit wording only when no necessary fact, term, boundary, or uncertainty is lost; never force a fixed sentence pattern.
-- Keep prompts, process rationale, style names, tool notes, placeholders, and internal method language out of the artifact. Machine-enforced restrictions and semantic colors live in [config/3080-brief.json](config/3080-brief.json).
-- Keep generated time, owner, version, location, permissions, and sharing defaults unless the user requests or operations require a change.
+- Source-back every number, conclusion, risk, and recommendation. Preserve material denominator, period, sample, scope, significance, confidence, and metric definition. Mark unsupported gaps `原文未提供` / `not provided in the source` or `推断` / `inference`.
+- Rebuild the narrative around what readers must understand, trust, decide, or do. Do not compress the source mechanically or impose a fixed body order; put decision implication before implementation detail unless implementers are the explicit audience.
+- For each value-bearing title, heading, and lead, map `specific object -> source-backed action or change -> reader-observable result`, then write it naturally without forcing a sentence template. Record the object-action/result map for each value-bearing title, heading, and lead.
+- Keep prompts, internal process/method language, style names, tool notes, and placeholders out of the artifact. Machine restrictions and semantic colors live in [config/3080-brief.json](config/3080-brief.json).
+- Keep generated time, owner, version, location, permissions, and sharing defaults unless requested or operationally required.
 - Use `lark-doc` for Feishu docs, `documents:documents` for Word, `lark-whiteboard` for live Feishu preview, and `beautiful-feishu-whiteboard` for Feishu style selection.
 
 ## Conditional Routing
 
-Do not preload references. Read a resource only when its condition becomes true.
+Do not preload references. Read only resources whose condition is true.
 
-| Condition | Read / run |
+| Need | Read / run |
 | --- | --- |
-| Output type is ambiguous or conversion is requested | [references/output-format-rules.md](references/output-format-rules.md) |
-| Feishu output is selected, or dependency status is not PASS | `scripts/check_dependencies.py --mode feishu --json`; then [references/dependency-and-installation.md](references/dependency-and-installation.md) only for BLOCKED/SKIP/FAIL |
-| Building evidence artifacts | [references/source-inventory-template.md](references/source-inventory-template.md) and [references/claim-ledger.schema.json](references/claim-ledger.schema.json) |
-| Data, experiment, causal, metric, or risk evidence is material/unclear | [references/evidence-and-risk-rules.md](references/evidence-and-risk-rules.md) |
-| First reader-structured draft exists, source material is thin, claim strength is uncertain, or expression needs revision | [references/source-faithful-expression.md](references/source-faithful-expression.md); add [references/expression-anti-patterns.md](references/expression-anti-patterns.md) only for a concrete wording signal |
-| Narrative is unclear, jargon-heavy, or fails readability | [references/reader-optimization.md](references/reader-optimization.md) |
-| Planning structured content or the one-picture summary | [references/brief.schema.json](references/brief.schema.json), [references/visual-spec.schema.json](references/visual-spec.schema.json), [references/visual-pattern-library.md](references/visual-pattern-library.md), and [references/theme-selection.md](references/theme-selection.md) |
-| Directional values/statuses appear | [references/semantic-color-system.md](references/semantic-color-system.md) |
-| Building/debugging a Feishu SVG | [references/whiteboard-patterns.md](references/whiteboard-patterns.md) |
-| HTML output is selected | [references/html-visualization.md](references/html-visualization.md) |
-| Considering bitmap/image generation | [references/image2-auxiliary-rules.md](references/image2-auxiliary-rules.md) before sending any content |
-| Preparing audit review | [references/review-packet-template.md](references/review-packet-template.md) and [references/review-loop.md](references/review-loop.md) |
-| All three audit reviewers pass | [references/blind-reader-replay.md](references/blind-reader-replay.md) |
-| Creating/debugging Feishu XML or final Feishu output | [references/feishu-doc-output.md](references/feishu-doc-output.md) |
+| Resolve output format or conversion | [output-format-rules.md](references/output-format-rules.md) |
+| Create Feishu output or diagnose dependencies | `scripts/check_dependencies.py --mode feishu --json`; read [dependency-and-installation.md](references/dependency-and-installation.md) only on BLOCKED/SKIP/FAIL |
+| Inventory sources and claims | [source-inventory-template.md](references/source-inventory-template.md), [claim-ledger.schema.json](references/claim-ledger.schema.json); add [evidence-and-risk-rules.md](references/evidence-and-risk-rules.md) for material data, experiment, causal, metric, or risk claims |
+| Draft/revise reader-facing content | [source-faithful-expression.md](references/source-faithful-expression.md); add [reader-optimization.md](references/reader-optimization.md) for clarity/jargon failures and [expression-anti-patterns.md](references/expression-anti-patterns.md) only for a concrete wording signal |
+| Plan the brief and visual | [brief.schema.json](references/brief.schema.json), [visual-spec.schema.json](references/visual-spec.schema.json), [visual-pattern-library.md](references/visual-pattern-library.md), [theme-selection.md](references/theme-selection.md); add [semantic-color-system.md](references/semantic-color-system.md) for directional values/statuses |
+| Build target-specific visuals | Feishu: [whiteboard-patterns.md](references/whiteboard-patterns.md), [feishu-doc-output.md](references/feishu-doc-output.md); HTML: [html-visualization.md](references/html-visualization.md), [html-design.schema.json](references/html-design.schema.json), [font-catalog.json](assets/html-kit/font-catalog.json) |
+| Consider bitmap/image generation | Read [image2-auxiliary-rules.md](references/image2-auxiliary-rules.md) before sending any content |
+| Run visual, audit, and comprehension review | [visual-blind-replay.md](references/visual-blind-replay.md), [review-packet-template.md](references/review-packet-template.md), [review-loop.md](references/review-loop.md); after all three audit reviewers pass, read [blind-reader-replay.md](references/blind-reader-replay.md) |
 
-## Runtime State Machine
+## Runtime
 
-Use `standard` by default. Use `fast` only when the user explicitly prioritizes speed or asks to skip independent review; all source, language, relation, assertion, TLDR, coverage, and visual hard gates still run, and skipped review/replay must be disclosed. In Fast, stop the audit sequence after the self-check: do not build reviewer packets or start Blind Reader Replay, then create and verify the output. Use `strict` when explicitly requested or when conclusions affect material resources, policy/rules, causal claims, risk, or broad rollout; it adds exact P0/P1 relation replay before the normal review and configured reader escalation. See [references/review-loop.md](references/review-loop.md) for profile details.
+Use `standard` by default. Use `fast` only when the user explicitly prioritizes speed or skips independent review; hard source, language, relation, assertion, TLDR, coverage, and visual gates still apply, while audit/replay are skipped and disclosed. Use `strict` when requested or when conclusions affect material resources, policy/rules, causal claims, risk, or broad rollout; it adds exact P0/P1 relation replay and configured reader escalation. Mode details and retry limits are in [review-loop.md](references/review-loop.md).
 
-### 1. Route And Gate
-
-Determine source type, output type, constraints, and explicit language override. For Feishu/Lark, run the dependency diagnostic before fetching or writing. If `installation_request.required` is true, show exact source/version, destination, network/file/restart effect, and command; request explicit approval and stop installation for that turn. A document request is not installation or authentication approval. HTML uses the bundled offline renderer without another report skill, CDN, or runtime installation.
-
-### 2. Ground The Source
-
-Fetch with the matching tool; inventory embedded sheets, Bases, images, charts, and boards, inspecting P0/P1/chartable evidence. Build `source_inventory.md`, untranslated `source_non_appendix.md`, and `claim_ledger.json`. Use snapshot language, never request/conversation language. Record language basis/override, excluded appendix, sufficiency, stable claim/source identity, evidence ceiling/assertion, chartable data, risks/actions, mappings, and omissions. For each non-appendix P0/P1 claim, protect a subject-predicate-object relation plus scope, time/status, qualifiers, and exact value attachment. Reopen the source only to resolve a missing fact or dispute.
-
-### 3. Clarify Blocking Ambiguity
-
-Ask before drafting only when uncertainty can change the main conclusion, metric meaning/denominator/period/sample/scope, risk boundary, target reader, next action, source-language decision, or protected source relation. Ask at most three blocking questions at a time. If the material is thin, shorten the output or clarify; never make a thin source appear rich. Proceed through non-blocking gaps only with an explicit missing-source or inference label.
-
-### 4. Draft And Revise For The Reader
-
-Identify decision-maker, cross-functional, domain, implementer, and skeptical-reader gaps that actually matter. Structure the body from the source logic and reader decision path; make headings short judgments whose scan order explains the argument. Start the Pyramid opening with one primary judgment line, followed by 1–3 short evidence/action/boundary support lines; support lines must not introduce a second peer conclusion. Keep the question table inside TLDR; split dense rows or move detail to the body. Apply semantic meaning before color and retain signs/arrows/wording as non-color cues. Store the reviewed reader-facing content in one `brief.json` conforming to `references/brief.schema.json`; Feishu and HTML render from this same artifact.
-
-Only after this first draft exists, run the source-faithful expression pass. Record the object-action/result map for each value-bearing title, heading, and lead; revise any line that leaves the object or supported result implicit behind a method label, process description, generic benefit, or negative problem statement. Keep each output assertion at or below its evidence ceiling and make only the smallest edit that resolves a concrete reading problem. Treat vague/template patterns as contextual clusters, not banned words. Preserve valid technical terms, uncertainty, passive voice, neutral tone, and punctuation; never add personal experience, emotion, examples, facts, precision, or a named person's voice.
-
-### 5. Design The Visual
-
-Create `visual_spec.json` before drawing and map each block to claim IDs. Select one explicit relationship and compact composition, then render the same approved spec for every target format. The visual must reach configured value-weighted coverage, cannot silently omit P0 claims, and every block must visibly render its payload rather than only its title. If the source has at least three quantitative claims, or the main conclusion depends on quantitative evidence, include a real quantitative encoding beyond boxes and prose; if data cannot be extracted reliably, show a truthful boundary instead of false precision.
-
-Select exactly one allowed `beautiful-feishu-whiteboard` theme for every visual output from document type, reader, tone, relationship, and density; never use a fixed or silent default. Record the choice and content-based rationale in `visual_spec.json`. Feishu reads only that theme's `design.md`; HTML uses the bundled adaptation of the same theme. Keep semantic colors consistent with the body. Use editable native-shape SVG and validate it. Bitmap generation is inspiration only: never send internal source text, identifiers, links, names, or real metrics, and never let bitmap output carry critical evidence or conclusions.
-
-For HTML, inspect the standalone SVG, then embed the same approved spec, composition, and theme. Use one dominant relationship, judgment titles, visible values, metric scope, alt text, responsive/print CSS, and canonical semantic colors. Reject title-only blocks, omitted values, repeated full-width stage walls, and sparse vertical canvases. Critical conclusions, evidence, risks, and actions must remain visible without interaction; collapsed blocks are P2 only.
-
-### 6. Preflight And Audit
-
-Run deterministic gates before reviewers:
+1. **Route**: determine source/output type, explicit language override, scope, and constraints. For Feishu, check dependencies before fetch/write. Installation or authentication requires separate approval; follow the dependency reference and stop that action when approval is required.
+2. **Ground**: inspect all material non-appendix evidence, including embedded P0/P1/chartable content. Build `source_inventory.md`, untranslated `source_non_appendix.md`, and `claim_ledger.json`; record language basis, exclusions, sufficiency, stable claim/source identity, evidence ceilings, exact protected relations, chartable data, risks/actions, mappings, and omissions. Reopen the source only to resolve a missing fact or dispute.
+3. **Clarify**: before drafting, ask up to three blocking questions only when ambiguity can change the main conclusion, metric meaning/scope, risk boundary, audience, next action, language, or protected relation. For non-blocking gaps, use explicit missing-source/inference labels. Shorten thin-source output instead of making it appear rich.
+4. **Draft**: create one `brief.json` conforming to [brief.schema.json](references/brief.schema.json), used by every renderer. Build a Pyramid opening and a source-shaped reader path with short judgment headings. Apply source-faithful expression only after the first draft; keep each assertion below its evidence ceiling and preserve valid terms, uncertainty, neutral tone, and necessary boundaries.
+5. **Visualize**: create `visual_spec.json` before drawing and map every block to claim IDs. Choose the smallest content-fit relationship and exactly one allowed theme, with no fixed/silent default. Reach configured weighted coverage without omitting P0 claims. When three or more quantitative claims exist, or the conclusion depends on quantitative evidence, use a real quantitative encoding beyond boxes/prose; show a truthful boundary when extraction is unreliable. Keep semantic colors consistent across visual and body. Image generation is private-safe inspiration only, never the final evidence carrier. For HTML, also create reviewed `html_design.json` and preserve an auditable native-SVG fallback.
+6. **Gate and audit**: run deterministic checks before human-like review:
 
 ```bash
 scripts/validate_claim_ledger.py claim_ledger.json
 scripts/preflight_check.py DRAFT --source-inventory source_inventory.md --claim-ledger claim_ledger.json
 scripts/check_expression_quality.py DRAFT --claim-ledger claim_ledger.json --non-appendix-source source_non_appendix.md
-scripts/check_coverage.py claim_ledger.json
+scripts/check_coverage.py claim_ledger.json --visual-spec visual_spec.json
 scripts/validate_visual_spec.py visual_spec.json claim_ledger.json
 scripts/validate_brief.py brief.json visual_spec.json
 ```
 
-Validate the rendered visual for its target format; for Feishu use `scripts/validate_whiteboard.sh`; for HTML use `scripts/validate_html_output.py OUTPUT --visual-spec visual_spec.json`. Fix deterministic failures before review.
-
-Build role-specific, hash-locked packets: Reader gets the readable draft; Source gets non-appendix outline, P0/P1 excerpts, protected relations, ceilings, and ledger; Visualization gets preview, spec, coverage, validation, and semantic mapping. Launch all three independently. Reader checks clarity without blanket language bans; Source fails relation drift, invented specificity, or overclaiming. Do not share reviewer comments before all submit. Any FAIL/blocker requires revision and all three rerun, up to three rounds. Never claim unavailable independent review.
-
-Aggregate only matching roles, rounds, and artifact hashes with `scripts/aggregate_reviews.py`.
+Validate the target render with `scripts/validate_whiteboard.sh` or `scripts/validate_html_output.py OUTPUT --visual-spec visual_spec.json --design-plan html_design.json`. Fix deterministic failures first. In standard/strict, run isolated Visual Blind Replay on the cropped one-picture render before audit; the reader sees no TLDR, body, source, spec, alt text, expected answer, or prior feedback. A failure returns to visual design and deterministic gates. Only after it passes, send hash-locked role-specific packets to Reader, Source, and Visualization reviewers independently; expose no replay/reviewer feedback to another reviewer before all return. Any blocker/FAIL requires revision and all three rerun. Aggregate only matching roles, rounds, and hashes. Fast mode uses a disclosed visual self-check. Never claim unavailable independent review.
 
 ### 7. Replay Reader Understanding
 
-After all three reviewers pass the same artifact set, follow the blind-reader reference. Start with Primary using only the rendered artifact and exactly three document-specific question-answer replays. Add Technical and Decision readers only under the configured escalation conditions; do not expose sources, expected answers, reviewer output, another replay, or the escalation reason. A blocking comprehension defect restarts preflight, all three reviews, and Primary replay.
+After all three reviewers pass the same artifact, run Blind Reader Replay using [blind-reader-replay.md](references/blind-reader-replay.md): Primary first with rendered artifact only and exactly three document-specific question-answer replays; add Technical/Decision readers only under the configured escalation conditions. A blocking comprehension failure restarts gates, all three reviews, and Primary replay.
 
-### 8. Create And Verify The New Output
+### 8. Create And Verify
 
-Create output only after gates pass. Feishu: build native XML with `scripts/build_feishu_brief.py`, then inspect the live board for clipping, overlap, overflow, and staleness. HTML: build the same reviewed inputs with `scripts/build_html_brief.py`, inspect desktop/mobile/print, and rerun validation. Verify source unchanged, format/language, citation, TLDR units, coverage, theme/semantic consistency, accessibility, and final hashes. Never publish Feishu while a dependency is SKIP/BLOCKED or a new skill awaits restart registration.
+Create the new output only after applicable gates pass. Render Feishu with native XML and inspect the live board; build HTML with `scripts/build_html_brief.py brief.json visual_spec.json OUTPUT --design-plan html_design.json`, inspect rich/fallback views, and revalidate. Verify source unchanged, format/language, source citation, TLDR, claim coverage, theme/colors, accessibility, artifact hashes, and dependency status.
 
 ## Delivery
 
-Respond briefly with:
-
-- generated output link or absolute file path;
-- source link or absolute file path;
-- verification notes covering source unchanged, format/language decision, dependency status when applicable, clarification result, three-review status or blocker, blind-reader status or limitation, visual validation, and Feishu live-preview inspection when applicable.
-
-If `lark-cli` returns `_notice.update`, mention `lark-cli update` only after completing the task.
+Return the generated link or absolute path, the source link/path, and concise verification notes: source unchanged; format/language basis; dependency/clarification status when relevant; Visual Blind Replay, three-review, and Blind Reader status or limitation; visual validation; and Feishu live-preview status when applicable. If `lark-cli` returns `_notice.update`, mention `lark-cli update` only after completing the task.

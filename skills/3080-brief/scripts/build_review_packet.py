@@ -30,9 +30,10 @@ ROLE_GATES = {
         "No causal, quantitative, or recommendation claim is stronger than its evidence.",
         "Thin or blocked material is shortened or clarified rather than padded with external facts, invented specificity, experience, or emotion.",
         "Missing denominators, periods, samples, conflicts, or inferences are visible and handled safely.",
+        "Every visual title and label stays at or below the mapped claim's evidence ceiling and preserves its protected relation.",
     ],
     "visual": [
-        "The visual spec maps every board block to source claim IDs and value-weighted board coverage is at least 80%.",
+        "Recompute visible coverage from claim visual_required_tokens; do not trust the declared coverage percentage or block mapping alone.",
         "The visual language matches the declared document output language, except for source-native proper nouns and necessary terms.",
         "The preview uses content-fit visual encoding rather than boxes plus prose when chartable data exists.",
         "Exactly one allowed theme was selected from document type, audience, tone, relationship, and density; its rationale is content-based rather than a silent default.",
@@ -40,8 +41,13 @@ ROLE_GATES = {
         "The rendered board has a clear reading path and no visible clipping, overlap, overflow, or misleading precision.",
         "The body and whiteboard use the same source-grounded semantic mapping; mathematical sign alone does not determine favorable or unfavorable color.",
         "Each figure uses a judgment title, preserves metric scope, labels decision-bearing values, and provides useful alt text when the target format supports it.",
+        "The rendered preview visibly carries the conclusion and decision path; a title that promises a leader, actor, segment, or object visibly names it rather than relying on hidden alt text or the spec.",
+        "The declared composition creates real hierarchy: anchor_support has one dominant anchor and smaller supports, while comparison_grid keeps peers directly comparable.",
+        "Values sharing one quantitative axis use the same metric, unit, period, and denominator; different scopes are split or explicitly cross-labeled.",
+        "Visual titles and annotations do not use causal wording above the mapped evidence ceiling.",
         "Missing values remain N/A rather than zero; scatter points, funnel stages, area, size, and flow magnitude are used only when source data supports them.",
-        "For HTML, the artifact is readable on desktop, mobile, and print; critical information is visible without interaction and no runtime resource is external.",
+        "For HTML, critical information is visible without interaction, the rendered document is readable, and no runtime resource is external.",
+        "For HTML, the design plan fits the source, the dominant chartable/structural relationship uses the planned rich renderer, selected fonts support the reading task, and the native-SVG fallback preserves the full evidence payload.",
         "For Feishu, body figures use editable native shapes, judgment titles, compact captions, and readable table widths/alignment.",
     ],
 }
@@ -74,6 +80,8 @@ def packet_for(role, args):
         "body": digest(args.body),
         "draft": digest(args.draft),
         "visual_spec": digest(args.visual_spec),
+        "html_design_plan": digest(args.html_design_plan),
+        "validation_notes": digest(args.validation_notes),
         "whiteboard_preview": digest(args.whiteboard_preview),
         "document_preview": digest(args.document_preview),
     }
@@ -143,6 +151,10 @@ def packet_for(role, args):
 ## Draft Body Mapping
 
 {read_optional(args.body)}
+
+## Visual Claim Labels
+
+{read_optional(args.visual_spec) or '- Not provided; FAIL if visual claim wording cannot be checked against evidence ceilings.'}
 """
     else:
         evidence = f"""
@@ -150,11 +162,19 @@ def packet_for(role, args):
 
 {read_optional(args.visual_spec) or '- Not provided; FAIL if claim-to-block mapping cannot be verified.'}
 
+## HTML Design Plan
+
+{read_optional(args.html_design_plan) or '- Not applicable or not provided. For HTML output, FAIL if layout, typography, renderer, anchor, or fallback choice cannot be verified.'}
+
 ## Whiteboard Evidence
 
 - Preview/path: {args.whiteboard_preview or 'Not provided.'}
 
 {read_optional(args.whiteboard_summary) or '- Validation summary not provided.'}
+
+## Deterministic Validation Evidence
+
+{read_optional(args.validation_notes) or '- Not provided; FAIL any gate that depends on unavailable structural or runtime-resource evidence.'}
 
 ## Body Visual Evidence
 
@@ -165,7 +185,7 @@ def packet_for(role, args):
     output_contract = f"""
 ## Required Output
 
-Return JSON only:
+Return JSON only. Validate against `references/independent-review.schema.json`; do not use the simplified `evals/review.schema.json`:
 
 ```json
 {{
@@ -199,6 +219,8 @@ def main():
     parser.add_argument("--source-outline", default="")
     parser.add_argument("--source-excerpts", default="")
     parser.add_argument("--visual-spec", default="")
+    parser.add_argument("--html-design-plan", default="")
+    parser.add_argument("--validation-notes", default="", help="Deterministic validation summary for the final rendered artifact")
     parser.add_argument("--whiteboard-summary", default="")
     parser.add_argument("--whiteboard-preview", default="")
     parser.add_argument("--document-preview", default="")

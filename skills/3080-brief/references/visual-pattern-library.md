@@ -22,11 +22,13 @@ Before rendering, write `visual_spec.json` using `visual-spec.schema.json`. Ever
 Also choose one explicit composition shared by every target format:
 
 - `stage_story`: 3-4 connected process stages with a compact context band and evidence/risk/action strip;
-- `anchor_support`: one dominant quantitative or decision anchor with 1-2 supporting blocks;
-- `comparison_grid`: peer segments or alternatives whose positions are directly comparable;
+- `anchor_support`: one dominant quantitative or decision anchor using the full first row, followed by 1-2 smaller supports and at most one compact caveat;
+- `comparison_grid`: 2-4 peer segments or alternatives in a shared grid, plus at most one compact caveat;
 - `vertical_story`: a genuinely top-to-bottom argument where vertical order carries meaning.
 
 Composition is not a theme. Do not choose `vertical_story` merely because it is easy to stack blocks. A sequence split into repeated full-width stage panels creates empty space and weakens the overall relationship.
+
+Coverage is visible decision value, not a declared percentage. For each covered or partial P0/P1 claim, record `visual_required_tokens` containing the names, values, or labels the reader must actually see. A claim is not visually covered when its block mapping exists but those tokens are absent. Never combine values with different metrics, units, periods, or denominators on one quantitative axis; split them into separate blocks or use a labeled matrix.
 
 Select the information relationship once and keep it stable across formats. Feishu renders editable native shapes; Word and Markdown use auditable static SVG; HTML uses the bundled offline renderer described in `html-visualization.md`. A renderer may change layout mechanics but cannot change claim meaning, metric scope, semantic color, or evidence strength.
 

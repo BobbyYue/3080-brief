@@ -7,7 +7,7 @@
   "composition": "vertical_story",
   "render_target": "html",
   "alt_text": "分层结果为68，高于汇总结果42，但仍低于75的扩大范围阈值，因此应先验证稳定性。",
-  "coverage_percent": 100,
+  "coverage_percent": 90,
   "source_note": "Synthetic evaluation fixture; values are used only to validate the renderer.",
   "blocks": [
     {
@@ -22,8 +22,8 @@
       "alt_text": "分层结果68，汇总结果42，差异为26个百分点。",
       "metric_scope": {"metric": "synthetic score", "unit": "points", "period": "evaluation fixture"},
       "items": [
-        {"label": "汇总", "value": 42, "display": "42", "semantic_direction": "neutral"},
-        {"label": "分层", "value": 68, "display": "68", "semantic_direction": "favorable"}
+        {"label": "汇总", "value": 42, "display": "42", "semantic_direction": "neutral", "metric_scope": {"metric": "synthetic score", "unit": "points", "period": "evaluation fixture", "denominator": "eligible observations", "segment": "aggregate"}},
+        {"label": "分层", "value": 68, "display": "68", "semantic_direction": "favorable", "metric_scope": {"metric": "synthetic score", "unit": "points", "period": "evaluation fixture", "denominator": "eligible observations", "segment": "layer"}}
       ]
     },
     {

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "layout": "editorial-research",
+  "density": "balanced",
+  "typography": {
+    "display": "Instrument Serif",
+    "body": "Instrument Sans",
+    "mono": "IBM Plex Mono"
+  },
+  "one_picture": {
+    "renderer": "auto",
+    "anchor_block_id": "B01",
+    "support_position": "right",
+    "fallback": "native-svg"
+  },
+  "body": {
+    "prose_measure": "medium",
+    "section_treatment": "ruled",
+    "figure_treatment": "integrated"
+  },
+  "asset_mode": "inline",
+  "motion": "none",
+  "rationale": "This evidence-led comparison needs an editorial reading order, one dominant quantitative chart, and compact threshold support."
+}

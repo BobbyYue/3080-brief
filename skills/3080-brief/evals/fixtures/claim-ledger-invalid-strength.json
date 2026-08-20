@@ -32,6 +32,7 @@
         }
       ],
       "board_status": "covered",
+      "visual_required_tokens": ["strategy"],
       "appendix": false,
       "inference": false
     }

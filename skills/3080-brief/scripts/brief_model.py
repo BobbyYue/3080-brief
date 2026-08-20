@@ -161,4 +161,6 @@ def subset_visual_spec(visual_spec, block_ids, title, alt_text):
     subset["reading_path"] = alt_text
     subset["alt_text"] = alt_text
     subset["blocks"] = blocks
+    subset["composition"] = "comparison_grid" if len(blocks) > 1 else "vertical_story"
+    subset["body_figure"] = True
     return subset

@@ -69,7 +69,7 @@ cp -R ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-brief"
 - **提炼核心价值：** 从背景噪音中抽出关键结论、证据、风险和下一步。
 - **理清故事线：** 把零散或技术化的原文组织成一条连贯论证。
 - **表达具体：** 需要说明价值的标题、章节名和开场结论直接写清对象和原文支持的结果，不用方法名或空泛价值词代替。
-- **用图表达关系：** 飞书和 HTML 共用一套明确构图、可见证据数值、主题和语义色，避免同一张主线图在不同格式中变形。
+- **用图表达关系：** 飞书和 HTML 共用一套明确构图、可见证据数值、主题和语义色。HTML 额外内置离线图表/图解素材库和可审计的原生 SVG 回退，避免一张图退化为“方框加文字”。
 - **可靠交付：** 保持源文不变、重要主张可追溯、格式跟随，并验收最终产物。
 
 ## 安装方式
@@ -115,17 +115,17 @@ Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-
 | 宿主状态 | 能说明什么 |
 | --- | --- |
 | 可安装 | Agent 能发现完整 Skill 目录，尚不能说明产出质量。 |
-| 核心流程已验证 | Agent 能运行可恢复流程和 Markdown/docx 离线检查。 |
+| 核心流程已验证 | Agent 能运行可恢复流程和 Markdown/docx、自包含 HTML 的离线检查。 |
 | 飞书流程已验证 | 当前运行真实完成文档读写、原生可编辑白板插入与查询、线上预览和最终验收。 |
 
-固定生产流程为：初始化 → 冻结来源证据 → 预检 → 创建完整初稿 → 审阅已登记产物 → 重新读取源文档和产物 → 验收。确认收到或执行计划不算最终交付。
+固定生产流程为：初始化 → 冻结非附录来源证据 → 预检 → 渲染完整初稿 → 独立执行一张图盲读 → 三位 Reviewer 独立审稿并全部通过 → Primary Blind Reader 复述，按条件升级 Technical/Decision Reader → 重新读取源文档和产物 → 验收。确认收到或执行计划不算最终交付。
 
-Standard 和 Strict 需要三个独立审阅执行；只有用户明确要求 Fast 时，才允许改为三份角色分离的自检。
+Standard 和 Strict 必须按顺序完成一张图盲读、三次独立审稿和适用的全文盲读。只有用户明确要求 Fast 时，才允许以披露限制的自检代替独立盲读/审稿，并跳过全文 Blind Reader Replay。
 
 <details>
 <summary><strong>飞书/Lark 依赖与安装行为</strong></summary>
 
-核心离线校验只需要 Python 3.9+，不依赖第三方 Python 包。飞书/Lark 输出额外需要：
+核心离线校验只需要 Python 3.9+，不依赖第三方 Python 包。自包含 HTML 只使用 Skill 内置字体和渲染素材，不加载外部脚本、字体或样式。飞书/Lark 输出额外需要：
 
 - 可实际执行的 `lark-doc` 读写和 `lark-whiteboard` 查询/更新工作流；
 - Node.js 20+；
@@ -144,6 +144,7 @@ Standard 和 Strict 需要三个独立审阅执行；只有用户明确要求 Fa
 
 ```bash
 bash skills/3080-brief/scripts/self_test.sh
+python3 skills/3080-brief/scripts/test_public_runtime.py
 ```
 
 单独检查运行上下文和飞书依赖：

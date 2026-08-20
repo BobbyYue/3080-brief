@@ -15,7 +15,15 @@ from urllib.parse import urlsplit, urlunsplit
 SKILL_DIR = Path(__file__).resolve().parents[1]
 SCRIPTS = SKILL_DIR / "scripts"
 STATE_FILE = "run_state.json"
-STAGES = ["grounded", "preflight", "review_draft", "review", "finalized"]
+STAGES = [
+    "grounded",
+    "preflight",
+    "review_draft",
+    "visual_replay",
+    "audit_review",
+    "reader_replay",
+    "finalized",
+]
 
 
 class ContractError(RuntimeError):
@@ -85,7 +93,7 @@ def clear_from(state, stage):
     index = STAGES.index(stage)
     for name in STAGES[index:]:
         state.get("completed", {}).pop(name, None)
-    if index <= STAGES.index("review"):
+    if index <= STAGES.index("audit_review"):
         state.pop("review_preparation", None)
     state["status"] = "IN_PROGRESS"
     state["delivery_allowed"] = False
@@ -136,8 +144,10 @@ def next_action(state):
         "initialized": "Fetch the source, create source_before/source_non_appendix/source_inventory/claim_ledger, then run `run_3080.py ground`.",
         "grounded": "Create the draft and visual spec, then run `run_3080.py preflight`.",
         "preflight": "Create the complete review draft in the target format, capture live evidence, then run `run_3080.py record-output`.",
-        "review_draft": "Run `run_3080.py prepare-review`, execute the three role packets, then run `run_3080.py record-review`.",
-        "review": "Re-fetch the source and generated output, then run `run_3080.py finalize`.",
+        "review_draft": "Run `run_3080.py record-visual-replay` before preparing audit packets.",
+        "visual_replay": "Run `run_3080.py prepare-review`, execute the three isolated audit packets, then run `run_3080.py record-review`.",
+        "audit_review": "Run the Primary Blind Reader on the approved artifact, apply the escalation gate, then run `run_3080.py record-reader`.",
+        "reader_replay": "Re-fetch the source and generated output, then run `run_3080.py finalize`.",
         "finalized": "Delivery is allowed; return the generated output reference and delivery_receipt.json summary.",
     }
     return actions[stage]
@@ -207,25 +217,42 @@ def command_preflight(args):
     draft = require_file(args.draft, "draft", 20)
     visual_spec = require_file(args.visual_spec, "visual spec", 20)
     run_script("validate_claim_ledger.py", frozen["claim_ledger"])
-    run_script(
-        "preflight_check.py",
-        draft,
-        "--source-inventory", frozen["inventory"],
-        "--claim-ledger", frozen["claim_ledger"],
-        "--output-type", state["output_type"],
-    )
+    if state["output_type"] == "html":
+        run_script("validate_brief.py", draft, visual_spec)
+    else:
+        run_script(
+            "preflight_check.py",
+            draft,
+            "--source-inventory", frozen["inventory"],
+            "--claim-ledger", frozen["claim_ledger"],
+        )
     run_script(
         "check_expression_quality.py",
         draft,
         "--claim-ledger", frozen["claim_ledger"],
         "--non-appendix-source", frozen["source_snapshot"],
     )
-    run_script("check_coverage.py", frozen["claim_ledger"])
+    run_script("check_coverage.py", frozen["claim_ledger"], "--visual-spec", visual_spec)
     run_script("validate_visual_spec.py", visual_spec, frozen["claim_ledger"])
     records = {
         "draft": artifact(draft, "draft", 20),
         "visual_spec": artifact(visual_spec, "visual spec", 20),
     }
+    if state["output_type"] == "html":
+        if not args.html_design:
+            raise ContractError("HTML preflight requires --html-design")
+        html_design = require_file(args.html_design, "HTML design plan", 20)
+        try:
+            from html_design_kit import validate_design_plan
+
+            design_plan = json.loads(html_design.read_text(encoding="utf-8"))
+            visual_payload = json.loads(visual_spec.read_text(encoding="utf-8"))
+        except (ImportError, json.JSONDecodeError, OSError) as exc:
+            raise ContractError(f"HTML design plan is unavailable or invalid: {exc}") from exc
+        design_errors = validate_design_plan(design_plan, visual_payload)
+        if design_errors:
+            raise ContractError("HTML design plan failed:\n" + "\n".join(f"- {item}" for item in design_errors))
+        records["html_design"] = artifact(html_design, "HTML design plan", 20)
     if state["output_type"] == "feishu":
         if not args.whiteboard_svg:
             raise ContractError("Feishu preflight requires --whiteboard-svg; a normal image is not a valid substitute")
@@ -291,7 +318,28 @@ def command_record_output(args):
         )
     else:
         output = require_file(args.output_ref, "generated review draft", 20)
+        if not args.one_picture_preview:
+            raise ContractError("non-Feishu review draft requires --one-picture-preview")
         evidence["output_file"] = artifact(output, "generated review draft", 20)
+        evidence["one_picture_preview"] = artifact(
+            args.one_picture_preview,
+            "cropped one-picture preview",
+            100,
+        )
+        if state["output_type"] == "html":
+            run_script(
+                "preflight_check.py",
+                output,
+                "--format", "html",
+                "--source-inventory", grounding["inventory"]["path"],
+                "--claim-ledger", grounding["claim_ledger"]["path"],
+            )
+            run_script(
+                "validate_html_output.py",
+                output,
+                "--visual-spec", preflight["visual_spec"]["path"],
+                "--design-plan", preflight["html_design"]["path"],
+            )
     state["completed"]["review_draft"] = {
         "at": now_utc(),
         "output_ref": args.output_ref,
@@ -303,9 +351,53 @@ def command_record_output(args):
     print_status(state)
 
 
-def command_prepare_review(args):
+def command_record_visual_replay(args):
     state, path = load_state(args.run_dir)
     require_stage(state, "review_draft")
+    grounding = state["completed"]["grounded"]["artifacts"]
+    preflight = state["completed"]["preflight"]["artifacts"]
+    review_draft = state["completed"]["review_draft"]
+    verify_group(grounding, ("claim_ledger",))
+    verify_group(preflight, tuple(preflight))
+    verify_group(review_draft["artifacts"], tuple(review_draft["artifacts"]))
+    preview_record = (
+        review_draft["artifacts"].get("whiteboard_preview")
+        or review_draft["artifacts"].get("one_picture_preview")
+    )
+    if not preview_record:
+        raise ContractError("cropped one-picture preview is missing")
+    clear_from(state, "visual_replay")
+    records = {"visual_preview": preview_record}
+    if state["profile"] == "fast":
+        if not args.fast_self_check:
+            raise ContractError("Fast profile requires --fast-self-check and disclosure")
+        records["fast_self_check"] = artifact(args.fast_self_check, "Fast visual self-check", 20)
+        mode = "self_check"
+    else:
+        if not args.visual_replay_result:
+            raise ContractError("standard/strict profile requires --visual-replay-result")
+        result = require_file(args.visual_replay_result, "visual blind replay result", 20)
+        run_script(
+            "validate_visual_replay.py",
+            result,
+            "--visual-preview", preview_record["path"],
+            "--claim-ledger", grounding["claim_ledger"]["path"],
+            "--visual-spec", preflight["visual_spec"]["path"],
+        )
+        records["visual_replay_result"] = artifact(result, "visual blind replay result", 20)
+        mode = "independent"
+    state["completed"]["visual_replay"] = {
+        "at": now_utc(),
+        "mode": mode,
+        "artifacts": records,
+    }
+    save_state(state, path)
+    print_status(state)
+
+
+def command_prepare_review(args):
+    state, path = load_state(args.run_dir)
+    require_stage(state, "visual_replay")
     grounding = state["completed"]["grounded"]["artifacts"]
     preflight = state["completed"]["preflight"]["artifacts"]
     review_draft = state["completed"]["review_draft"]
@@ -315,6 +407,12 @@ def command_prepare_review(args):
     tldr = require_file(args.tldr or frozen_preflight["draft"], "TLDR review artifact", 20)
     body = require_file(args.body or frozen_preflight["draft"], "body review artifact", 20)
     document_preview = require_file(args.document_preview, "rendered document preview", 100)
+    visual_preview_record = (
+        review_draft["artifacts"].get("whiteboard_preview")
+        or review_draft["artifacts"].get("one_picture_preview")
+    )
+    visual_preview = verify_artifact_record(visual_preview_record, "one-picture preview")
+    validation_notes = require_file(args.validation_notes, "validation notes", 20) if args.validation_notes else None
     packet_dir = Path(args.run_dir).expanduser().resolve() / f"review_round_{args.round}"
     arguments = [
         "--role", "all",
@@ -327,21 +425,24 @@ def command_prepare_review(args):
         "--source-outline", args.source_outline or frozen_grounding["source_snapshot"],
         "--source-excerpts", args.source_excerpts or frozen_grounding["source_snapshot"],
         "--visual-spec", frozen_preflight["visual_spec"],
-        "--whiteboard-preview", review_draft["artifacts"].get("whiteboard_preview", {}).get("path", ""),
+        "--whiteboard-preview", visual_preview,
         "--document-preview", document_preview,
         "--round", args.round,
-        "--review-mode", "self_check" if state["profile"] == "fast" else "independent",
         "--output", packet_dir,
     ]
     if args.user_request:
         arguments.extend(("--user-request", args.user_request))
     if args.whiteboard_summary:
         arguments.extend(("--whiteboard-summary", args.whiteboard_summary))
+    if frozen_preflight.get("html_design"):
+        arguments.extend(("--html-design-plan", frozen_preflight["html_design"]))
+    if validation_notes:
+        arguments.extend(("--validation-notes", validation_notes))
     run_script("build_review_packet.py", *arguments)
     reader_packet = (packet_dir / "review_packet_reader.md").read_text(encoding="utf-8")
     marker = "Artifact set ID: `"
     artifact_set_id = reader_packet.split(marker, 1)[1].split("`", 1)[0]
-    clear_from(state, "review")
+    clear_from(state, "audit_review")
     state["review_preparation"] = {
         "round": args.round,
         "artifact_set_id": artifact_set_id,
@@ -349,39 +450,57 @@ def command_prepare_review(args):
         "tldr": artifact(tldr, "TLDR review artifact", 20),
         "body": artifact(body, "body review artifact", 20),
         "document_preview": artifact(document_preview, "rendered document preview", 100),
+        "visual_preview": artifact(visual_preview, "one-picture preview", 100),
         "packet_dir": str(packet_dir),
     }
+    if frozen_preflight.get("html_design"):
+        state["review_preparation"]["html_design_plan"] = artifact(
+            frozen_preflight["html_design"],
+            "HTML design plan",
+            20,
+        )
+    if validation_notes:
+        state["review_preparation"]["validation_notes"] = artifact(
+            validation_notes,
+            "validation notes",
+            20,
+        )
     save_state(state, path)
     print(json.dumps(state["review_preparation"], ensure_ascii=False, indent=2))
 
 
-def validate_blind_reader(path, artifact_set_id):
-    candidate = require_file(path, "primary blind-reader replay", 20)
+def validate_blind_reader(path, artifact_set_id, expected_role):
+    candidate = require_file(path, f"{expected_role} blind-reader replay", 20)
     try:
         replay = json.loads(candidate.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise ContractError(f"primary blind-reader replay is invalid JSON: {exc}") from exc
-    if replay.get("reader_role") != "primary":
-        raise ContractError("standard/strict profile requires a Primary blind-reader replay")
+        raise ContractError(f"{expected_role} blind-reader replay is invalid JSON: {exc}") from exc
+    if replay.get("reader_role") != expected_role:
+        raise ContractError(f"blind-reader replay must use role: {expected_role}")
     if replay.get("artifact_set_id") != artifact_set_id:
         raise ContractError("blind-reader replay evaluated a different artifact set")
     questions = replay.get("questions")
     if not isinstance(questions, list) or len(questions) != 3:
-        raise ContractError("Primary blind-reader replay must contain exactly three questions")
+        raise ContractError(f"{expected_role} blind-reader replay must contain exactly three questions")
     for index, item in enumerate(questions, 1):
         if not isinstance(item, dict) or not item.get("question") or not item.get("answer"):
             raise ContractError(f"blind-reader question {index} is incomplete")
-    return artifact(candidate, "primary blind-reader replay", 20)
+        if not str(item.get("inference_or_uncertainty", "")).strip():
+            raise ContractError(f"blind-reader question {index} must state inference or uncertainty")
+    return artifact(candidate, f"{expected_role} blind-reader replay", 20)
 
 
 def command_record_review(args):
     state, path = load_state(args.run_dir)
-    require_stage(state, "review_draft")
+    require_stage(state, "visual_replay")
     preparation = state.get("review_preparation")
     if not preparation:
         raise ContractError("review packets are missing; run prepare-review first")
-    for label in ("tldr", "body", "document_preview"):
+    for label in ("tldr", "body", "document_preview", "visual_preview"):
         verify_artifact_record(preparation[label], label)
+    for label in ("html_design_plan", "validation_notes"):
+        if preparation.get(label):
+            verify_artifact_record(preparation[label], label)
     reviews = [
         require_file(args.reader_review, "reader review", 20),
         require_file(args.source_review, "source review", 20),
@@ -392,7 +511,6 @@ def command_record_review(args):
     run_script(
         "aggregate_reviews.py",
         *(str(review) for review in reviews),
-        "--mode", mode,
         "--output", review_result,
     )
     result = json.loads(review_result.read_text(encoding="utf-8"))
@@ -404,18 +522,62 @@ def command_record_review(args):
         "source_review": artifact(reviews[1], "source review", 20),
         "visual_review": artifact(reviews[2], "visual review", 20),
     }
-    if state["profile"] != "fast":
-        if not args.blind_reader_result:
-            raise ContractError("standard/strict profile requires --blind-reader-result after independent review PASS")
-        records["blind_reader_result"] = validate_blind_reader(
-            args.blind_reader_result,
-            preparation["artifact_set_id"],
-        )
-    clear_from(state, "review")
+    clear_from(state, "audit_review")
     state["review_preparation"] = preparation
-    state["completed"]["review"] = {
+    state["completed"]["audit_review"] = {
         "at": now_utc(),
         "mode": mode,
+        "artifact_set_id": preparation["artifact_set_id"],
+        "artifacts": records,
+    }
+    if state["profile"] == "fast":
+        state["completed"]["reader_replay"] = {
+            "at": now_utc(),
+            "mode": "skipped_fast",
+            "artifact_set_id": preparation["artifact_set_id"],
+            "artifacts": {},
+        }
+    save_state(state, path)
+    print_status(state)
+
+
+def command_record_reader(args):
+    state, path = load_state(args.run_dir)
+    require_stage(state, "audit_review")
+    if state["profile"] == "fast":
+        raise ContractError("Fast profile skips Blind Reader Replay and records that limitation automatically")
+    preparation = state.get("review_preparation")
+    audit = state["completed"]["audit_review"]
+    verify_group(audit["artifacts"], tuple(audit["artifacts"]))
+    if not preparation or audit["artifact_set_id"] != preparation.get("artifact_set_id"):
+        raise ContractError("audit result does not match the prepared artifact set")
+    if not args.blind_reader_result:
+        raise ContractError("standard/strict profile requires --blind-reader-result after audit PASS")
+    records = {
+        "blind_reader_result": validate_blind_reader(
+            args.blind_reader_result,
+            preparation["artifact_set_id"],
+            "primary",
+        )
+    }
+    if args.blind_reader_escalation == "required":
+        if not args.technical_blind_reader_result or not args.decision_blind_reader_result:
+            raise ContractError("reader escalation requires both Technical and Decision replay results")
+        records["technical_blind_reader_result"] = validate_blind_reader(
+            args.technical_blind_reader_result,
+            preparation["artifact_set_id"],
+            "technical",
+        )
+        records["decision_blind_reader_result"] = validate_blind_reader(
+            args.decision_blind_reader_result,
+            preparation["artifact_set_id"],
+            "decision",
+        )
+    clear_from(state, "reader_replay")
+    state["completed"]["reader_replay"] = {
+        "at": now_utc(),
+        "mode": "independent",
+        "escalation": args.blind_reader_escalation,
         "artifact_set_id": preparation["artifact_set_id"],
         "artifacts": records,
     }
@@ -428,7 +590,9 @@ def verify_reviewed_set(state):
     preflight = state["completed"]["preflight"]["artifacts"]
     review_draft = state["completed"]["review_draft"]["artifacts"]
     preparation = state["review_preparation"]
-    review = state["completed"]["review"]["artifacts"]
+    review = state["completed"]["audit_review"]["artifacts"]
+    html_design = preparation.get("html_design_plan", {}).get("path", "")
+    validation_notes = preparation.get("validation_notes", {}).get("path", "")
     run_script(
         "verify_reviewed_artifacts.py",
         "--review-result", review["review_result"]["path"],
@@ -439,21 +603,27 @@ def verify_reviewed_set(state):
         "--body", preparation["body"]["path"],
         "--draft", preflight["draft"]["path"],
         "--visual-spec", preflight["visual_spec"]["path"],
-        "--whiteboard-preview", review_draft.get("whiteboard_preview", {}).get("path", ""),
+        "--html-design-plan", html_design,
+        "--validation-notes", validation_notes,
+        "--whiteboard-preview", preparation["visual_preview"]["path"],
         "--document-preview", preparation["document_preview"]["path"],
     )
 
 
 def command_finalize(args):
     state, path = load_state(args.run_dir)
-    require_stage(state, "review")
+    require_stage(state, "reader_replay")
     grounding = state["completed"]["grounded"]["artifacts"]
     preflight = state["completed"]["preflight"]["artifacts"]
     review_draft = state["completed"]["review_draft"]
-    review = state["completed"]["review"]
+    review = state["completed"]["audit_review"]
+    reader_replay = state["completed"]["reader_replay"]
+    visual_replay = state["completed"]["visual_replay"]
     verify_group(grounding, ("source_before", "source_snapshot", "inventory", "claim_ledger"))
     verify_group(preflight, tuple(preflight))
     verify_group(review["artifacts"], tuple(review["artifacts"]))
+    verify_group(reader_replay["artifacts"], tuple(reader_replay["artifacts"]))
+    verify_group(visual_replay["artifacts"], tuple(visual_replay["artifacts"]))
     verify_reviewed_set(state)
     source_after = require_file(args.source_after, "raw source snapshot after generation", 20)
     if sha256_file(source_after) != grounding["source_before"]["sha256"]:
@@ -489,7 +659,9 @@ def command_finalize(args):
             "output_distinct_and_accessible": "PASS",
             "grounding_frozen": "PASS",
             "deterministic_preflight": "PASS",
+            "visual_blind_replay": "PASS" if visual_replay["mode"] == "independent" else "LIMITED",
             "review": "PASS" if review["mode"] == "independent" else "LIMITED",
+            "blind_reader_replay": "PASS" if reader_replay["mode"] == "independent" else "NOT_RUN",
             "native_editable_whiteboard": "PASS" if state["output_type"] == "feishu" else "NOT_APPLICABLE",
             "live_output_verification": "PASS",
         },
@@ -514,12 +686,15 @@ def command_finalize(args):
 def command_status(args):
     state, _ = load_state(args.run_dir)
     if state.get("delivery_allowed"):
-        for stage in ("grounded", "preflight", "review_draft", "review"):
+        for stage in ("grounded", "preflight", "review_draft", "visual_replay", "audit_review", "reader_replay"):
             records = state.get("completed", {}).get(stage, {}).get("artifacts", {})
             verify_group(records, tuple(records))
         preparation = state.get("review_preparation", {})
-        for label in ("tldr", "body", "document_preview"):
+        for label in ("tldr", "body", "document_preview", "visual_preview"):
             verify_artifact_record(preparation.get(label), label)
+        for label in ("html_design_plan", "validation_notes"):
+            if preparation.get(label):
+                verify_artifact_record(preparation[label], label)
         finalized = state.get("completed", {}).get("finalized", {})
         verify_artifact_record(finalized.get("source_after"), "source_after")
         verify_artifact_record(finalized.get("delivery_receipt"), "delivery_receipt")
@@ -536,7 +711,7 @@ def build_parser():
     init.add_argument("run_dir")
     init.add_argument("--source-ref", required=True)
     init.add_argument("--source-type", choices=("feishu", "docx", "markdown", "html", "other"), required=True)
-    init.add_argument("--output-type", choices=("feishu", "docx", "markdown"), required=True)
+    init.add_argument("--output-type", choices=("feishu", "docx", "markdown", "html"), required=True)
     init.add_argument("--profile", choices=("fast", "standard", "strict"), default="standard")
     init.set_defaults(handler=command_init)
 
@@ -553,6 +728,7 @@ def build_parser():
     preflight.add_argument("--draft", required=True)
     preflight.add_argument("--visual-spec", required=True)
     preflight.add_argument("--whiteboard-svg", default="")
+    preflight.add_argument("--html-design", default="")
     preflight.set_defaults(handler=command_preflight)
 
     output = subparsers.add_parser("record-output")
@@ -563,7 +739,14 @@ def build_parser():
     output.add_argument("--whiteboard-preview", default="")
     output.add_argument("--whiteboard-token", default="")
     output.add_argument("--whiteboard-block-id", default="")
+    output.add_argument("--one-picture-preview", default="")
     output.set_defaults(handler=command_record_output)
+
+    visual_replay = subparsers.add_parser("record-visual-replay")
+    visual_replay.add_argument("run_dir")
+    visual_replay.add_argument("--visual-replay-result", default="")
+    visual_replay.add_argument("--fast-self-check", default="")
+    visual_replay.set_defaults(handler=command_record_visual_replay)
 
     prepare = subparsers.add_parser("prepare-review")
     prepare.add_argument("run_dir")
@@ -574,6 +757,7 @@ def build_parser():
     prepare.add_argument("--source-excerpts", default="")
     prepare.add_argument("--whiteboard-summary", default="")
     prepare.add_argument("--document-preview", required=True)
+    prepare.add_argument("--validation-notes", default="")
     prepare.add_argument("--round", type=int, default=1)
     prepare.set_defaults(handler=command_prepare_review)
 
@@ -582,8 +766,15 @@ def build_parser():
     review.add_argument("--reader-review", required=True)
     review.add_argument("--source-review", required=True)
     review.add_argument("--visual-review", required=True)
-    review.add_argument("--blind-reader-result", default="")
     review.set_defaults(handler=command_record_review)
+
+    reader = subparsers.add_parser("record-reader")
+    reader.add_argument("run_dir")
+    reader.add_argument("--blind-reader-result", required=True)
+    reader.add_argument("--blind-reader-escalation", choices=("none", "required"), default="none")
+    reader.add_argument("--technical-blind-reader-result", default="")
+    reader.add_argument("--decision-blind-reader-result", default="")
+    reader.set_defaults(handler=command_record_reader)
 
     finalize = subparsers.add_parser("finalize")
     finalize.add_argument("run_dir")

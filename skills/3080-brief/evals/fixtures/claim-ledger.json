@@ -38,6 +38,7 @@
       "body_section": "汇总指标掩盖了真正差异",
       "semantic_direction": "neutral",
       "display_values": ["42"],
+      "visual_required_tokens": ["汇总", "42"],
       "appendix": false,
       "inference": false
     },
@@ -66,6 +67,7 @@
       "body_section": "汇总指标掩盖了真正差异",
       "semantic_direction": "favorable",
       "display_values": ["+26pp"],
+      "visual_required_tokens": ["分层", "68"],
       "appendix": false,
       "inference": false
     },
@@ -94,6 +96,7 @@
       "body_section": "分层验证决定能否扩大使用",
       "semantic_direction": "warning",
       "display_values": ["68"],
+      "visual_required_tokens": ["68"],
       "appendix": false,
       "inference": false
     },
@@ -120,6 +123,7 @@
       "board_status": "covered",
       "board_block": "B02",
       "body_section": "分层验证决定能否扩大使用",
+      "visual_required_tokens": ["扩大范围"],
       "appendix": false,
       "inference": false
     }

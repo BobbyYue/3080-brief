@@ -2,8 +2,8 @@
   "schema_version": 1,
   "context_budget": {
     "default_runtime_files": ["SKILL.md"],
-    "max_skill_bytes": 15360,
-    "max_skill_lines": 200,
+    "max_skill_bytes": 12500,
+    "max_skill_lines": 100,
     "retired_default_files": [
       "references/runtime-core.md",
       "references/user-supplements-rules.md",
@@ -30,8 +30,10 @@
     "THEME-01",
     "FSH-01",
     "HTML-01",
+    "HTMLKIT-01",
     "DEP-01",
     "REV-01",
+    "VBR-01",
     "RPL-01",
     "DEL-01",
     "CTX-01"
@@ -138,14 +140,32 @@
     },
     {
       "id": "HTML-01",
-      "requirement": "HTML output is independently implemented, offline, source-grounded, interaction-independent for critical content, responsive, printable, and driven by the same approved visual spec, composition, theme, and visible payload as Feishu.",
+      "requirement": "HTML output is independently implemented, offline, source-grounded, interaction-independent for critical content, readable in its rendered form, and driven by the same approved visual spec, composition, theme, and visible payload as Feishu.",
       "owner": {"file": "references/html-visualization.md", "marker": "## Ownership Boundary"},
       "enforced_by": [
         "references/brief.schema.json",
+        "references/html-design.schema.json",
         "assets/html/brief.css",
         "scripts/build_html_brief.py",
         "scripts/preflight_check.py",
         "scripts/validate_html_output.py",
+        "scripts/run_evals.py"
+      ]
+    },
+    {
+      "id": "HTMLKIT-01",
+      "requirement": "HTML selects a reviewed content-fit design plan, embeds only required local fonts and ECharts/Mermaid assets, renders chartable relationships with the matching rich renderer, and retains one complete native-SVG evidence fallback.",
+      "owner": {"file": "references/html-visualization.md", "marker": "## Bundled Material Library"},
+      "enforced_by": [
+        "assets/html-kit/asset-manifest.json",
+        "assets/html-kit/font-catalog.json",
+        "assets/html-kit/THIRD_PARTY_NOTICES.md",
+        "scripts/html_design_kit.py",
+        "scripts/build_html_brief.py",
+        "scripts/validate_html_output.py",
+        "scripts/build_review_packet.py",
+        "scripts/verify_reviewed_artifacts.py",
+        "evals/fixtures/html-design.json",
         "scripts/run_evals.py"
       ]
     },
@@ -160,6 +180,18 @@
       "requirement": "Three independent reviewers use isolated, role-specific, hash-locked packets.",
       "owner": {"file": "config/3080-brief.json", "marker": "\"review_roles\""},
       "enforced_by": ["references/review-loop.md", "scripts/build_review_packet.py", "scripts/aggregate_reviews.py", "scripts/run_evals.py"]
+    },
+    {
+      "id": "VBR-01",
+      "requirement": "A visual-only blind reader sees only the cropped one-picture render and must replay its conclusion, evidence path, and action or boundary before audit review begins.",
+      "owner": {"file": "references/visual-blind-replay.md", "marker": "## Isolation"},
+      "enforced_by": [
+        "references/visual-replay.schema.json",
+        "scripts/build_visual_replay_packet.py",
+        "scripts/validate_visual_replay.py",
+        "references/review-loop.md",
+        "scripts/run_evals.py"
+      ]
     },
     {
       "id": "RPL-01",

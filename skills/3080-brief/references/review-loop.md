@@ -5,6 +5,7 @@ Use this reference whenever a source has ambiguity, unclear data, undefined term
 ## Contents
 
 - Clarification gate and ambiguity handling
+- Isolated Visual Blind Replay before audit
 - Three independent reviewer roles and packets
 - Role-specific PASS criteria
 - Revision loop, review tiers, and final release rule
@@ -74,6 +75,14 @@ Before drafting, check:
 
 If any item affects the main decision, ask first.
 
+## Pre-Audit Visual Blind Replay
+
+After deterministic render validation, follow [visual-blind-replay.md](visual-blind-replay.md) before building audit packets. The visual blind reader receives only the cropped one-picture render at normal document width. Do not provide surrounding TLDR/body text, source evidence, claim IDs, visual spec, alt text, expected answer, coverage, or prior feedback.
+
+The main agent compares the replay with the hidden ledger/spec and validates the result with `scripts/validate_visual_replay.py`. If it fails, revise the picture and rerun deterministic visual gates plus Visual Blind Replay. Do not spend the three audit reviews on a picture that an isolated reader cannot understand. After PASS, do not expose the replay transcript or its revision rationale to any audit reviewer.
+
+Fast mode may use the same criteria as a self-check and must disclose that independent Visual Blind Replay was skipped.
+
 ## Three-Reviewer Subagent Protocol
 
 Before final output, create three role-specific, hash-locked packets using [review-packet-template.md](review-packet-template.md) and `scripts/build_review_packet.py --role all`, then send them to three reviewer subagents at the same time. They must evaluate independently and must not see each other's comments before submitting their own verdicts.
@@ -96,7 +105,7 @@ Use three independent reviewer roles:
 
 3. **Visualization And Expression Reviewer**
    - Persona: presentation and visualization reviewer.
-   - Focus: whether the one-picture visual covers at least 80% of value-weighted non-appendix claims, whether visual forms match the content logic, whether Feishu/Lark style was selected from candidate styles instead of using a fixed default, whether chartable metrics are encoded visually instead of written as prose, whether image2/bitmap generation was used only for inspiration and not evidence, whether the board avoids text piles and empty pretty graphics, whether body-level expression forms help comprehension without defaulting to tables, and whether body/board semantic colors agree.
+   - Focus: whether the one-picture visual visibly covers at least 80% of value-weighted non-appendix claims, whether visual forms match the content logic, whether the declared composition creates real hierarchy, whether values on one axis share a valid scope, whether decision-bearing entities and values are actually visible, whether Feishu/Lark style was selected from candidate styles instead of using a fixed default, whether chartable metrics are encoded visually instead of written as prose, whether image2/bitmap generation was used only for inspiration and not evidence, whether the board avoids text piles and empty pretty graphics, whether body-level expression forms help comprehension without defaulting to tables, and whether body/board semantic colors agree. This audit does not replace the earlier isolated visual replay.
 
 ### Reviewer Inputs
 
@@ -104,7 +113,7 @@ All packets share user constraints, source inventory, claim ledger, TLDR, review
 
 - Reader Comprehension: full reader-facing draft or rendered document and document preview. Body summaries alone are insufficient to judge readability.
 - Source Coverage And Grounding: complete non-appendix source outline, P0/P1 source excerpts with locations, claim ledger, and body claim mapping. The reviewer must fail when it cannot independently verify coverage or grounding.
-- Visualization And Expression: `visual_spec.json`, value-weighted coverage result, whiteboard validation summary, selected style, local/live board previews, rendered document preview, and the ledger's semantic directions/display values. Do not paste full SVG/XML unless debugging a specific defect.
+- Visualization And Expression: `visual_spec.json`, value-weighted coverage result, validation summary, selected style, local/live previews, rendered document preview, and the ledger's semantic directions/display values. For HTML, add `html_design.json`, selected local assets, runtime/fallback status, and a browser render preview. Do not paste full SVG/XML unless debugging a specific defect. Do not provide the Visual Blind Replay transcript, expected answer, failure reason, or prior revision rationale.
 
 Independence means reviewers do not see each other's opinions; it does not require identical evidence packets.
 
@@ -174,7 +183,7 @@ Role-specific pass conditions:
   - Appendix material is excluded from the draft and from missing-coverage objections unless the user explicitly requested it.
   - Source/output language and routing basis are independently verified; any language change includes the user's exact explicit override instruction.
 - Visualization And Expression Reviewer:
-  - Value-weighted one-picture coverage is at least the configured threshold, based on valuable non-appendix claims rather than decorative density.
+  - Value-weighted one-picture coverage is at least the configured threshold after independently checking each claim's `visual_required_tokens` against the preview; declared percentages and block mappings are insufficient.
   - Visualization readability and style-content fit both pass.
   - If the source contains 3 or more quantitative claims, or the main conclusion depends on quantitative evidence, quantitative visual encoding passes.
   - If image2 or generated bitmap imagery was used, it influenced only composition/style and did not carry evidence, numbers, charts, risks, formulas, thresholds, or recommendations.
@@ -184,6 +193,10 @@ Role-specific pass conditions:
   - Classified directional values/statuses use the canonical configured semantic meaning in both body and whiteboard; candidate style colors do not override it.
   - Mathematical sign is not treated as business meaning, and color remains redundant with text, sign, arrow, shape, or position.
   - Whiteboard labels and annotations use the declared output language consistently with the body.
+  - The preview visibly carries the conclusion and decision path instead of relying on hidden alt text or the visual spec; the independent Visual Blind Replay is verified separately before this audit.
+  - `anchor_support` has one visibly dominant anchor plus smaller supports; `comparison_grid` keeps peers directly comparable rather than stacking equal-weight panels.
+  - Values sharing an axis have the same metric, unit, period, and denominator; visual titles stay at or below mapped evidence ceilings.
+  - For HTML, the chosen layout and bundled typography fit the source; ECharts/Mermaid is used when it lowers understanding cost, no external runtime is required, and the complete native-SVG fallback remains available.
 
 The Visualization And Expression Reviewer must return `FAIL` if chartable metrics are available but the whiteboard is primarily boxes plus prose, unless the draft explicitly explains that the data could not be extracted reliably or that the source lacks enough chartable data.
 
@@ -199,16 +212,16 @@ If one or more reviewers fail, the main agent must merge required fixes across a
 
 Use this loop:
 
-1. Draft v1.
-2. Build three role-specific, hash-locked reviewer packets.
-3. Three reviewers evaluate independently in parallel from their role-specific evidence.
-4. Do not aggregate, summarize, or share any review until all three reports are complete.
-5. Run `scripts/aggregate_reviews.py` to verify roles, artifact-set ID, round, verdicts, and blockers; then aggregate the three reports.
-6. If all three return `PASS`, proceed to Blind Reader Replay using `blind-reader-replay.md`.
-7. If any reviewer returns `FAIL`, revise the required failing areas.
-8. For follow-up rounds, send only previous blocking issues, revision diff/summary, changed excerpts, and unchanged packet sections needed to verify the fix.
-9. Re-run all three reviewers.
-10. Repeat up to 3 rounds.
+1. Draft and render v1; pass deterministic gates.
+2. Run isolated Visual Blind Replay on the cropped one-picture render.
+3. If replay fails, revise the visual and repeat deterministic gates plus the isolated replay.
+4. After replay PASS, build three role-specific, hash-locked reviewer packets without replay feedback.
+5. Three reviewers evaluate independently in parallel from their role-specific evidence.
+6. Do not aggregate, summarize, or share any review until all three reports are complete.
+7. Run `scripts/aggregate_reviews.py` to verify roles, artifact-set ID, round, verdicts, and blockers; then aggregate the three reports.
+8. If all three return `PASS`, proceed to full-artifact Blind Reader Replay using `blind-reader-replay.md`.
+9. If any reviewer returns `FAIL`, revise the required failing areas, rerun deterministic gates and Visual Blind Replay when the picture changed, then rerun all three reviewers.
+10. Repeat up to 3 audit rounds.
 
 If any reviewer still fails after 3 rounds, or if a blocker depends on missing user/source information, stop and ask the user for the required clarification instead of publishing a final version.
 
@@ -224,9 +237,9 @@ Use this wording:
 
 ## Runtime Profiles
 
-- **Standard (default)**: run every deterministic hard gate, one cluster-based expression scan, all three independent reviewers, and Primary Blind Reader Replay. Escalate additional readers only under the configured conditions.
-- **Strict**: use when explicitly requested or when conclusions affect material resources, policy/rules, causal claims, risk, or broad rollout. Before reviewer packets are built, replay every non-appendix P0/P1 protected relation against its source excerpt and confirm output assertion does not exceed evidence ceiling. Then run Standard review and configured reader escalation.
-- **Fast**: use only when the user explicitly prioritizes speed or asks to skip independent review. Still run every deterministic hard gate and one expression scan. Replace the three independent reviewers with a lightweight self-check against the same role gates, skip Blind Reader Replay, and disclose both omissions. Never describe Fast output as independently reviewed.
+- **Standard (default)**: run every deterministic hard gate, one cluster-based expression scan, independent Visual Blind Replay, all three independent reviewers, and Primary Blind Reader Replay. Escalate additional readers only under the configured conditions.
+- **Strict**: use when explicitly requested or when conclusions affect material resources, policy/rules, causal claims, risk, or broad rollout. Before reviewer packets are built, replay every non-appendix P0/P1 protected relation against its source excerpt and confirm output assertion does not exceed evidence ceiling. Then run the independent Visual Blind Replay, Standard audit, and configured reader escalation.
+- **Fast**: use only when the user explicitly prioritizes speed or asks to skip independent review. Still run every deterministic hard gate and one expression scan. Replace Visual Blind Replay and the three independent reviewers with lightweight self-checks, skip Blind Reader Replay, and disclose all omissions. Never describe Fast output as independently reviewed.
 
 No profile may bypass source grounding, blocking clarification, relation/claim-strength gates, source language, appendix exclusion, the new-doc-only rule, TLDR structure, visual coverage, or format validation.
 
@@ -238,7 +251,7 @@ Audit review and Blind Reader Replay are sequential quality gates, not parallel 
 
 Do not present a generated doc as final until either:
 
-- All three reviewers return `PASS` and the required Blind Reader Replay completes without a blocking comprehension failure, or
+- Visual Blind Replay passes, all three reviewers return `PASS`, and the required full-artifact Blind Reader Replay completes without a blocking comprehension failure, or
 - The user explicitly asks to publish despite known unresolved issues.
 
 Fast output follows the explicit exception above; Standard and Strict output require reviewer PASS plus the applicable replay before final delivery.

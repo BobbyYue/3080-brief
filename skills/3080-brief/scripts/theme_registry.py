@@ -51,6 +51,7 @@ def theme_palette(theme):
         "background_alt": tokens["surface_subtle"],
         "surface": tokens["surface"],
         "text": tokens["ink"],
+        "muted": tokens["muted"],
         "rule": tokens["rule"],
     }
 

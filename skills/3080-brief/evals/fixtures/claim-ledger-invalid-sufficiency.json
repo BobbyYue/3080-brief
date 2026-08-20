@@ -32,6 +32,7 @@
         }
       ],
       "board_status": "covered",
+      "visual_required_tokens": ["方案"],
       "appendix": false,
       "inference": false
     }

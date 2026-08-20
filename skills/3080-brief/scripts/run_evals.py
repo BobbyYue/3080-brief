@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import hashlib
 import json
 import os
 import py_compile
@@ -7,6 +8,8 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+from html_design_kit import echarts_option
 
 
 SKILL = Path(__file__).resolve().parents[1]
@@ -31,6 +34,35 @@ def main():
     json.loads((SKILL / "references" / "claim-ledger.schema.json").read_text(encoding="utf-8"))
     json.loads((SKILL / "references" / "visual-spec.schema.json").read_text(encoding="utf-8"))
     json.loads((SKILL / "references" / "brief.schema.json").read_text(encoding="utf-8"))
+    json.loads((SKILL / "references" / "html-design.schema.json").read_text(encoding="utf-8"))
+    json.loads((SKILL / "references" / "visual-replay.schema.json").read_text(encoding="utf-8"))
+    html_manifest = json.loads((SKILL / "assets" / "html-kit" / "asset-manifest.json").read_text(encoding="utf-8"))
+    font_catalog = json.loads((SKILL / "assets" / "html-kit" / "font-catalog.json").read_text(encoding="utf-8"))
+    html_kit = SKILL / "assets" / "html-kit"
+    for runtime_name, runtime in html_manifest.get("runtime", {}).items():
+        asset = html_kit / runtime["file"]
+        if not asset.is_file():
+            raise SystemExit(f"HTML Design Kit runtime is missing: {runtime_name}")
+        digest = hashlib.sha256(asset.read_bytes()).hexdigest()
+        if digest != runtime.get("sha256"):
+            raise SystemExit(f"HTML Design Kit runtime hash differs from manifest: {runtime_name}")
+        if not (html_kit / runtime["license_file"]).is_file():
+            raise SystemExit(f"HTML Design Kit runtime license is missing: {runtime_name}")
+    font_files = list((html_kit / "fonts").glob("*.ttf"))
+    if len(font_files) != html_manifest.get("fonts", {}).get("file_count"):
+        raise SystemExit("HTML Design Kit font count differs from manifest")
+    families = font_catalog.get("families") or []
+    if len(families) != 29:
+        raise SystemExit(f"HTML Design Kit must expose all 29 bundled font families, found {len(families)}")
+    for family in families:
+        prefix = family["prefix"]
+        if not list((html_kit / "fonts").glob(f"{prefix}-*.ttf")):
+            raise SystemExit(f"HTML Design Kit catalog has no font file for {family['family']}")
+        license_prefix = "IBMPlex" if prefix.startswith("IBMPlex") else prefix
+        if not (html_kit / "fonts" / f"{license_prefix}-OFL.txt").is_file():
+            raise SystemExit(f"HTML Design Kit catalog has no OFL notice for {family['family']}")
+    if not (html_kit / "THIRD_PARTY_NOTICES.md").is_file():
+        raise SystemExit("HTML Design Kit third-party notices are missing")
     theme_registry = json.loads((SKILL / "assets" / "themes" / "beautiful-feishu-themes.json").read_text(encoding="utf-8"))
     themes = theme_registry.get("themes") or []
     if len(themes) != 22:
@@ -50,11 +82,103 @@ def main():
     review_packet_text = (SCRIPTS / "build_review_packet.py").read_text(encoding="utf-8")
     if "Every value-bearing title, heading, and lead identifies the actual object" not in review_packet_text:
         raise SystemExit("reader review packet omitted the concrete value-expression gate")
+    if "Recompute visible coverage from claim visual_required_tokens" not in review_packet_text:
+        raise SystemExit("visual review packet omitted the visible-coverage replay gate")
+    if "Visual Blind Replay is a separate earlier gate" not in (SKILL / "references" / "review-packet-template.md").read_text(encoding="utf-8"):
+        raise SystemExit("visual audit packet does not preserve Visual Blind Replay isolation")
 
     run(sys.executable, str(SCRIPTS / "validate_skill.py"), str(SKILL))
     run(sys.executable, str(SCRIPTS / "check_context_budget.py"), str(SKILL))
     run(sys.executable, str(SCRIPTS / "check_dependencies.py"), "--mode", "core")
     run(sys.executable, str(SCRIPTS / "validate_claim_ledger.py"), str(FIXTURES / "claim-ledger.json"))
+
+    grouped_block = {
+        "type": "stacked_bar",
+        "minimum": 0,
+        "maximum": 100,
+        "items": [
+            {"series": "Planning", "label": "People", "value": 70, "display": "70%", "semantic_direction": "neutral"},
+            {"series": "Planning", "label": "Agent", "value": 30, "display": "30%", "semantic_direction": "unknown"},
+            {"series": "Execution", "label": "People", "value": 20, "display": "20%", "semantic_direction": "neutral"},
+            {"series": "Execution", "label": "Agent", "value": 80, "display": "80%", "semantic_direction": "unknown"},
+        ],
+    }
+    renderer_test_spec = {"style": "Avocado Press", "style_rationale": "A restrained comparison theme fits the synthetic evaluation evidence."}
+    grouped_option = echarts_option(grouped_block, renderer_test_spec, config)
+    if grouped_option.get("yAxis", {}).get("data") != ["Planning", "Execution"]:
+        raise SystemExit("grouped stacked-bar renderer did not preserve comparison rows")
+    if len(grouped_option.get("series", [])) != 2 or any(len(series.get("data", [])) != 2 for series in grouped_option["series"]):
+        raise SystemExit("grouped stacked-bar renderer did not preserve both actors across both rows")
+    matrix_option = echarts_option(
+        {"type": "matrix", "semantic_direction": "neutral", "rows": ["A"], "columns": ["B"], "cells": [{"row": "A", "column": "B", "label": "Text"}]},
+        renderer_test_spec,
+        config,
+    )
+    matrix_fill = matrix_option["series"][0]["data"][0]["itemStyle"]["color"]
+    if matrix_fill == config["semantic_colors"]["neutral"]["svg"]:
+        raise SystemExit("plain matrix cells must not become solid semantic-blue panels")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        preview = tmp / "one-picture.png"
+        preview.write_bytes(b"synthetic rendered image")
+        packet = tmp / "visual-replay-packet.md"
+        built = run(
+            sys.executable,
+            str(SCRIPTS / "build_visual_replay_packet.py"),
+            "--visual-preview", str(preview),
+            "--round", "1",
+            "--output", str(packet),
+        )
+        artifact_id = json.loads(built.stdout)["visual_artifact_id"]
+        packet_text = packet.read_text(encoding="utf-8")
+        if str(preview.resolve()) not in packet_text or "Do not return claim IDs, PASS, or FAIL" not in packet_text:
+            raise SystemExit("visual replay packet is missing its image-only isolation contract")
+        valid_report = {
+            "reader_role": "visual_blind",
+            "visual_artifact_id": artifact_id,
+            "review_round": 1,
+            "replay": {
+                "main_judgment": "The aggregate hides the useful segmented difference.",
+                "supporting_evidence": ["The segmented value is higher than the aggregate."],
+                "next_action_or_boundary": "Validate stability before expanding.",
+                "reading_path": "Comparison first, threshold second.",
+                "unresolved_confusion": [],
+            },
+            "evaluation": {
+                "verdict": "PASS",
+                "main_judgment_claim_ids": ["C01"],
+                "evidence_claim_ids": ["C02"],
+                "action_or_boundary_claim_ids": ["C04"],
+                "reading_path_clear": True,
+                "unresolved_confusion_blocks_decision": False,
+                "blocking_issues": [],
+                "required_fixes": [],
+            },
+        }
+        valid_path = tmp / "visual-replay-valid.json"
+        valid_path.write_text(json.dumps(valid_report, ensure_ascii=False), encoding="utf-8")
+        run(
+            sys.executable,
+            str(SCRIPTS / "validate_visual_replay.py"),
+            str(valid_path),
+            "--visual-preview", str(preview),
+            "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
+            "--visual-spec", str(FIXTURES / "visual-spec.json"),
+        )
+        invalid_report = json.loads(json.dumps(valid_report))
+        invalid_report["visual_artifact_id"] = "0" * 64
+        invalid_path = tmp / "visual-replay-invalid.json"
+        invalid_path.write_text(json.dumps(invalid_report, ensure_ascii=False), encoding="utf-8")
+        run(
+            sys.executable,
+            str(SCRIPTS / "validate_visual_replay.py"),
+            str(invalid_path),
+            "--visual-preview", str(preview),
+            "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
+            "--visual-spec", str(FIXTURES / "visual-spec.json"),
+            expect=1,
+        )
 
     run(sys.executable, str(SCRIPTS / "preflight_check.py"), str(FIXTURES / "valid-brief.md"), "--source-inventory", str(inventory_zh))
     run(sys.executable, str(SCRIPTS / "preflight_check.py"), str(FIXTURES / "valid-brief.xml"), "--format", "xml", "--source-inventory", str(inventory_zh))
@@ -201,19 +325,102 @@ def main():
         str(FIXTURES / "valid-brief.md"),
         "--source-inventory", str(FIXTURES / "inventory-en-explicit-zh.md"),
     )
-    run(sys.executable, str(SCRIPTS / "check_coverage.py"), str(FIXTURES / "claim-ledger.json"))
+    run(
+        sys.executable,
+        str(SCRIPTS / "check_coverage.py"),
+        str(FIXTURES / "claim-ledger.json"),
+        "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
+    )
     run(sys.executable, str(SCRIPTS / "validate_visual_spec.py"), str(FIXTURES / "visual-spec.json"), str(FIXTURES / "claim-ledger.json"))
     run(sys.executable, str(SCRIPTS / "validate_visual_spec.py"), str(FIXTURES / "html-visual-spec.json"), str(FIXTURES / "claim-ledger.json"))
     run(sys.executable, str(SCRIPTS / "validate_brief.py"), str(FIXTURES / "html-brief.json"), str(FIXTURES / "visual-spec.json"))
 
     with tempfile.TemporaryDirectory(prefix="3080-brief-eval-") as tmp:
         tmp_path = Path(tmp)
+
+        missing_token_ledger = json.loads((FIXTURES / "claim-ledger.json").read_text(encoding="utf-8"))
+        missing_token_ledger["claims"][0]["visual_required_tokens"] = ["不可见对象"]
+        missing_token_path = tmp_path / "missing-visible-token-ledger.json"
+        missing_token_path.write_text(json.dumps(missing_token_ledger, ensure_ascii=False), encoding="utf-8")
+        missing_token_result = run(
+            sys.executable,
+            str(SCRIPTS / "check_coverage.py"),
+            str(missing_token_path),
+            "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
+            expect=1,
+        )
+        if "omits visible token" not in missing_token_result.stdout:
+            raise SystemExit("coverage gate did not reject claim mapping without visible decision-bearing content")
+
+        mixed_scope_spec = json.loads((FIXTURES / "html-visual-spec.json").read_text(encoding="utf-8"))
+        mixed_scope_spec["blocks"][0]["items"][1]["metric_scope"]["denominator"] = "troubled sessions"
+        mixed_scope_path = tmp_path / "mixed-scope-visual-spec.json"
+        mixed_scope_path.write_text(json.dumps(mixed_scope_spec, ensure_ascii=False), encoding="utf-8")
+        mixed_scope_result = run(
+            sys.executable,
+            str(SCRIPTS / "validate_visual_spec.py"),
+            str(mixed_scope_path),
+            str(FIXTURES / "claim-ledger.json"),
+            expect=1,
+        )
+        if "one quantitative axis mixes different metrics" not in mixed_scope_result.stdout:
+            raise SystemExit("visual-spec gate did not reject mixed-denominator axis")
+
+        causal_spec = json.loads((FIXTURES / "html-visual-spec.json").read_text(encoding="utf-8"))
+        causal_spec["title"] = "The strategy shapes outcomes"
+        causal_spec_path = tmp_path / "causal-title-visual-spec.json"
+        causal_spec_path.write_text(json.dumps(causal_spec, ensure_ascii=False), encoding="utf-8")
+        causal_result = run(
+            sys.executable,
+            str(SCRIPTS / "validate_visual_spec.py"),
+            str(causal_spec_path),
+            str(FIXTURES / "claim-ledger.json"),
+            expect=1,
+        )
+        if "causal language" not in causal_result.stdout:
+            raise SystemExit("visual-spec gate did not reject a title above its evidence ceiling")
+
         svg = tmp_path / "synthetic-board.svg"
         run(sys.executable, str(SCRIPTS / "render_visual_spec.py"), str(FIXTURES / "visual-spec.json"), str(svg))
         svg_text = svg.read_text(encoding="utf-8")
         for semantic_color in ("#1456F0", "#2EA121", "#DE7802"):
             if semantic_color not in svg_text:
                 raise SystemExit(f"rendered visual omitted semantic color {semantic_color}")
+        fallback_svg = tmp_path / "html-fallback-board.svg"
+        run(sys.executable, str(SCRIPTS / "render_visual_spec.py"), str(FIXTURES / "html-visual-spec.json"), str(fallback_svg))
+        fallback_text = fallback_svg.read_text(encoding="utf-8")
+        for required_fallback_text in (
+            "synthetic score · points · evaluation fixture",
+            "Synthetic evaluation fixture; values are used only to validate the renderer.",
+        ):
+            if required_fallback_text not in fallback_text:
+                raise SystemExit(f"native-SVG fallback omitted evidence scope: {required_fallback_text}")
+        dense_matrix_spec = json.loads((FIXTURES / "visual-spec.json").read_text(encoding="utf-8"))
+        dense_matrix_spec["blocks"] = [{
+            "id": "B01",
+            "type": "matrix",
+            "visual_role": "anchor",
+            "title": "Five source dimensions remain visible",
+            "rows": ["Row 1", "Row 2", "Row 3", "Row 4", "Fifth source row"],
+            "columns": ["State"],
+            "cells": [{"row": f"Row {index}", "column": "State", "label": str(index)} for index in range(1, 5)]
+                + [{"row": "Fifth source row", "column": "State", "label": "Visible fifth value"}],
+        }]
+        dense_matrix_path = tmp_path / "dense-matrix-spec.json"
+        dense_matrix_svg = tmp_path / "dense-matrix.svg"
+        dense_matrix_path.write_text(json.dumps(dense_matrix_spec, ensure_ascii=False), encoding="utf-8")
+        run(sys.executable, str(SCRIPTS / "render_visual_spec.py"), str(dense_matrix_path), str(dense_matrix_svg))
+        if "Fifth source row" not in dense_matrix_svg.read_text(encoding="utf-8"):
+            raise SystemExit("matrix renderer dropped a source-backed row after the fourth row")
+        long_title_spec = json.loads((FIXTURES / "visual-spec.json").read_text(encoding="utf-8"))
+        long_title_spec["title"] = "People keep direction while the agent carries execution and task expertise remains associated with outcomes"
+        long_title_path = tmp_path / "long-title-spec.json"
+        long_title_svg = tmp_path / "long-title.svg"
+        long_title_path.write_text(json.dumps(long_title_spec, ensure_ascii=False), encoding="utf-8")
+        run(sys.executable, str(SCRIPTS / "render_visual_spec.py"), str(long_title_path), str(long_title_svg))
+        long_title_text = long_title_svg.read_text(encoding="utf-8")
+        if long_title_text.count('font-size="38"') < 2 or 'y="118"' not in long_title_text:
+            raise SystemExit("visual renderer did not wrap a clipping-prone root title")
         run(sys.executable, str(SCRIPTS / "validate_whiteboard_svg.py"), str(svg))
         wide_svg = run(
             sys.executable,
@@ -246,6 +453,154 @@ def main():
             str(html_output),
             "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
         )
+        rich_html_output = tmp_path / "synthetic-rich-brief.html"
+        html_design = FIXTURES / "html-design.json"
+        run(
+            sys.executable,
+            str(SCRIPTS / "build_html_brief.py"),
+            str(FIXTURES / "html-brief.json"),
+            str(FIXTURES / "html-visual-spec.json"),
+            str(rich_html_output),
+            "--design-plan", str(html_design),
+        )
+        run(
+            sys.executable,
+            str(SCRIPTS / "validate_html_output.py"),
+            str(rich_html_output),
+            "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
+            "--design-plan", str(html_design),
+        )
+        rich_text = rich_html_output.read_text(encoding="utf-8")
+        for expected in (
+            'data-html-layout="editorial-research"',
+            'data-font-display="Instrument Serif"',
+            'data-3080-runtime="echarts"',
+            'data-rich-visual="true"',
+            'data-renderer="echarts"',
+            'data:font/ttf;base64,',
+            'class="visual-fallback visual-canvas"',
+        ):
+            if expected not in rich_text:
+                raise SystemExit(f"rich HTML renderer omitted required Design Kit feature: {expected}")
+        if not re.search(r'id="body-visual-1"[^>]+data-support-position="none"', rich_text):
+            raise SystemExit("single-block body figure retained an empty rich-render support column")
+        if re.search(r'<(?:script|link|img)[^>]+(?:src|href)=["\'](?:https?:|//|file:)', rich_text, re.I):
+            raise SystemExit("rich HTML renderer introduced an external runtime resource")
+
+        invalid_html_design = json.loads(html_design.read_text(encoding="utf-8"))
+        invalid_html_design["typography"]["body"] = "Unbundled Sans"
+        invalid_html_design_path = tmp_path / "invalid-html-design.json"
+        invalid_html_design_path.write_text(json.dumps(invalid_html_design), encoding="utf-8")
+        invalid_design_result = run(
+            sys.executable,
+            str(SCRIPTS / "build_html_brief.py"),
+            str(FIXTURES / "html-brief.json"),
+            str(FIXTURES / "html-visual-spec.json"),
+            str(tmp_path / "invalid-rich.html"),
+            "--design-plan", str(invalid_html_design_path),
+            expect=1,
+        )
+        if "not in the bundled catalog" not in invalid_design_result.stdout:
+            raise SystemExit("HTML design gate did not reject an unbundled body font")
+
+        crowded_spec = json.loads((FIXTURES / "html-visual-spec.json").read_text(encoding="utf-8"))
+        for block_id in ("B03", "B04"):
+            crowded_spec["blocks"].append({
+                "id": block_id,
+                "type": "annotation",
+                "visual_role": "support",
+                "relationship": "annotation",
+                "render_target": "html",
+                "interaction": "none",
+                "claim_ids": ["C04"],
+                "title": f"Support {block_id}",
+                "items": [{"label": "Boundary", "display": "Visible"}],
+            })
+        crowded_spec_path = tmp_path / "crowded-right-rail-spec.json"
+        crowded_spec_path.write_text(json.dumps(crowded_spec), encoding="utf-8")
+        crowded_result = run(
+            sys.executable,
+            str(SCRIPTS / "build_html_brief.py"),
+            str(FIXTURES / "html-brief.json"),
+            str(crowded_spec_path),
+            str(tmp_path / "crowded-rich.html"),
+            "--design-plan", str(html_design),
+            expect=1,
+        )
+        if "more than two support blocks" not in crowded_result.stdout:
+            raise SystemExit("HTML design gate accepted an empty-space-prone right support rail")
+
+        mermaid_spec_path = FIXTURES / "html-flow-visual-spec.json"
+        mermaid_output = tmp_path / "mermaid-rich.html"
+        run(
+            sys.executable,
+            str(SCRIPTS / "build_html_brief.py"),
+            str(FIXTURES / "html-brief.json"),
+            str(mermaid_spec_path),
+            str(mermaid_output),
+            "--design-plan", str(html_design),
+        )
+        run(
+            sys.executable,
+            str(SCRIPTS / "validate_html_output.py"),
+            str(mermaid_output),
+            "--visual-spec", str(mermaid_spec_path),
+            "--design-plan", str(html_design),
+        )
+        mermaid_text = mermaid_output.read_text(encoding="utf-8")
+        if any(token not in mermaid_text for token in ('data-3080-runtime="mermaid"', 'data-renderer="mermaid"', "js-rich-loading")):
+            raise SystemExit("rich HTML renderer did not route a structural anchor through bundled Mermaid")
+        if "style N2 fill:#FFF1DE,stroke:#DE7802" not in mermaid_text:
+            raise SystemExit("rich Mermaid renderer omitted canonical warning semantics")
+
+        annotation_spec = json.loads((FIXTURES / "html-visual-spec.json").read_text(encoding="utf-8"))
+        annotation_spec["blocks"].append({
+            "id": "B03",
+            "type": "annotation",
+            "visual_role": "caveat",
+            "relationship": "annotation",
+            "render_target": "html",
+            "interaction": "none",
+            "claim_ids": ["C04"],
+            "title": "语义边界",
+            "items": [
+                {"label": "观察项一", "display": "需验证", "semantic_direction": "warning"},
+                {"label": "观察项二", "display": "已记录", "semantic_direction": "neutral"},
+                {"label": "观察项三", "display": "已记录", "semantic_direction": "neutral"},
+                {"label": "观察项四", "display": "已记录", "semantic_direction": "neutral"},
+                {"label": "观察项五", "display": "必须可见", "semantic_direction": "favorable"},
+            ],
+        })
+        annotation_spec_path = tmp_path / "semantic-annotation-spec.json"
+        annotation_spec_path.write_text(json.dumps(annotation_spec, ensure_ascii=False), encoding="utf-8")
+        annotation_output = tmp_path / "semantic-annotation-rich.html"
+        run(
+            sys.executable,
+            str(SCRIPTS / "build_html_brief.py"),
+            str(FIXTURES / "html-brief.json"),
+            str(annotation_spec_path),
+            str(annotation_output),
+            "--design-plan", str(html_design),
+        )
+        annotation_text = annotation_output.read_text(encoding="utf-8")
+        if 'class="semantic-warning" data-semantic="warning"' not in annotation_text:
+            raise SystemExit("rich annotation renderer omitted canonical warning semantics")
+        if ".rich-annotation strong:not([data-semantic])" not in annotation_text:
+            raise SystemExit("rich annotation CSS overrides canonical semantic colors")
+        if "overflow-wrap: anywhere" not in annotation_text:
+            raise SystemExit("rich annotation CSS does not protect decision-bearing values from clipping")
+        if "padding: 7px 12px 7px 0" not in annotation_text:
+            raise SystemExit("rich annotation rows do not preserve right-edge breathing room")
+        annotation_svg = tmp_path / "semantic-annotation.svg"
+        run(
+            sys.executable,
+            str(SCRIPTS / "render_visual_spec.py"),
+            str(annotation_spec_path),
+            str(annotation_svg),
+        )
+        annotation_svg_text = annotation_svg.read_text(encoding="utf-8")
+        if "观察项五" not in annotation_svg_text or "必须可见" not in annotation_svg_text:
+            raise SystemExit("native SVG annotation renderer dropped the fifth evidence item")
         wrong_lang_output = tmp_path / "synthetic-brief-wrong-lang.html"
         wrong_lang_output.write_text(
             html_output.read_text(encoding="utf-8").replace('<html lang="zh-CN"', '<html lang="en"', 1),
@@ -263,9 +618,67 @@ def main():
         if "HTML lang attribute conflicts with declared output language" not in wrong_html_language.stdout:
             raise SystemExit("preflight did not reject an HTML language attribute that conflicts with the output")
         html_text = html_output.read_text(encoding="utf-8")
-        for expected in ("@media print", "@media (max-width", "class=\"one-picture\"", "data-priority=\"P2\"", "data-theme=\"avocado-press\""):
+        for expected in ("class=\"one-picture\"", "data-priority=\"P2\"", "data-theme=\"avocado-press\""):
             if expected not in html_text:
                 raise SystemExit(f"HTML renderer omitted required output feature: {expected}")
+
+        anchor_support_spec = json.loads((FIXTURES / "html-visual-spec.json").read_text(encoding="utf-8"))
+        anchor_support_spec["composition"] = "anchor_support"
+        anchor_support_spec["blocks"][1]["visual_role"] = "support"
+        anchor_support_spec["blocks"].append({
+            "id": "B03",
+            "type": "annotation",
+            "visual_role": "caveat",
+            "relationship": "boundary",
+            "render_target": "html",
+            "interaction": "none",
+            "claim_ids": ["C04"],
+            "title": "Expand only after validation",
+            "items": [{"label": "Next action", "display": "Validate stability first"}],
+        })
+        anchor_support_path = tmp_path / "anchor-support-spec.json"
+        anchor_support_path.write_text(json.dumps(anchor_support_spec, ensure_ascii=False), encoding="utf-8")
+        run(
+            sys.executable,
+            str(SCRIPTS / "validate_visual_spec.py"),
+            str(anchor_support_path),
+            str(FIXTURES / "claim-ledger.json"),
+        )
+        anchor_support_output = tmp_path / "anchor-support.html"
+        run(
+            sys.executable,
+            str(SCRIPTS / "build_html_brief.py"),
+            str(FIXTURES / "html-brief.json"),
+            str(anchor_support_path),
+            str(anchor_support_output),
+        )
+        run(
+            sys.executable,
+            str(SCRIPTS / "validate_html_output.py"),
+            str(anchor_support_output),
+            "--visual-spec", str(anchor_support_path),
+        )
+        anchor_support_text = anchor_support_output.read_text(encoding="utf-8")
+        if 'data-layout="anchor_support"' not in anchor_support_text:
+            raise SystemExit("anchor-support composition did not create a real dominant-anchor layout")
+
+        support_figure_brief = json.loads((FIXTURES / "html-brief.json").read_text(encoding="utf-8"))
+        support_figure_brief["body"][0]["blocks"][-1]["visual_block_ids"] = ["B02"]
+        support_figure_path = tmp_path / "support-figure-brief.json"
+        support_figure_path.write_text(json.dumps(support_figure_brief, ensure_ascii=False), encoding="utf-8")
+        support_figure_output = tmp_path / "support-figure.html"
+        run(
+            sys.executable,
+            str(SCRIPTS / "build_html_brief.py"),
+            str(support_figure_path),
+            str(anchor_support_path),
+            str(support_figure_output),
+        )
+        if 'data-composition="vertical_story"' not in support_figure_output.read_text(encoding="utf-8"):
+            raise SystemExit("body figure did not decouple its local layout from the one-picture composition")
+        support_viewboxes = re.findall(r'<svg[^>]+viewBox="0 0 ([0-9.]+) ([0-9.]+)"', support_figure_output.read_text(encoding="utf-8"))
+        if not support_viewboxes or max(float(width) / float(height) for width, height in support_viewboxes) < 3.5:
+            raise SystemExit("body figure retained the sparse one-picture canvas ratio")
 
         stage_story_output = tmp_path / "stage-story-brief.html"
         stage_story_spec = FIXTURES / "html-stage-story-visual-spec.json"
@@ -455,8 +868,9 @@ def main():
             "--draft", str(FIXTURES / "valid-brief.md"),
             "--source-outline", "Synthetic non-appendix outline",
             "--source-excerpts", "Synthetic P0/P1 excerpts",
-            "--visual-spec", str(FIXTURES / "visual-spec.json"),
-            "--whiteboard-preview", str(svg),
+            "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
+            "--html-design-plan", str(FIXTURES / "html-design.json"),
+            "--document-preview", str(rich_html_output),
             "--output", str(packets),
         )
         packet_texts = [(packets / f"review_packet_{role}.md").read_text(encoding="utf-8") for role in ("reader", "source", "visual")]
@@ -490,8 +904,9 @@ def main():
             "--tldr", str(FIXTURES / "valid-brief.md"),
             "--body", str(FIXTURES / "valid-brief.md"),
             "--draft", str(FIXTURES / "valid-brief.md"),
-            "--visual-spec", str(FIXTURES / "visual-spec.json"),
-            "--whiteboard-preview", str(svg),
+            "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
+            "--html-design-plan", str(FIXTURES / "html-design.json"),
+            "--document-preview", str(rich_html_output),
         )
 
     with tempfile.TemporaryDirectory(prefix="3080-brief-dependencies-") as tmp:
@@ -742,6 +1157,14 @@ def main():
         raise SystemExit("blind-reader replay roles are incomplete")
     if len(replay.get("escalation_conditions", [])) != 6:
         raise SystemExit("blind-reader replay escalation gate is incomplete")
+    visual_replay = config.get("visual_blind_replay", {})
+    if visual_replay.get("position") != "after_render_validation_before_audit" or visual_replay.get("input") != "cropped_one_picture_only":
+        raise SystemExit("Visual Blind Replay must run on the cropped picture before audit")
+    if set(visual_replay.get("required_replay_fields", [])) != {"main_judgment", "supporting_evidence", "next_action_or_boundary", "reading_path", "unresolved_confusion"}:
+        raise SystemExit("Visual Blind Replay output fields are incomplete")
+    forbidden_visual_inputs = set(visual_replay.get("forbidden_inputs", []))
+    if not {"tldr_text", "body", "claim_ledger", "visual_spec", "alt_text", "expected_answer", "reviewer_comments"} <= forbidden_visual_inputs:
+        raise SystemExit("Visual Blind Replay isolation does not exclude answer-bearing context")
     opening = config.get("tldr", {}).get("opening_unit", {})
     if opening != {
         "primary_judgment_count": 1,
@@ -759,6 +1182,8 @@ def main():
         raise SystemExit("language policy default must follow source primary language")
     if language_policy.get("allowed_override_basis") != "explicit_user_request":
         raise SystemExit("language policy override must require an explicit user request")
+    if config.get("coverage", {}).get("require_visible_tokens") is not True:
+        raise SystemExit("coverage policy must require visible decision-bearing tokens")
     if "conversation_language" not in language_policy.get("forbidden_inference_bases", []):
         raise SystemExit("language policy must reject conversation language as override evidence")
     expression = config.get("expression_quality", {})
@@ -786,8 +1211,12 @@ def main():
         raise SystemExit("fast profile must be explicit and cannot claim independent review")
     if profiles["fast"].get("audit_sequence_terminal") != "after_self_check":
         raise SystemExit("fast profile must stop the audit sequence after self-check")
+    if profiles["fast"].get("visual_blind_replay") != "self_check_and_disclose":
+        raise SystemExit("fast profile must disclose that independent Visual Blind Replay was skipped")
     if profiles["standard"].get("selection") != "default" or profiles["standard"].get("review") != "three_independent_reviewers":
         raise SystemExit("standard profile must remain the independently reviewed default")
+    if profiles["standard"].get("visual_blind_replay") != "independent_before_audit" or profiles["strict"].get("visual_blind_replay") != "independent_before_audit":
+        raise SystemExit("standard and strict profiles must run Visual Blind Replay before audit")
     if profiles["strict"].get("relation_replay") != "all_non_appendix_p0_p1":
         raise SystemExit("strict profile must replay every non-appendix P0/P1 relation")
     if len(expression.get("style_warning_groups", [])) < 6:
@@ -797,6 +1226,8 @@ def main():
         raise SystemExit("blind-reader replay reference is missing")
     if "### 7. Replay Reader Understanding" not in skill_text or "references/blind-reader-replay.md" not in skill_text:
         raise SystemExit("blind-reader replay is not connected to the runtime workflow")
+    if "references/visual-blind-replay.md" not in skill_text or "before audit" not in skill_text:
+        raise SystemExit("Visual Blind Replay is not connected before the audit workflow")
     print("3080-brief evals PASS")
 
 
