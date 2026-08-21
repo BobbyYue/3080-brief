@@ -64,6 +64,17 @@ def semantic_color(node, block, palette, tint=False, fallback=None):
     return mapping.get(key, fallback or palette["primary"])
 
 
+def categorical_series_color(index, palette):
+    colors = [palette["primary"], palette["accent"], palette["text"], palette["muted"]]
+    return colors[index % len(colors)]
+
+
+def contrast_text_color(fill):
+    red, green, blue = (int(fill[index:index + 2], 16) / 255 for index in (1, 3, 5))
+    luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+    return "#0B0A09" if luminance > 0.5 else "#FFFFFF"
+
+
 def metric_scope_text(block):
     scope = block.get("metric_scope") or {}
     ordered = [scope.get(key) for key in ("metric", "unit", "period", "denominator", "segment", "filter")]
@@ -131,6 +142,14 @@ def render_stacked_bar(block, x, y, width, palette):
     groups = list(dict.fromkeys(str(item.get("series", "")) for item in items if item.get("series")))
     if groups:
         labels = list(dict.fromkeys(str(item.get("label", "")) for item in items))
+        categorical = len(labels) > 1 and all(
+            (item.get("semantic_direction") or block.get("semantic_direction") or "neutral") == "neutral"
+            for item in items
+        )
+        label_colors = {
+            label: categorical_series_color(index, palette)
+            for index, label in enumerate(labels)
+        } if categorical else {}
         item_map = {(str(item.get("series", "")), str(item.get("label", ""))): item for item in items}
         maximum = float(block.get("maximum", 100)) or 100
         label_width = min(170, width * 0.24)
@@ -147,16 +166,17 @@ def render_stacked_bar(block, x, y, width, palette):
                     continue
                 value = max(0, float(item.get("value", 0)))
                 segment_width = usable * value / maximum
-                mark_color = semantic_color(item, block, palette)
+                mark_color = label_colors.get(label) or semantic_color(item, block, palette)
                 output.append(f'<rect x="{cursor:.1f}" y="{row_y}" width="{segment_width:.1f}" height="38" fill="{mark_color}"/>')
                 if segment_width >= 48:
-                    output.append(text(cursor + segment_width / 2, row_y + 25, item.get("display", item.get("value", "")), 15, 700, "#FFFFFF", "middle"))
+                    label_color = contrast_text_color(mark_color) if categorical else "#FFFFFF"
+                    output.append(text(cursor + segment_width / 2, row_y + 25, item.get("display", item.get("value", "")), 15, 700, label_color, "middle"))
                 cursor += segment_width
         legend_y = y + 58 + len(groups) * 58 + 18
         legend_x = start
         for label in labels:
             sample = next((item for item in items if str(item.get("label", "")) == label), {})
-            mark_color = semantic_color(sample, block, palette)
+            mark_color = label_colors.get(label) or semantic_color(sample, block, palette)
             output.append(f'<circle cx="{legend_x + 7}" cy="{legend_y - 5}" r="7" fill="{mark_color}"/>')
             output.append(text(legend_x + 20, legend_y, label, 15, 600, palette["text"]))
             legend_x += max(130, usable / max(1, len(labels)))
@@ -557,14 +577,20 @@ def anchor_support_layout(blocks, start_y, palette, renderers):
 
     if supports:
         gap = 28
-        columns = 2 if len(supports) == 2 else 1
-        panel_width = (1480 - gap) / 2 if columns == 2 else 1180
-        support_height = max(block_height(block) + (60 if columns == 2 else 0) for block in supports)
-        start_x = 60 if columns == 2 else 360
-        for index, block in enumerate(supports):
-            x = start_x + index * (panel_width + gap)
-            output.extend(render_panel(block, x, y, panel_width, support_height, palette, renderers))
-        y += support_height + 28
+        columns = 1 if len(supports) == 1 else 2
+        for row_start in range(0, len(supports), columns):
+            row = supports[row_start:row_start + columns]
+            if len(row) == 1:
+                panel_width = 1180
+                start_x = 210
+            else:
+                panel_width = (1480 - gap) / 2
+                start_x = 60
+            support_height = max(block_height(block) + (60 if len(row) == 2 else 0) for block in row)
+            for column, block in enumerate(row):
+                x = start_x + column * (panel_width + gap)
+                output.extend(render_panel(block, x, y, panel_width, support_height, palette, renderers))
+            y += support_height + 28
 
     for block in caveats:
         caveat_height = block_height(block)

@@ -216,7 +216,7 @@ Role-specific pass conditions:
   - Mathematical sign is not treated as business meaning, and color remains redundant with text, sign, arrow, shape, or position.
   - Whiteboard labels and annotations use the declared output language consistently with the body.
   - The preview visibly carries the conclusion and decision path instead of relying on hidden alt text or the visual spec; the independent Visual Blind Replay is verified separately before this audit.
-  - `anchor_support` has one visibly dominant anchor plus smaller supports; `comparison_grid` keeps peers directly comparable rather than stacking equal-weight panels.
+  - `anchor_support` has one visibly dominant anchor plus smaller supports whose count is justified by evidence value and rendered readability; `comparison_grid` keeps peers directly comparable rather than stacking equal-weight panels.
   - Values sharing an axis have the same metric, unit, period, and denominator; visual titles stay at or below mapped evidence ceilings.
   - For HTML, the chosen layout and bundled typography fit the source; ECharts/Mermaid is used when it lowers understanding cost, no external runtime is required, and the complete native-SVG fallback remains available.
 
@@ -226,12 +226,13 @@ The Visualization And Expression Reviewer must return `FAIL` if a generated bitm
 
 The Visualization And Expression Reviewer must return `FAIL` when a decision-relevant value classified in the claim ledger is unstyled in the body, has a conflicting semantic color on the whiteboard, or depends on color alone. Use `neutral` or `unknown` when the source does not support a favorable/unfavorable interpretation.
 
-The final draft passes only when all three reviewers return `PASS`.
+The first complete candidate passes its initial audit only when all three reviewers return `PASS`.
 
 If one or more reviewers fail, wait for all reports, merge and deduplicate every
-required fix, make one coherent revision, rerun affected pre-audit checks and
-replays, then re-run all three reviewers for the new artifact hash. Additional
-complete batches are exceptional retries after a complete failure.
+required fix, and make one coherent revision. Then use
+[scoped-revalidation.md](scoped-revalidation.md) to decide which prior PASS
+results remain valid. Do not restart all three roles merely because the package
+hash changed.
 
 ### Revision Loop
 
@@ -244,12 +245,15 @@ Use this loop:
 5. Run `validate_review_readiness.py` and lock its passing receipt.
 6. Build one three-role packet set and launch all reviewers concurrently.
 7. Wait for all reports, then aggregate matching roles, round, and hashes.
-8. If all pass, freeze the artifact and proceed to creation and verification.
-9. If any fail, merge all fixes, revise once, rerun affected gates and replays,
-   then start the next complete batch for the new hash.
-10. Repeat only after a complete failed batch, up to 3 audit rounds.
+8. Snapshot the reviewed source, content, visual, desktop, and mobile layers.
+9. If any role fails, revise once and generate a scoped rerun plan from the
+   before/after manifests.
+10. Run only the checks and roles required by that plan. When its receipt
+    verifies, stop and proceed to creation; do not start a reassurance round.
 
-If any reviewer still fails after 3 rounds, or if a blocker depends on missing user/source information, stop and ask the user for the required clarification instead of publishing a final version.
+After two targeted repair rounds, deliver the current version with unresolved
+issues and ask whether to continue. A blocker caused by missing source, user
+intent, permission, or external state stops immediately.
 
 Use this wording:
 
@@ -279,7 +283,9 @@ after the selected replays pass.
 
 Do not present a generated doc as final until either:
 
-- readiness passes, applicable one-picture/full-page visual and full-artifact Blind Reader replays have no blocking failure, and all three reviewers return `PASS` for the unchanged artifact, or
+- the first candidate passes the complete audit, or a later candidate has a verified scoped-revalidation receipt that preserves unaffected PASS results and passes every affected check;
 - The user explicitly asks to publish despite known unresolved issues.
 
-Fast output follows the explicit exception above; Standard and Strict output require reviewer PASS plus the applicable replay before final delivery.
+Fast output follows the explicit exception above. Standard and Strict require
+the complete initial audit or a valid scoped receipt; a changed package hash
+alone does not invalidate unrelated evidence.

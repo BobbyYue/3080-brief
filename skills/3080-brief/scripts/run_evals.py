@@ -26,6 +26,90 @@ def run(*args, expect=0, env=None):
     return result
 
 
+def test_scoped_review_planner():
+    with tempfile.TemporaryDirectory() as raw_tmp:
+        tmp = Path(raw_tmp)
+        before_files = {}
+        after_files = {}
+        for layer in ("source", "content", "visual", "layout_desktop", "layout_mobile"):
+            before = tmp / f"before-{layer}.txt"
+            after = tmp / f"after-{layer}.txt"
+            before.write_text(f"stable {layer}\n", encoding="utf-8")
+            after.write_text(f"stable {layer}\n", encoding="utf-8")
+            before_files[layer] = before
+            after_files[layer] = after
+        after_files["layout_mobile"].write_text("repaired mobile layout\n", encoding="utf-8")
+
+        reviews = {}
+        for role, verdict in (("reader", "PASS"), ("source", "PASS"), ("visual", "FAIL")):
+            path = tmp / f"review-{role}.json"
+            path.write_text(json.dumps({
+                "reviewer_role": role,
+                "artifact_set_id": "fixture-artifact",
+                "review_round": 1,
+                "verdict": verdict,
+            }), encoding="utf-8")
+            reviews[role] = path
+
+        before_manifest = tmp / "before.json"
+        after_manifest = tmp / "after.json"
+        base_command = [sys.executable, str(SCRIPTS / "plan_review_scope.py"), "snapshot"]
+        before_args = base_command + sum(
+            [["--input", f"{layer}:fixture={path}"] for layer, path in before_files.items()], []
+        ) + sum(
+            [["--review", f"{role}={path}"] for role, path in reviews.items()], []
+        ) + ["--output", str(before_manifest)]
+        after_args = base_command + sum(
+            [["--input", f"{layer}:fixture={path}"] for layer, path in after_files.items()], []
+        ) + ["--output", str(after_manifest)]
+        run(*before_args)
+        run(*after_args)
+
+        plan_path = tmp / "plan.json"
+        run(
+            sys.executable, str(SCRIPTS / "plan_review_scope.py"), "plan",
+            "--before", str(before_manifest), "--after", str(after_manifest),
+            "--output", str(plan_path),
+        )
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        if plan.get("scope") != "layout_only" or plan.get("changed_layers") != ["layout_mobile"]:
+            raise SystemExit("scoped review planner did not isolate a mobile-only layout change")
+        if plan.get("required_reviews") or set(plan.get("reused_reviews", [])) != {"reader", "source"}:
+            raise SystemExit("scoped review planner did not preserve unaffected PASS roles")
+        if set(plan.get("required_checks", [])) != {"target_validator", "mobile_geometry", "mobile_visual_review"}:
+            raise SystemExit("mobile-only scope contains unnecessary or missing checks")
+
+        receipt = tmp / "receipt.json"
+        receipt.write_text(json.dumps({
+            "schema_version": 1,
+            "plan_id": plan["plan_id"],
+            "checks": {name: "PASS" for name in plan["required_checks"]},
+            "reviews": {},
+        }), encoding="utf-8")
+        run(
+            sys.executable, str(SCRIPTS / "plan_review_scope.py"), "verify",
+            "--plan", str(plan_path), "--receipt", str(receipt),
+        )
+        broken = json.loads(receipt.read_text(encoding="utf-8"))
+        broken["checks"].pop("mobile_visual_review")
+        receipt.write_text(json.dumps(broken), encoding="utf-8")
+        run(
+            sys.executable, str(SCRIPTS / "plan_review_scope.py"), "verify",
+            "--plan", str(plan_path), "--receipt", str(receipt), expect=1,
+        )
+
+        after_files["content"].write_text("changed conclusion\n", encoding="utf-8")
+        run(*after_args)
+        run(
+            sys.executable, str(SCRIPTS / "plan_review_scope.py"), "plan",
+            "--before", str(before_manifest), "--after", str(after_manifest),
+            "--output", str(plan_path),
+        )
+        full_plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        if full_plan.get("scope") != "full_audit" or set(full_plan.get("required_reviews", [])) != {"reader", "source", "visual"}:
+            raise SystemExit("content changes must restart the complete audit")
+
+
 def main():
     for script in SCRIPTS.glob("*.py"):
         py_compile.compile(str(script), doraise=True)
@@ -88,6 +172,10 @@ def main():
         raise SystemExit("visual audit packet does not preserve Visual Blind Replay isolation")
     if not (SCRIPTS / "validate_review_readiness.py").is_file():
         raise SystemExit("review readiness validator is missing")
+    if not (SCRIPTS / "plan_review_scope.py").is_file():
+        raise SystemExit("scoped review planner is missing")
+
+    test_scoped_review_planner()
 
     run(sys.executable, str(SCRIPTS / "validate_skill.py"), str(SKILL))
     run(sys.executable, str(SCRIPTS / "check_context_budget.py"), str(SKILL))
@@ -100,9 +188,9 @@ def main():
         "maximum": 100,
         "items": [
             {"series": "Planning", "label": "People", "value": 70, "display": "70%", "semantic_direction": "neutral"},
-            {"series": "Planning", "label": "Agent", "value": 30, "display": "30%", "semantic_direction": "unknown"},
+            {"series": "Planning", "label": "Agent", "value": 30, "display": "30%", "semantic_direction": "neutral"},
             {"series": "Execution", "label": "People", "value": 20, "display": "20%", "semantic_direction": "neutral"},
-            {"series": "Execution", "label": "Agent", "value": 80, "display": "80%", "semantic_direction": "unknown"},
+            {"series": "Execution", "label": "Agent", "value": 80, "display": "80%", "semantic_direction": "neutral"},
         ],
     }
     renderer_test_spec = {"style": "Avocado Press", "style_rationale": "A restrained comparison theme fits the synthetic evaluation evidence."}
@@ -111,6 +199,11 @@ def main():
         raise SystemExit("grouped stacked-bar renderer did not preserve comparison rows")
     if len(grouped_option.get("series", [])) != 2 or any(len(series.get("data", [])) != 2 for series in grouped_option["series"]):
         raise SystemExit("grouped stacked-bar renderer did not preserve both actors across both rows")
+    grouped_colors = [series.get("itemStyle", {}).get("color") for series in grouped_option["series"]]
+    if len(set(grouped_colors)) != len(grouped_colors):
+        raise SystemExit("neutral grouped stacked-bar categories must remain visually distinguishable")
+    if any(series.get("data", [{}])[0].get("label", {}).get("color") in (None, "") for series in grouped_option["series"]):
+        raise SystemExit("neutral grouped stacked-bar labels must use contrast-aware text")
     matrix_option = echarts_option(
         {"type": "matrix", "semantic_direction": "neutral", "rows": ["A"], "columns": ["B"], "cells": [{"row": "A", "column": "B", "label": "Text"}]},
         renderer_test_spec,
@@ -515,6 +608,8 @@ def main():
             'data-renderer="echarts"',
             'data:font/ttf;base64,',
             'class="visual-fallback visual-canvas"',
+            'data-geometry-scope="table"',
+            'data-label="问题"',
         ):
             if expected not in rich_text:
                 raise SystemExit(f"rich HTML renderer omitted required Design Kit feature: {expected}")
@@ -580,17 +675,25 @@ def main():
             })
         crowded_spec_path = tmp_path / "crowded-right-rail-spec.json"
         crowded_spec_path.write_text(json.dumps(crowded_spec), encoding="utf-8")
-        crowded_result = run(
+        crowded_output = tmp_path / "crowded-rich.html"
+        run(
             sys.executable,
             str(SCRIPTS / "build_html_brief.py"),
             str(FIXTURES / "html-brief.json"),
             str(crowded_spec_path),
-            str(tmp_path / "crowded-rich.html"),
+            str(crowded_output),
             "--design-plan", str(html_design),
-            expect=1,
         )
-        if "more than two support blocks" not in crowded_result.stdout:
-            raise SystemExit("HTML design gate accepted an empty-space-prone right support rail")
+        run(
+            sys.executable,
+            str(SCRIPTS / "validate_html_output.py"),
+            str(crowded_output),
+            "--visual-spec", str(crowded_spec_path),
+            "--design-plan", str(html_design),
+        )
+        crowded_text = crowded_output.read_text(encoding="utf-8")
+        if 'data-visual-block="B04"' not in crowded_text:
+            raise SystemExit("HTML renderer dropped a support block after removing the fixed-count gate")
 
         mermaid_spec_path = FIXTURES / "html-flow-visual-spec.json"
         mermaid_output = tmp_path / "mermaid-rich.html"
@@ -698,6 +801,18 @@ def main():
             "title": "Expand only after validation",
             "items": [{"label": "Next action", "display": "Validate stability first"}],
         })
+        for block_id, title in (("B04", "Reader question one"), ("B05", "Reader question two")):
+            anchor_support_spec["blocks"].append({
+                "id": block_id,
+                "type": "annotation",
+                "visual_role": "support",
+                "relationship": "comparison",
+                "render_target": "html",
+                "interaction": "none",
+                "claim_ids": ["C03"],
+                "title": title,
+                "items": [{"label": "Evidence", "display": "Visible and scoped"}],
+            })
         anchor_support_path = tmp_path / "anchor-support-spec.json"
         anchor_support_path.write_text(json.dumps(anchor_support_spec, ensure_ascii=False), encoding="utf-8")
         run(
@@ -725,6 +840,9 @@ def main():
         anchor_support_text = anchor_support_output.read_text(encoding="utf-8")
         if 'data-layout="anchor_support"' not in anchor_support_text:
             raise SystemExit("anchor-support composition did not create a real dominant-anchor layout")
+        for block_id in ("B04", "B05"):
+            if f'data-block-id="{block_id}"' not in anchor_support_text:
+                raise SystemExit("anchor-support composition dropped a support block after responsive wrapping")
 
         support_figure_brief = json.loads((FIXTURES / "html-brief.json").read_text(encoding="utf-8"))
         support_figure_brief["body"][0]["blocks"][-1]["visual_block_ids"] = ["B02"]
@@ -944,10 +1062,24 @@ def main():
             "contract_id": contract_match.group(1),
             "status": "PASS",
             "issues": [],
-            "checked_scopes": 1,
+            "checked_scopes": 2,
+            "checked_scope_types": ["one-picture", "table"],
+            "document": {"scrollWidth": 1440, "clientWidth": 1440},
             "viewport": {"width": 1440, "height": 1800},
         }), encoding="utf-8")
         run(sys.executable, str(SCRIPTS / "validate_html_geometry_report.py"), str(geometry_report), "--html", str(rich_html_output))
+        mobile_geometry_report = tmp_path / "mobile-geometry-report.json"
+        mobile_geometry_report.write_text(json.dumps({
+            "schema_version": 1,
+            "contract_id": contract_match.group(1),
+            "status": "PASS",
+            "issues": [],
+            "checked_scopes": 2,
+            "checked_scope_types": ["one-picture", "table"],
+            "document": {"scrollWidth": 390, "clientWidth": 390},
+            "viewport": {"width": 390, "height": 844},
+        }), encoding="utf-8")
+        run(sys.executable, str(SCRIPTS / "validate_html_geometry_report.py"), str(mobile_geometry_report), "--html", str(rich_html_output), "--viewport", "mobile")
         full_page_replay = tmp_path / "full-page-replay.json"
         full_page_replay.write_text(json.dumps({
             "schema_version": 1,
@@ -1373,6 +1505,11 @@ def main():
         "extra_full_batch_requires_prior_failure": True,
         "merge_all_review_fixes_before_revision": True,
         "change_impact_rerun_required": True,
+        "layered_manifest_required_after_review": True,
+        "selective_post_audit_rerun": True,
+        "stop_when_required_scope_passes": True,
+        "targeted_repair_round_limit": 2,
+        "publish_current_after_targeted_limit_with_disclosure": True,
         "stop_on_missing_external_input": True,
     }
     if efficiency != required_efficiency:

@@ -4,6 +4,26 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-21
+
+### Added
+
+- Added layer-hashed scoped revalidation for source, content, core visual, desktop layout, and mobile layout.
+- Added `plan_review_scope.py` with `snapshot`, `plan`, and `verify` commands so later revisions preserve unaffected PASS results and stop when the required scope passes.
+- Added regression coverage proving that mobile-only repairs require only target validation, mobile geometry, and mobile visual review, while source or content changes still restart the complete audit.
+
+### Changed
+
+- Replaced the global package-hash reset with change-impact review planning after the first complete audit.
+- Removed the arbitrary limit on supporting blocks; one dominant anchor remains required, while support count now follows evidence value and rendered readability.
+- Neutral categories now use distinct theme accents without implying favorable, unfavorable, warning, or unknown meaning.
+
+### Fixed
+
+- Made key-question and body tables readable at 390 px by rendering labeled vertical rows instead of hiding decision-critical columns behind horizontal interaction.
+- Extended HTML geometry validation to key-question tables, table cells, and full-document horizontal overflow on desktop and mobile.
+- Kept observed actor shares semantically neutral while applying favorable styling consistently to source-supported task-value increases.
+
 ## [0.6.0] - 2026-08-20
 
 ### Added

@@ -50,7 +50,7 @@ Do not preload references. Read only resources whose condition is true.
 | Plan the brief and visual | [brief.schema.json](references/brief.schema.json), [visual-spec.schema.json](references/visual-spec.schema.json), [visual-pattern-library.md](references/visual-pattern-library.md), [theme-selection.md](references/theme-selection.md); add [semantic-color-system.md](references/semantic-color-system.md) for directional values/statuses |
 | Build target-specific visuals | Feishu: [whiteboard-patterns.md](references/whiteboard-patterns.md), [feishu-doc-output.md](references/feishu-doc-output.md); HTML: [html-visualization.md](references/html-visualization.md) |
 | Consider bitmap/image generation | Read [image2-auxiliary-rules.md](references/image2-auxiliary-rules.md) before sending any content |
-| Run review | [visual-blind-replay.md](references/visual-blind-replay.md), HTML-only [full-page-visual-replay.md](references/full-page-visual-replay.md), [blind-reader-replay.md](references/blind-reader-replay.md), then [review-loop.md](references/review-loop.md) audit |
+| Run or resume review | First candidate: [visual-blind-replay.md](references/visual-blind-replay.md), HTML [full-page-visual-replay.md](references/full-page-visual-replay.md), [blind-reader-replay.md](references/blind-reader-replay.md), then [review-loop.md](references/review-loop.md). Changed candidate: [scoped-revalidation.md](references/scoped-revalidation.md) before retry |
 
 ## Runtime
 
@@ -76,11 +76,11 @@ Validate with `validate_whiteboard.sh` or `validate_html_output.py`. HTML requir
 
 ### 7. Stabilize Comprehension Before Audit
 
-In standard/strict, run cropped-picture Visual Blind Replay; HTML then adds isolated full-page replay plus geometry validation. Run Blind Reader on the full render, starting with Primary and escalating only when configured. Resolve blockers before audit; fast mode uses disclosed self-checks.
+For the first candidate, run cropped-picture Visual Blind Replay; HTML also uses geometry and isolated full-page replay. Then run Blind Reader, starting with Primary. Resolve blockers before audit; fast mode uses disclosed self-checks.
 
 ### 8. Run The Final Independent Audit
 
-After readiness and both replays pass, send one hash-locked batch to Reader, Source, and Visualization reviewers concurrently. Wait for all results. On failure, merge fixes, revise once, rerun affected pre-audit gates, then start the next complete batch for the new hash. Extra batches require a prior failure and remain capped at three; external blockers require a stop, not a retry.
+Send the first ready candidate to Reader, Source, and Visualization reviewers concurrently. After any change, create before/after layer manifests and execute only the scope emitted by `plan_review_scope.py`; unchanged PASS results remain valid. Stop immediately when `verify` passes. Full audit restarts only for source/content changes or when the plan requires it.
 
 ### 9. Create And Verify
 

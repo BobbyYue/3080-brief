@@ -120,7 +120,9 @@ Copy-Item -Recurse ./3080-brief/skills/3080-brief "<YOUR_AGENT_SKILLS_DIR>/3080-
 
 生产流程为：冻结非附录来源证据 → 预检 → 渲染完整初稿 → 独立执行一张图盲读 → HTML 额外执行几何检查与整页视觉复述 → Primary Blind Reader 复述，按条件升级 Technical/Decision Reader → 三位 Reviewer 独立审稿并全部通过 → 重新读取源文档和产物 → 验收。确认收到或执行计划不算最终交付。
 
-Standard 和 Strict 必须先完成适用的视觉复述和 Blind Reader Replay，再执行三次独立审稿。只有用户明确要求 Fast 时，才允许以披露限制的自检代替独立盲读/审稿，并跳过全文 Blind Reader Replay。
+已经审阅过的候选版本发生变化后，Skill 会分别计算来源、正文、核心视觉、桌面布局和移动端布局的哈希，只重跑真正受影响的检查和审阅，保留未受影响的 PASS 结果，并在分层回执验证通过后立即停止。来源或正文变化仍会重启完整审阅；只修复移动端布局不会。
+
+Standard 和 Strict 的首个候选版本必须完成视觉复述、Blind Reader Replay 和三方独立审稿；后续修改执行经过验证的分层复核计划。只有用户明确要求 Fast 时，才允许以披露限制的自检代替独立盲读/审稿，并跳过全文 Blind Reader Replay。
 
 <details>
 <summary><strong>飞书/Lark 依赖与安装行为</strong></summary>

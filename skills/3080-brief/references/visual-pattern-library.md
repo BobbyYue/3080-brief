@@ -22,8 +22,8 @@ Before rendering, write `visual_spec.json` using `visual-spec.schema.json`. Ever
 Also choose one explicit composition shared by every target format:
 
 - `stage_story`: 3-4 connected process stages with a compact context band and evidence/risk/action strip;
-- `anchor_support`: one dominant quantitative or decision anchor using the full first row, followed by 1-2 smaller supports and at most one compact caveat;
-- `comparison_grid`: 2-4 peer segments or alternatives in a shared grid, plus at most one compact caveat;
+- `anchor_support`: one dominant quantitative or decision anchor using the full first row, followed by only the smaller support or caveat blocks that materially reduce understanding cost. Do not add or reject blocks to satisfy a fixed count; judge them by hierarchy, evidence value, density, and rendered readability.
+- `comparison_grid`: at least two peer segments or alternatives in a shared grid, plus only the caveats that materially change interpretation. Do not reject a readable comparison because it exceeds a fixed block count.
 - `vertical_story`: a genuinely top-to-bottom argument where vertical order carries meaning.
 
 Composition is not a theme. Do not choose `vertical_story` merely because it is easy to stack blocks. A sequence split into repeated full-width stage panels creates empty space and weakens the overall relationship.

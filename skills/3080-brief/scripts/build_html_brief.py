@@ -60,6 +60,14 @@ def rich_text(value):
     return "".join(output)
 
 
+def plain_text(value):
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return "".join(str(span.get("text", "")) for span in value if isinstance(span, dict))
+    return str(value)
+
+
 def validate_svg(svg_text, label):
     lowered = svg_text.casefold()
     lowered = lowered.replace('xmlns="http://www.w3.org/2000/svg"', "")
@@ -79,9 +87,13 @@ def render_table(headers, rows, class_name=""):
     for row in rows:
         if len(row) != len(headers):
             raise ValueError("table row width does not match headers")
-        row_html.append("<tr>" + "".join(f"<td>{rich_text(cell)}</td>" for cell in row) + "</tr>")
+        cells = "".join(
+            f'<td data-label="{esc(plain_text(headers[index]))}">{rich_text(cell)}</td>'
+            for index, cell in enumerate(row)
+        )
+        row_html.append(f"<tr>{cells}</tr>")
     class_attr = f' class="{esc(class_name)}"' if class_name else ""
-    return f'<div class="table-wrap"><table{class_attr}><thead><tr>{header_html}</tr></thead><tbody>{"".join(row_html)}</tbody></table></div>'
+    return f'<div class="table-wrap" data-geometry-scope="table"><table{class_attr}><thead><tr>{header_html}</tr></thead><tbody>{"".join(row_html)}</tbody></table></div>'
 
 
 def resolve_svg(block, base_dir, visual_spec, config):

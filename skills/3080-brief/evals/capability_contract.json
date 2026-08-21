@@ -197,11 +197,12 @@
     },
     {
       "id": "EFF-01",
-      "requirement": "Evidence and review inputs are complete before rendering or delegation; independent artifacts use separate concurrent lanes; the normal path spends one full audit batch and reruns work by change impact.",
+      "requirement": "Evidence and review inputs are complete before delegation; the first candidate gets one full audit, then layer hashes preserve unaffected PASS results and stop review when the affected scope passes.",
       "owner": {"file": "references/execution-efficiency.md", "marker": "## One Full Audit On The Normal Path"},
       "enforced_by": [
         "config/3080-brief.json",
         "scripts/validate_review_readiness.py",
+        "scripts/plan_review_scope.py",
         "scripts/build_review_packet.py",
         "scripts/verify_reviewed_artifacts.py",
         "scripts/run_evals.py"

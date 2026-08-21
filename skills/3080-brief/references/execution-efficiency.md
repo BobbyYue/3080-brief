@@ -25,16 +25,17 @@ Use deterministic gates, Visual Blind Replay, and full-artifact Blind Reader
 Replay to stabilize comprehension before the expensive three-reviewer audit.
 The normal path launches one complete Reader/Source/Visual batch per artifact.
 An additional complete batch is allowed only after a prior complete batch
-failed for that artifact hash.
+failed and the scoped plan shows that source or content changed.
 
 Wait for every audit result before editing. Merge and deduplicate all required
-fixes, make one coherent revision, rerun affected pre-audit checks and replays,
-then build the next hash-locked batch. Never fix one reviewer result while the
-others are still running.
+fixes and make one coherent revision. Preserve each role's result separately;
+a PASS remains reusable when its review layer has not changed.
 
 ## Change-Impact Reruns
 
-Before audit, rerun only checks affected by a change:
+Before the first audit, rerun only checks affected by a change. After any
+review result exists, follow [scoped-revalidation.md](scoped-revalidation.md)
+and generate a machine-readable scope with `scripts/plan_review_scope.py`.
 
 | Change | Required rerun |
 | --- | --- |
@@ -44,14 +45,16 @@ Before audit, rerun only checks affected by a change:
 | HTML/Feishu renderer, asset, link, or fallback | target validator, affected renders, readiness |
 | Publication placement only | action preflight and live-target verification |
 
-Use the union for cross-category changes. Record `change -> affected checks ->
-result`. Any reader-facing change after a passing audit creates a new artifact
-set and requires the audit contract again; publication-only placement does not
-regenerate unchanged content.
+Use the union for cross-category changes. Do not treat the final HTML hash as a
+global reset: compare source, content, core visual, desktop layout, and mobile
+layout independently. Source/content changes require a full audit; a layout-only
+change requires only target validation, affected geometry, and affected visual
+review. Publication-only placement does not regenerate unchanged content.
 
 ## Stop Conditions
 
-The three-round audit limit is an emergency bound. Stop and ask for input when
-the blocker is missing source evidence, ambiguous intent, permission, or an
-external-system state. Do not consume another generation, render, or reviewer
-round when no document edit can resolve the blocker.
+Stop as soon as the generated scope receipt passes. Do not add another replay
+or audit for reassurance. Allow at most two targeted repair rounds after the
+first complete audit; then deliver the current version with unresolved issues
+and ask whether to continue. Missing source, intent, permission, or external
+state stops immediately.

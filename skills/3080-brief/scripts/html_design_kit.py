@@ -67,9 +67,6 @@ def validate_design_plan(plan, visual_spec):
         errors.append("HTML design plan selected Mermaid for a non-structural anchor block")
     if picture.get("support_position") not in {"right", "below"}:
         errors.append("HTML one-picture support_position must be right or below")
-    support_count = max(0, len(visual_spec.get("blocks", [])) - 1)
-    if picture.get("support_position") == "right" and support_count > 2:
-        errors.append("HTML one-picture with more than two support blocks must use the below evidence band")
     if picture.get("fallback") != "native-svg":
         errors.append("HTML rich rendering requires the auditable native-svg fallback")
     if plan.get("asset_mode", "inline") != "inline":
@@ -159,7 +156,7 @@ code, pre, .metric-scope {{ font-family: var(--font-mono); }}
 .rich-annotation ul {{ margin: 8px 0 0; padding: 0; list-style: none; }}
 .rich-annotation li {{ display: flex; justify-content: space-between; gap: 12px; padding: 7px 12px 7px 0; border-bottom: 1px solid var(--rule); }}
 .rich-annotation li > span {{ min-width: 0; overflow-wrap: anywhere; }}
-.rich-annotation strong {{ min-width: 0; max-width: 50%; text-align: right; overflow-wrap: anywhere; }}
+.rich-annotation strong {{ min-width: 0; max-width: 50%; text-align: right; overflow-wrap: normal; word-break: normal; }}
 .rich-annotation strong:not([data-semantic]) {{ color: var(--ink); }}
 .rich-note {{ margin: 8px 0 0; color: var(--muted); font-size: 0.78rem; line-height: 1.5; }}
 html[data-html-layout="editorial-research"] .report-header {{ background: var(--ink); color: var(--surface); }}
@@ -208,6 +205,17 @@ def _semantic_color(node, block, config, fallback):
     return config.get("semantic_colors", {}).get(direction, {}).get("svg", fallback)
 
 
+def _categorical_series_color(index, palette):
+    colors = [palette["primary"], palette["accent"], palette["text"], palette["muted"]]
+    return colors[index % len(colors)]
+
+
+def _contrast_text_color(fill):
+    red, green, blue = (int(fill[index:index + 2], 16) / 255 for index in (1, 3, 5))
+    luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+    return "#0B0A09" if luminance > 0.5 else "#FFFFFF"
+
+
 def _display(item, value_key="value"):
     return str(item.get("display", item.get(value_key, "")))
 
@@ -247,19 +255,26 @@ def echarts_option(block, visual_spec, config, font_family="Instrument Sans"):
         groups = list(dict.fromkeys(str(item.get("series", "")) for item in items if item.get("series")))
         if groups:
             labels = list(dict.fromkeys(str(item.get("label", "")) for item in items))
+            categorical = len(labels) > 1 and all(
+                (item.get("semantic_direction") or block.get("semantic_direction") or "neutral") == "neutral"
+                for item in items
+            )
             item_map = {(str(item.get("series", "")), str(item.get("label", ""))): item for item in items}
             series = []
-            for label in labels:
+            for index, label in enumerate(labels):
                 sample = next((item for item in items if str(item.get("label", "")) == label), {})
-                color = _semantic_color(sample, block, config, palette["primary"])
+                color = _categorical_series_color(index, palette) if categorical else _semantic_color(sample, block, config, palette["primary"])
                 data = []
                 for group in groups:
                     item = item_map.get((group, label), {})
                     value = item.get("value", 0)
+                    label_style = {"show": bool(item), "position": "inside", "formatter": _display(item) if item else ""}
+                    if categorical:
+                        label_style["color"] = _contrast_text_color(color)
                     data.append({
                         "value": value,
                         "itemStyle": {"color": color},
-                        "label": {"show": bool(item), "position": "inside", "formatter": _display(item) if item else ""},
+                        "label": label_style,
                     })
                 series.append({"name": label, "type": "bar", "stack": "total", "barMaxWidth": 42, "itemStyle": {"color": color}, "data": data})
             common.update({
@@ -578,7 +593,8 @@ def runtime_scripts(runtime_items, visual_spec, config):
       return child.left < parent.left - tolerance || child.right > parent.right + tolerance ||
         child.top < parent.top - tolerance || child.bottom > parent.bottom + tolerance;
     }};
-    for (const scope of document.querySelectorAll('[data-geometry-scope], .body-figure')) {{
+    const geometryScopes = Array.from(document.querySelectorAll('[data-geometry-scope], .body-figure'));
+    for (const scope of geometryScopes) {{
       const scopeRect = scope.getBoundingClientRect();
       for (const node of scope.querySelectorAll('svg text, .rich-block-title, .metric-scope, .rich-note')) {{
         const rect = node.getBoundingClientRect();
@@ -605,6 +621,17 @@ def runtime_scripts(runtime_items, visual_spec, config):
           }}
         }}
       }}
+      if (scope.matches('.table-wrap')) {{
+        if (scope.scrollWidth > scope.clientWidth + 2) {{
+          geometryIssues.push({{type:'table-horizontal-overflow', overflow:scope.scrollWidth-scope.clientWidth}});
+        }}
+        for (const cell of scope.querySelectorAll('tbody td')) {{
+          const rect = cell.getBoundingClientRect();
+          if (rect.width > 2 && rect.height > 2 && outside(rect, scopeRect, 3)) {{
+            geometryIssues.push({{type:'table-cell-out-of-scope', text:(cell.textContent || '').trim().slice(0,80)}});
+          }}
+        }}
+      }}
     }}
     for (const node of document.querySelectorAll('.report-header, .report-title, .opening-unit, .one-picture, .story-section, .rich-anchor, .rich-support-block')) {{
       const style = getComputedStyle(node);
@@ -612,13 +639,19 @@ def runtime_scripts(runtime_items, visual_spec, config):
         geometryIssues.push({{type:'horizontal-overflow', element:node.className || node.tagName, overflow:node.scrollWidth-node.clientWidth}});
       }}
     }}
+    const documentElement = document.documentElement;
+    if (documentElement.scrollWidth > documentElement.clientWidth + 2) {{
+      geometryIssues.push({{type:'document-horizontal-overflow', overflow:documentElement.scrollWidth-documentElement.clientWidth}});
+    }}
     window.__3080GeometryAudit = {{
       schema_version: 1,
       contract_id: document.documentElement.dataset.contractId || '',
       viewport: {{width: window.innerWidth, height: window.innerHeight}},
       status: geometryIssues.length ? 'FAIL' : 'PASS',
       issues: geometryIssues,
-      checked_scopes: document.querySelectorAll('[data-geometry-scope], .body-figure').length
+      checked_scopes: geometryScopes.length,
+      checked_scope_types: geometryScopes.map(function(scope){{ return scope.getAttribute('data-geometry-scope') || 'body-figure'; }}),
+      document: {{scrollWidth:documentElement.scrollWidth, clientWidth:documentElement.clientWidth}}
     }};
     document.documentElement.setAttribute('data-geometry-status', window.__3080GeometryAudit.status.toLowerCase());
     window.addEventListener('resize', function(){{ for (const chart of instances) chart.resize(); }});

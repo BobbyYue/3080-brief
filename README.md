@@ -121,7 +121,9 @@ Download the [latest release](https://github.com/BobbyYue/3080-brief/releases/la
 
 The production path is: freeze non-appendix source evidence → preflight → render the full draft → run isolated one-picture Visual Blind Replay → for HTML, validate geometry and run Full-page Visual Replay → run Primary Blind Reader Replay with conditional Technical/Decision escalation → pass three independent audit reviews → re-fetch source and output → finalize. A plan or acknowledgement is never the final deliverable.
 
-Standard and Strict require the applicable visual replays and Blind Reader Replay before the three independent audit reviews. Fast may replace independent replay/reviews with disclosed self-checks and skip full-document Blind Reader Replay only when the user explicitly requests Fast.
+After a reviewed candidate changes, the skill hashes source, content, core visual, desktop layout, and mobile layout separately. It reruns only the affected checks and reviewers, preserves unaffected PASS results, and stops as soon as the scoped receipt verifies. Source or content changes still restart the complete audit; a mobile-only layout repair does not.
+
+Standard and Strict require the complete replay and three-reviewer sequence for the first candidate, followed by a verified scoped plan for later revisions. Fast may replace independent replay/reviews with disclosed self-checks and skip full-document Blind Reader Replay only when the user explicitly requests Fast.
 
 <details>
 <summary><strong>Feishu/Lark requirements and dependency behavior</strong></summary>

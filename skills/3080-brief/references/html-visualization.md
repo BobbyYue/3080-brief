@@ -75,7 +75,7 @@ The renderer choice follows the relationship:
 
 Never choose ECharts or Mermaid only to make the page look richer. Never turn multiple unrelated facts into an equal-weight dashboard. The planned `anchor_block_id` must be the block that carries the document's main visual judgment.
 
-Use a right support rail only for one or two compact support blocks. With three or more supports, use the below evidence band so the support stack cannot stretch the anchor into an empty vertical canvas.
+Choose a right support rail when the rendered supports remain compact relative to the anchor; use the below evidence band when it creates a clearer reading order or avoids empty vertical space. Do not infer readability from block count alone. Geometry checks and visual replay decide whether the chosen placement works.
 
 ## First-Screen Contract
 
@@ -101,7 +101,7 @@ Before HTML generation:
 
 After deterministic render checks, crop the one-picture figure at normal document width and run [Visual Blind Replay](visual-blind-replay.md). Then capture one full-page desktop screenshot, collect `window.__3080GeometryAudit`, validate it with `validate_html_geometry_report.py`, and run [Full-page Visual Replay](full-page-visual-replay.md). A validator PASS does not replace either comprehension gate.
 
-`anchor_support` must render a visibly dominant first-row anchor, not four equal full-width panels. `comparison_grid` must render peer blocks on a shared grid. If the output DOM lacks the declared `data-layout` or block role groups, validation fails instead of accepting a composition label that did not affect layout.
+`anchor_support` must render a visibly dominant first-row anchor, not equal full-width panels. Its support and caveat blocks flow into readable rows according to their actual count; block count is not a quality proxy. `comparison_grid` must render peer blocks on a shared grid. If the output DOM lacks the declared `data-layout` or block role groups, validation fails instead of accepting a composition label that did not affect layout.
 
 For a process with 3-4 substantive stages, prefer `stage_story`: one compact context band, one connected stage row, and one evidence/risk/action strip. Do not render every stage as a separate full-width panel unless vertical order itself is the conclusion.
 

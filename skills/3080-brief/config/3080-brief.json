@@ -370,6 +370,11 @@
     "extra_full_batch_requires_prior_failure": true,
     "merge_all_review_fixes_before_revision": true,
     "change_impact_rerun_required": true,
+    "layered_manifest_required_after_review": true,
+    "selective_post_audit_rerun": true,
+    "stop_when_required_scope_passes": true,
+    "targeted_repair_round_limit": 2,
+    "publish_current_after_targeted_limit_with_disclosure": true,
     "stop_on_missing_external_input": true
   }
 }

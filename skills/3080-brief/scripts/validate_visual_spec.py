@@ -210,13 +210,16 @@ def main():
 
     role_counts = {role: sum(value == role for _, value in explicit_roles) for role in ("anchor", "support", "caveat")}
     if composition == "anchor_support":
-        if role_counts["anchor"] != 1 or not 1 <= role_counts["support"] <= 2 or role_counts["caveat"] > 1:
-            errors.append("anchor_support requires exactly one anchor, one or two supports, and at most one caveat")
+        if role_counts["anchor"] != 1:
+            errors.append("anchor_support requires exactly one anchor")
+        if role_counts["support"] + role_counts["caveat"] < 1:
+            errors.append("anchor_support requires at least one supporting or caveat block")
         if len(explicit_roles) != len(spec.get("blocks", [])):
             errors.append("anchor_support requires an explicit visual_role on every block")
     if composition == "comparison_grid":
-        if not 2 <= len(spec.get("blocks", [])) <= 5 or role_counts["caveat"] > 1:
-            errors.append("comparison_grid requires 2-4 comparison blocks plus at most one caveat")
+        comparison_count = len(spec.get("blocks", [])) - role_counts["caveat"]
+        if comparison_count < 2:
+            errors.append("comparison_grid requires at least two comparison blocks")
         if len(explicit_roles) != len(spec.get("blocks", [])):
             errors.append("comparison_grid requires an explicit visual_role on every block")
 
