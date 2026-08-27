@@ -11,7 +11,7 @@ ROLE_NAMES = CONFIG["review_roles"]
 ROLE_GATES = {
     "reader": [
         "The opening produces a useful judgment within 30 seconds without a fixed phrase template.",
-        "The full rendered draft is readable, source-fit, and follows a coherent reasoning path.",
+        "The target reader can access relevant information, find the decision spine, restate the meaning accurately, and use it; revise sentence or paragraph patterns only when they obstruct that path.",
         "Every value-bearing title, heading, and lead identifies the actual object plus a source-supported action, change, or result instead of relying on method labels or generic benefit language.",
         "Expression edits are minimal and contextual; legitimate technical terms, uncertainty, passive voice, neutral tone, and punctuation are not penalized in isolation.",
         "The title, TLDR, table, body, and visual use the declared output language; conversation language is not treated as an override.",
@@ -29,7 +29,7 @@ ROLE_GATES = {
         "The claim ledger covers valuable non-appendix source information and excludes appendix material.",
         "No causal, quantitative, or recommendation claim is stronger than its evidence.",
         "Thin or blocked material is shortened or clarified rather than padded with external facts, invented specificity, experience, or emotion.",
-        "Missing denominators, periods, samples, conflicts, or inferences are visible and handled safely.",
+        "Missing denominators, periods, samples, conflicts, mutable-source observation time or version markers, and inferences are visible and handled safely without invented dates.",
         "Every visual title and label stays at or below the mapped claim's evidence ceiling and preserves its protected relation.",
     ],
     "visual": [
@@ -38,7 +38,7 @@ ROLE_GATES = {
         "The preview uses content-fit visual encoding rather than boxes plus prose when chartable data exists.",
         "Exactly one allowed theme was selected from document type, audience, tone, relationship, and density; its rationale is content-based rather than a silent default.",
         "The one-picture visual, body figures, and HTML page use the same theme while preserving the canonical semantic colors.",
-        "The rendered board has a clear reading path and no visible clipping, overlap, overflow, or misleading precision.",
+        "The rendered board has a clear reading path, uses proximity to bind labels, captions, and sources to their objects, separates larger reader questions with wider gaps, and has no visible clipping, overlap, overflow, or misleading precision.",
         "The body and whiteboard use the same source-grounded semantic mapping; mathematical sign alone does not determine favorable or unfavorable color.",
         "Each figure uses a judgment title, preserves metric scope, labels decision-bearing values, and provides useful alt text when the target format supports it.",
         "The rendered preview visibly carries the conclusion and decision path; a title that promises a leader, actor, segment, or object visibly names it rather than relying on hidden alt text or the spec.",
@@ -47,7 +47,7 @@ ROLE_GATES = {
         "Visual titles and annotations do not use causal wording above the mapped evidence ceiling.",
         "Missing values remain N/A rather than zero; scatter points, funnel stages, area, size, and flow magnitude are used only when source data supports them.",
         "For HTML, critical information is visible without interaction, the rendered document is readable, and no runtime resource is external.",
-        "For HTML, the design plan fits the source, the dominant chartable/structural relationship uses the planned rich renderer, selected fonts support the reading task, and the native-SVG fallback preserves the full evidence payload.",
+        "For HTML, the design plan fits the source; accessibility and 14px body text remain hard floors; 16px body text, 1.5 line height, and controlled prose measure are preferred signals rather than automatic failures; and the renderer or native-SVG fallback preserves the full evidence payload.",
         "For HTML, a source-isolated full-page replay confirms that title hierarchy, TLDR distinction, heading narrative, page rhythm, and one-picture dominance are visible in the rendered page; deterministic geometry evidence reports no overlap, clipping, or horizontal overflow.",
         "For Feishu, body figures use editable native shapes, judgment titles, compact captions, and readable table widths/alignment.",
     ],

@@ -168,6 +168,14 @@ def main():
         raise SystemExit("reader review packet omitted the concrete value-expression gate")
     if "Recompute visible coverage from claim visual_required_tokens" not in review_packet_text:
         raise SystemExit("visual review packet omitted the visible-coverage replay gate")
+    if "access relevant information, find the decision spine, restate the meaning accurately, and use it" not in review_packet_text:
+        raise SystemExit("reader review packet omitted the four reader outcomes")
+    if "mutable-source observation time or version markers" not in review_packet_text:
+        raise SystemExit("source review packet omitted mutable-source timing")
+    if "uses proximity to bind labels, captions, and sources to their objects" not in review_packet_text:
+        raise SystemExit("visual review packet omitted proximity grouping")
+    if "preferred signals rather than automatic failures" not in review_packet_text:
+        raise SystemExit("HTML review packet turned preferred typography into a hard gate")
     if "Visual Blind Replay is a separate earlier gate" not in (SKILL / "references" / "review-packet-template.md").read_text(encoding="utf-8"):
         raise SystemExit("visual audit packet does not preserve Visual Blind Replay isolation")
     if not (SCRIPTS / "validate_review_readiness.py").is_file():
@@ -1095,6 +1103,7 @@ def main():
                 "title_hierarchy_clear": True,
                 "tldr_is_distinct_opening_unit": True,
                 "heading_path_restates_story": True,
+                "proximity_hierarchy_supports_grouping": True,
                 "no_overlap_or_clipping": True,
                 "not_a_component_wall": True,
                 "one_picture_is_dominant": True,
@@ -1484,6 +1493,7 @@ def main():
         "title_hierarchy_clear",
         "tldr_is_distinct_opening_unit",
         "heading_path_restates_story",
+        "proximity_hierarchy_supports_grouping",
         "no_overlap_or_clipping",
         "not_a_component_wall",
         "one_picture_is_dominant",

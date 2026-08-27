@@ -61,7 +61,7 @@ Preserve legitimate hedging, passive voice, technical terms, and neutral tone wh
 
 Edit only after the source-grounded reader narrative is complete.
 
-1. Identify the concrete reading problem: ambiguity, repetition, vague abstraction, mechanical sequence, unsupported certainty, or missing actor.
+1. Identify the concrete reading problem: ambiguity, repetition, vague abstraction, mechanical sequence, unsupported certainty, missing actor, overloaded sentence relationships, or paragraph topic drift.
 2. Change the smallest span that resolves that problem.
 3. Recheck the protected relation and assertion ceiling.
 4. Stop when the passage is clear, professional, and source-fit.
@@ -80,7 +80,10 @@ Apply this rule to a title, subtitle, section heading, opening judgment, or prod
 
 ## Prevent False Positives
 
-Treat expression patterns as clusters, not banned words. A style warning is actionable only when multiple signals create real reader friction in context. Keep the original when a phrase:
+Treat expression and readability patterns as signals, not banned forms. Sentence
+or paragraph length, topic shifts, relationship load, and typography metrics are
+actionable only when the target reader's actual task is impaired in context.
+Keep the original when a phrase or passage:
 
 - is a defined technical, legal, academic, metric, or product term;
 - accurately marks uncertainty, source identity, or causal limits;
@@ -91,7 +94,7 @@ Treat expression patterns as clusters, not banned words. A style warning is acti
 Deterministic checks distinguish:
 
 - **Hard failure**: fabricated or unsupported content, relation drift, assertion above evidence, source-language error, appendix leakage, or missing mandatory contract fields.
-- **Warning**: clustered vague language, mechanical transitions, inflated rhetoric, repetitive sentence framing, or other scene-dependent expression risk.
+- **Warning**: clustered vague language, mechanical transitions, inflated rhetoric, repetitive sentence framing, overloaded relationships, paragraph topic drift, or another scene-dependent readability risk.
 
 Warnings require contextual judgment and do not block release by themselves.
 

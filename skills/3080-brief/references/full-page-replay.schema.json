@@ -32,6 +32,7 @@
         "title_hierarchy_clear",
         "tldr_is_distinct_opening_unit",
         "heading_path_restates_story",
+        "proximity_hierarchy_supports_grouping",
         "no_overlap_or_clipping",
         "not_a_component_wall",
         "one_picture_is_dominant"
@@ -40,6 +41,7 @@
         "title_hierarchy_clear": {"type": "boolean"},
         "tldr_is_distinct_opening_unit": {"type": "boolean"},
         "heading_path_restates_story": {"type": "boolean"},
+        "proximity_hierarchy_supports_grouping": {"type": "boolean"},
         "no_overlap_or_clipping": {"type": "boolean"},
         "not_a_component_wall": {"type": "boolean"},
         "one_picture_is_dominant": {"type": "boolean"}

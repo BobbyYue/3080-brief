@@ -22,6 +22,11 @@ Traditional narrative is author-to-reader broadcasting. `3080-brief` narrative f
 
 The output is not a shorter version of the source. It is a source-grounded synthesis that reorganizes the source into a clear, evidence-backed, professional, useful narrative.
 
+Use the existing TLDR, heading-only readback, Blind Reader Replay, and final audit
+to check four outcomes without adding another section or review pass: the target
+reader can access the relevant information, find the decision spine, understand
+it without a material misreading, and use it for the intended judgment or action.
+
 ## Reader-Layered Narrative Workflow
 
 Before drafting, build a reader map:
@@ -103,6 +108,10 @@ Use [expression-anti-patterns.md](expression-anti-patterns.md) when the draft or
    - Run this as a method check after the body structure exists.
    - Check whether a capable newcomer can understand the terms, background, hidden assumptions, and why the sections appear in this order.
    - Add explanations only where they reduce confusion.
+   - Treat a sentence carrying several causal, contrastive, conditional, or
+     exception relationships, and a paragraph that changes reader question, as
+     review signals. Revise only when the target reader cannot follow the
+     relationship; do not enforce a sentence or paragraph count.
 
 ## Reader-Facing Rules
 

@@ -14,6 +14,7 @@ REQUIRED_GATES = (
     "title_hierarchy_clear",
     "tldr_is_distinct_opening_unit",
     "heading_path_restates_story",
+    "proximity_hierarchy_supports_grouping",
     "no_overlap_or_clipping",
     "not_a_component_wall",
     "one_picture_is_dominant",

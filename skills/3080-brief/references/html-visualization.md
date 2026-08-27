@@ -64,6 +64,13 @@ Select exactly one layout family and explain why it fits the source:
 
 Choose display, body, and mono families from `font-catalog.json`. Body must use a readable sans or serif family; expressive display faces require a source-fit rationale and must never carry dense body text. Set density, prose measure, section treatment, one-picture anchor, renderer, and support position explicitly. Keep motion `none` and asset mode `inline`.
 
+Separate hard floors from preferred reading defaults. Body text below the
+configured 14px minimum, clipped content, inaccessible contrast, or unreadable
+table geometry is a failure. The bundled 16px body size, long-form line height
+of at least 1.5, controlled prose measure, and left alignment are preferred
+starting points; a departure is a review signal and blocks only when the actual
+render increases reading error or prevents the intended reader task.
+
 These choices must materially change the report shell, not merely add CSS labels. The composer provides a strong title field, a readable prose measure, generous section rhythm, integrated figures, argument-bearing headings, and restrained callouts. Layout families may change header treatment, section rhythm, opening composition, and technical/editorial emphasis; they may not turn the body into a component gallery.
 
 The renderer choice follows the relationship:
@@ -158,6 +165,9 @@ Color is redundant with sign, wording, symbol, shape, or position. Never color w
 - Keep a readable single-column measure for prose.
 - Let first-level headings advance the argument; do not introduce a fixed body template.
 - Start a dense section with a short explanatory paragraph before a chart, table, or detail block.
+- Keep four proximity levels visible: tight within one idea and between a visual
+  and its label, normal between paragraphs, wider between subsections or evidence
+  forms, and widest between major reader questions.
 - Use callouts for a decision, risk, boundary, or action that interrupts the main flow; do not wrap every section in a card.
 - Use micro visuals such as sparklines only beside an existing metric or table row, never as unsupported decoration.
 - Keep tables full width when dense. Allow horizontal scrolling rather than compressing text into unreadable columns.

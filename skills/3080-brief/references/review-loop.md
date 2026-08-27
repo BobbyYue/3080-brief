@@ -119,15 +119,15 @@ Use three independent reviewer roles:
 
 1. **Reader Comprehension Reviewer**
    - Persona: mixed reader layer, including decision maker, cross-functional reader, domain reader, implementer, and capable novice.
-   - Focus: whether the document can be understood; whether the first opening line contains exactly one highest-level judgment; whether its 1–3 support lines contain only evidence, action, or boundary rather than a second peer conclusion; whether the opening works within 30 seconds and follows Pyramid Principle instead of a reusable template; whether value-bearing titles, headings, and leads identify their actual object and supported action, change, or result; whether the key-question table answers what readers most want to ask; whether the body follows SUCCESs Framework and Stepwise Information Delivery; whether Novice Reverse Review catches jargon/background gaps; and whether expression edits are minimal and contextual rather than driven by blanket word, punctuation, voice, or sentence bans.
+   - Focus: whether the target reader can access the relevant information, find the decision spine, understand it without material misreading, and use it for the intended judgment or action; whether the first opening line contains exactly one highest-level judgment; whether its 1–3 support lines contain only evidence, action, or boundary rather than a second peer conclusion; whether the opening works within 30 seconds and follows Pyramid Principle instead of a reusable template; whether value-bearing titles, headings, and leads identify their actual object and supported action, change, or result; whether the key-question table answers what readers most want to ask; whether the body follows SUCCESs Framework and Stepwise Information Delivery; whether Novice Reverse Review catches jargon, background, overloaded sentence relationships, and paragraph topic drift; and whether expression edits are minimal and contextual rather than driven by blanket word, punctuation, voice, sentence, or paragraph-length rules.
 
 2. **Source Coverage And Grounding Reviewer**
    - Persona: source auditor.
-   - Focus: whether the draft covers most of the source's valuable non-appendix information, whether key non-appendix sections are missing, whether data/conclusions/risks are source-backed, whether every P0/P1 protected relation and numeric attachment is preserved, whether output assertion stays below its evidence ceiling, whether inferred content is labeled, whether thin material was shortened or clarified instead of padded, and whether source appendix content was excluded unless the user explicitly requested it.
+   - Focus: whether the draft covers most of the source's valuable non-appendix information, whether key non-appendix sections are missing, whether data/conclusions/risks are source-backed, whether every P0/P1 protected relation and numeric attachment is preserved, whether output assertion stays below its evidence ceiling, whether inferred content is labeled, whether mutable online sources record actual observation time without inventing publication, update, or version metadata, whether thin material was shortened or clarified instead of padded, and whether source appendix content was excluded unless the user explicitly requested it.
 
 3. **Visualization And Expression Reviewer**
    - Persona: presentation and visualization reviewer.
-   - Focus: whether the one-picture visual visibly covers at least 80% of value-weighted non-appendix claims, whether visual forms match the content logic, whether the declared composition creates real hierarchy, whether values on one axis share a valid scope, whether decision-bearing entities and values are actually visible, whether Feishu/Lark style was selected from candidate styles instead of using a fixed default, whether chartable metrics are encoded visually instead of written as prose, whether image2/bitmap generation was used only for inspiration and not evidence, whether the board avoids text piles and empty pretty graphics, whether body-level expression forms help comprehension without defaulting to tables, and whether body/board semantic colors agree. This audit does not replace the earlier isolated visual replay.
+   - Focus: whether the one-picture visual visibly covers at least 80% of value-weighted non-appendix claims, whether visual forms match the content logic, whether the declared composition creates real hierarchy, whether proximity binds headings, labels, captions, annotations, and sources to the content they qualify, whether values on one axis share a valid scope, whether decision-bearing entities and values are actually visible, whether Feishu/Lark style was selected from candidate styles instead of using a fixed default, whether chartable metrics are encoded visually instead of written as prose, whether image2/bitmap generation was used only for inspiration and not evidence, whether the board avoids text piles and empty pretty graphics, whether body-level expression forms help comprehension without defaulting to tables, whether typography guidance is distinguished from hard accessibility and integrity floors, and whether body/board semantic colors agree. This audit does not replace the earlier isolated visual replay.
 
 ### Reviewer Inputs
 
@@ -179,6 +179,9 @@ Role-specific pass conditions:
 - Reader Comprehension Reviewer:
   - 30-second judgment, Pyramid opening, body logic, Novice Reverse Review, and real rendered readability all pass.
   - Reader confusion risks are non-blocking or resolved.
+  - Relevant information is accessible, the decision spine is findable, the
+    source-grounded meaning can be restated accurately, and the intended reader
+    can use it for the named judgment or action.
   - A reader can understand the opening without reading implementation details.
   - The opening `TLDR` section contains the one-sentence summary, one-picture summary, and one compact key-question table.
   - The one-sentence judgment makes the source document's core value clear within 30 seconds; its support lines add only evidence, action, or boundary and do not introduce a second peer conclusion.
@@ -200,6 +203,9 @@ Role-specific pass conditions:
   - Every non-appendix P0/P1 claim preserves subject, predicate, object, scope, time/status, qualifiers, and values attached to their source objects.
   - `source_fact`, `source_author_claim`, `source_self_report`, `agent_inference`, and `unknown` remain distinct; output assertion does not exceed evidence ceiling.
   - Thin material is shortened or clarified; no external fact, invented example, personal experience, emotion, or false precision is used to make it appear richer.
+  - Mutable online sources record actual observation or retrieval time and only
+    source-visible publication, update, or version markers; timing appears in
+    the brief only when it affects interpretation or reproducibility.
   - Missing non-appendix source coverage is non-critical or intentionally placed outside the 80% board.
   - No source-backed risk, caveat, or key result is omitted from both board and body.
   - Appendix material is excluded from the draft and from missing-coverage objections unless the user explicitly requested it.
@@ -217,8 +223,15 @@ Role-specific pass conditions:
   - Whiteboard labels and annotations use the declared output language consistently with the body.
   - The preview visibly carries the conclusion and decision path instead of relying on hidden alt text or the visual spec; the independent Visual Blind Replay is verified separately before this audit.
   - `anchor_support` has one visibly dominant anchor plus smaller supports whose count is justified by evidence value and rendered readability; `comparison_grid` keeps peers directly comparable rather than stacking equal-weight panels.
+  - Four proximity levels make within-idea relationships tighter than paragraph,
+    subsection, and major-section changes; labels and source notes stay closer
+    to the content they qualify than to neighboring content.
   - Values sharing an axis have the same metric, unit, period, and denominator; visual titles stay at or below mapped evidence ceilings.
-  - For HTML, the chosen layout and bundled typography fit the source; ECharts/Mermaid is used when it lowers understanding cost, no external runtime is required, and the complete native-SVG fallback remains available.
+  - For HTML, the chosen layout and bundled typography fit the source; the
+    configured 14px body minimum and integrity requirements remain hard floors,
+    while 16px, long-form line height, and prose measure are contextual defaults;
+    ECharts/Mermaid is used when it lowers understanding cost, no external runtime
+    is required, and the complete native-SVG fallback remains available.
 
 The Visualization And Expression Reviewer must return `FAIL` if chartable metrics are available but the whiteboard is primarily boxes plus prose, unless the draft explicitly explains that the data could not be extracted reliably or that the source lacks enough chartable data.
 

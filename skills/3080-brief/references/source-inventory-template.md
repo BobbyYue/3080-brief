@@ -7,6 +7,9 @@ Keep this compact. It is the source-of-truth working object for drafting, visual
 - Title:
 - Link / path:
 - Type:
+- Source mutability: `stable`, `mutable`, or `unknown`
+- Published / updated / version marker: record only what the source exposes; otherwise `not visible`
+- Observed / retrieved at: required for `mutable` or `unknown` online sources; use the actual access time, never a guessed publication time
 - Source language: inspect the normalized non-appendix source itself and use a primary BCP 47 tag such as `en`, `zh-CN`, or `ja`
 - Output language: match source language unless the user explicitly requests another language
 - Output-language basis: `source_primary_language` or `explicit_user_request`
@@ -16,7 +19,7 @@ Keep this compact. It is the source-of-truth working object for drafting, visual
 - Material sufficiency: `sufficient / proceed`, `thin / shorten`, `thin / clarify`, or `blocked / clarify`
 - Sufficiency rationale:
 
-The normalized snapshot must preserve the source language; do not translate it. Preflight verifies the declared source language against this file before it checks the output. The language used in the user's message, conversation, interface, locale, or surrounding context is not an output-language override. If source language is unclear or multiple languages compete for primacy, ask before drafting.
+The normalized snapshot must preserve the source language; do not translate it. Preflight verifies the declared source language against this file before it checks the output. The language used in the user's message, conversation, interface, locale, or surrounding context is not an output-language override. If source language is unclear or multiple languages compete for primacy, ask before drafting. Keep source timing in this inventory by default; show it in the brief only when page mutability changes how a claim should be interpreted or reproduced.
 
 ## Scope
 

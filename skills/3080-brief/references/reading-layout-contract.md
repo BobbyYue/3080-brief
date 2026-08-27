@@ -21,9 +21,14 @@ Do not add a body section that is absent from the plan. Do not use the plan to a
 - Tables and figures are dense evidence. Two dense evidence blocks may not be adjacent; place a substantive explanatory bridge between them.
 - Definitions, uncertainty, scope, and source notes remain adjacent to the claim or visual they qualify.
 - `dense` sections receive more separation in HTML. Other native formats use their own heading and paragraph spacing while preserving the same structural path.
+- Every renderer uses four distinguishable proximity relationships: tight within
+  one idea or between an object and its label, normal between paragraphs, wider
+  between subsections or evidence forms, and widest between major reader
+  questions. A heading, caption, annotation, or source note must sit closer to
+  the content it qualifies than to neighboring content.
 
 ## Runtime Gate
 
-`scripts/validate_brief.py` calls the shared document validator before any renderer runs. It rejects a missing or stale `reading_path`, an incomplete section map, an unknown density, evidence before takeaway, and consecutive dense evidence without explanation.
+`scripts/validate_brief.py` calls the shared document validator before any renderer runs. It rejects a missing or stale `reading_path`, an incomplete section map, an unknown density, evidence before takeaway, and consecutive dense evidence without explanation. Existing rendered review verifies proximity and grouping; this adds no new review pass.
 
 Failure is blocking. A renderer, output-format override, fast mode, or visual review cannot waive this contract. Fix the plan or document, rerun `validate_brief.py`, then rerun the target-format validator.

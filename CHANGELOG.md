@@ -4,6 +4,19 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-08-27
+
+### Added
+
+- Added four reader outcomes to the existing TLDR, heading readback, Blind Reader, and audit flow: readers must be able to access, find, understand, and use task-critical information.
+- Added mutable-source metadata to the source inventory, including actual observation time and only source-visible publication, update, or version markers.
+- Added a proximity-hierarchy gate to the existing full-page replay so labels, captions, sources, and major reader questions remain visibly grouped.
+
+### Changed
+
+- Treat sentence relationship load, paragraph topic drift, prose measure, and preferred typography values as contextual risk signals rather than automatic rewrite or release failures.
+- Kept the existing three reviewers and repair limit; the new checks reuse current review packets and full-page replay without adding another agent pass or review round.
+
 ## [0.7.0] - 2026-08-21
 
 ### Added
