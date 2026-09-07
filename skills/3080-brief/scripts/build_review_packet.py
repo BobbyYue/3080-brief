@@ -12,7 +12,7 @@ ROLE_GATES = {
     "reader": [
         "The opening produces a useful judgment within 30 seconds without a fixed phrase template.",
         "The target reader can access relevant information, find the decision spine, restate the meaning accurately, and use it; revise sentence or paragraph patterns only when they obstruct that path.",
-        "Every value-bearing title, heading, and lead identifies the actual object plus a source-supported action, change, or result instead of relying on method labels or generic benefit language.",
+        "Every value-bearing title, heading, and lead identifies the actual object and supported fact, question, change, condition, tradeoff, or impact. Restate the key relationship and its adjacent qualifications; accept a clear single fact without forcing an outcome or contrast.",
         "Expression edits are minimal and contextual; legitimate technical terms, uncertainty, passive voice, neutral tone, and punctuation are not penalized in isolation.",
         "The title, TLDR, table, body, and visual use the declared output language; conversation language is not treated as an override.",
         "A capable newcomer can restate the problem, solution, memorable example, and next action when source-backed.",
@@ -23,7 +23,7 @@ ROLE_GATES = {
     ],
     "source": [
         "Every P0/P1 conclusion, metric, risk, and action is traceable to the supplied source outline or excerpt.",
-        "Every non-appendix P0/P1 protected relation preserves subject, predicate, object, scope, time/status, qualifiers, and numeric attachment.",
+        "Every non-appendix P0/P1 protected relation preserves subject, predicate, object, scope, time/status, qualifiers, and numeric attachment. Compression must not invent opposites, winners, causality, or general laws; decisive conditions remain in or immediately beside the lead and agree with the visual.",
         "Each output assertion stays at or below its evidence ceiling; source facts, author claims, self-reports, inferences, and unknowns remain distinct.",
         "The declared source primary language is independently verified from the normalized non-appendix source, and output matches it unless the packet contains the user's exact explicit instruction requesting another language.",
         "The claim ledger covers valuable non-appendix source information and excludes appendix material.",

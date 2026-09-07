@@ -72,11 +72,14 @@ Do not force first person, slang, rhetorical questions, emotion, deliberate mist
 
 Apply this rule to a title, subtitle, section heading, opening judgment, or product/value line that tells the reader why something matters.
 
-1. Record `specific object -> source-backed action or change -> reader-observable result` before composing the visible line.
-2. Use the simplest natural expression of that relationship. In Chinese, a familiar verb-object or result-complement phrase such as `把复杂内容写明白` is often effective, but no language must follow a fixed grammatical template.
+1. Use the existing object-action/result map and protected relations to identify the specific object and supported fact, question, change, condition, tradeoff, or impact. A result is optional when the source gives none.
+2. Express the relationship that matters to the reader with the fewest necessary words. A single fact may stay a single fact. Use parallel clauses only for a real comparison on shared dimensions; do not invent an opposite, a winner, or a causal mechanism. Neither a one-sentence limit nor a memorable slogan is a goal.
 3. Remove method labels, process narration, and generic benefit words only when they add no necessary meaning. A line that says only `更清晰`, `更高效`, `赋能`, or `不用猜` must be rewritten when the source provides the actual object and result.
 4. Keep a method name, technical term, scope, evidence boundary, or uncertainty when it is the decision object or needed to interpret the result. Do not invent an outcome, user effect, magnitude, or certainty to make the line sound concrete.
-5. Read the line without its body. It passes only when the target reader can identify the actual object and supported action, change, or result, and the wording sounds natural rather than like a reusable slogan.
+5. Layer supporting evidence and explanation after the lead, but keep any qualifier that changes its interpretation in the lead or immediately adjacent. Preserve subject, direction, comparison basis, scope, time, and uncertainty; do not turn a local observation into a general law. The visual must express the same supported relationship and boundaries.
+6. Read the lead with its adjacent qualifiers, without the full body. The target reader should be able to restate what happened, the relationship, and when it applies. Verify that restatement against the source in the existing reader/source reviews. Stop when it is accurate and easy to understand; rhythm, symmetry, and word count alone do not justify another revision.
+
+For example, `本轮灰度中，审核从五步减为三步，错误率未见明显变化` may become `本轮灰度减少了审核步骤，尚未观察到错误率明显变化`, with the counts in the support. It cannot become `流程越简单，质量越稳定`. A and B having different strengths supports a tradeoff, not an invented recommendation.
 
 ## Prevent False Positives
 
@@ -107,6 +110,8 @@ Maintain three evaluation classes:
 - `relation_preservation`: cases where subject, action, object, scope, state, number attachment, or causal strength must not change.
 
 Run the fidelity pass before the expression pass. A more natural draft fails when it loses or strengthens source meaning. Reviewers must be able to explain both why a change is necessary and why untouched professional language was correctly preserved.
+
+For generation regression, use `semantic_cases` in `evals/expression_cases.json`. Give a fresh producer only the instructions, request, and source; keep expected behaviors for a separate reviewer. Existing script checks cover structure and signals, not semantic correctness. Reuse the reader/source review rather than adding a publication round.
 
 ## Explicit Rejections
 

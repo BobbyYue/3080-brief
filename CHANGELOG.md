@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-09-07
+
+### Changed
+
+- Express the source-supported fact or key relationship in titles, leads, and visuals without forcing an outcome, contrast, or slogan.
+- Keep decisive conditions beside the claim, preserve already-clear facts, and reject invented comparisons, winners, and causal conclusions in existing reviews.
+- Reuse the current review roles and round limits; shorter wording or symmetry alone does not justify another revision.
+
+### Added
+
+- Added five expression regression cases covering repetition, tradeoffs, causal uncertainty, unchanged clear facts, and material conditions, with structural coverage checks.
+
 ## [0.8.0] - 2026-08-27
 
 ### Added

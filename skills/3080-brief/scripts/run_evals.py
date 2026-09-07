@@ -161,6 +161,16 @@ def main():
     if not (SKILL / "assets" / "themes" / "LICENSE.beautiful-feishu-whiteboard.txt").is_file():
         raise SystemExit("theme adaptation must include the upstream MIT notice")
     expression_suite = json.loads((SKILL / "evals" / "expression_cases.json").read_text(encoding="utf-8"))
+    semantic_cases = expression_suite.get("semantic_cases", [])
+    semantic_ids = [case["id"] for case in semantic_cases]
+    if len(semantic_ids) != len(set(semantic_ids)) or not semantic_cases:
+        raise SystemExit("expression semantic cases are missing or have duplicate IDs")
+    for case in semantic_cases:
+        if any(not case.get(key) for key in (
+            "request", "source_material", "must_preserve",
+            "expected_behaviors", "forbidden_behaviors",
+        )):
+            raise SystemExit(f"incomplete semantic expression case: {case['id']}")
     inventory_zh = FIXTURES / "inventory-zh-source.md"
 
     review_packet_text = (SCRIPTS / "build_review_packet.py").read_text(encoding="utf-8")

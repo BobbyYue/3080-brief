@@ -131,6 +131,13 @@ Use three independent reviewer roles:
 
 ### Reviewer Inputs
 
+Within the existing reader check, restate the opening's key relationship and
+applicable conditions from the lead and adjacent qualifiers. The source check
+verifies that compression has not manufactured a contrast, winner, causal claim,
+or general rule, and the visual check verifies the same relationship in the
+picture. A clear single fact needs no contrast. Do not request another round
+only for shorter wording, symmetry, or rhythm.
+
 All packets share user constraints, source inventory, claim ledger, TLDR, review round, and artifact hashes. Give each role only the additional evidence it needs:
 
 - Reader Comprehension: full reader-facing draft or rendered document and document preview. Body summaries alone are insufficient to judge readability.

@@ -116,8 +116,8 @@ def validate(skill_dir):
     if len(text.splitlines()) > MAX_SKILL_LINES:
         errors.append(f"SKILL.md exceeds the {MAX_SKILL_LINES}-line progressive-disclosure limit")
     for required_term in (
-        "specific object -> source-backed action or change -> reader-observable result",
-        "Record the object-action/result map for each value-bearing title, heading, and lead",
+        "supported fact, question, change, condition, tradeoff, or impact",
+        "record it in the existing object-action/result map",
         "Every rendered brief must carry the mandatory `reading_path` contract",
         "create its mandatory `reading_path`",
     ):

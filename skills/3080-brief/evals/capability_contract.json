@@ -87,7 +87,7 @@
     },
     {
       "id": "VAL-01",
-      "requirement": "Value-bearing titles, headings, and leads name the specific object and a source-supported action, change, or reader-observable result in natural language without deleting necessary terms, scope, evidence boundaries, or uncertainty.",
+      "requirement": "Value-bearing titles, headings, and leads express the specific object and supported fact, question, change, condition, tradeoff, or impact. Preserve decisive qualifiers nearby, accept clear single facts, and reject invented contrasts, causes, winners, and outcomes; verify accurate restatement in the existing reviews.",
       "owner": {"file": "references/source-faithful-expression.md", "marker": "## Make Value Expressions Concrete"},
       "enforced_by": [
         "SKILL.md",

@@ -1,5 +1,106 @@
 {
   "schema_version": 1,
+  "semantic_cases": [
+    {
+      "id": "relation-repeated-observation",
+      "request": "把这段材料提炼成清楚的开头判断，必要时附一句支持。",
+      "source_material": "本轮只在灰度组试行审核调整。审核原来需要五步，现在减到三步，少了两步。步骤变少了，审核流程也缩短了。观察期内错误率未见明显变化，未检验统计等效性。",
+      "must_preserve": [
+        "本轮灰度组",
+        "五步减到三步",
+        "错误率未见明显变化",
+        "未检验统计等效性"
+      ],
+      "expected_behaviors": [
+        "合并对步骤减少的重复描述",
+        "保留灰度和观察边界",
+        "允许把具体步数放到紧邻支持句"
+      ],
+      "forbidden_behaviors": [
+        "宣称越简单质量越稳定",
+        "把未见明显变化写成已证明质量不变",
+        "凭空增加建议或扩大适用范围"
+      ]
+    },
+    {
+      "id": "relation-tradeoff-no-winner",
+      "request": "给技术评审者写一段简短的方案对比，保留当前决策状态。",
+      "source_material": "在现有方案评估中，A方案预计上线更快，B方案预计后续维护工作更少。目前没有确定上线速度和维护工作的优先级，也没有时间、成本或效果的量化数据。",
+      "must_preserve": [
+        "预计",
+        "A上线更快",
+        "B维护工作更少",
+        "优先级未定"
+      ],
+      "expected_behaviors": [
+        "说明已知取舍",
+        "比较维度保持一致",
+        "保留预计和优先级边界"
+      ],
+      "forbidden_behaviors": [
+        "指定A或B最好",
+        "编造数值",
+        "把A上线快等同于B质量差"
+      ]
+    },
+    {
+      "id": "relation-correlation-no-cause",
+      "request": "改写为读者能快速理解的分析结论，不补行动建议。",
+      "source_material": "本周预算增加，新增用户没有同步增加。材料没有给出增长来源拆分、用户分层、对照实验或变化幅度，也无法判断预算变化的因果作用。",
+      "must_preserve": [
+        "本周",
+        "预算增加",
+        "新增用户没有同步增加",
+        "缺少归因证据"
+      ],
+      "expected_behaviors": [
+        "直接描述观察到的不同变化",
+        "保留因果未知"
+      ],
+      "forbidden_behaviors": [
+        "断言增长来自存量放大",
+        "断言增加预算无效",
+        "编造新增用户下降或幅度"
+      ]
+    },
+    {
+      "id": "relation-clear-fact-keep",
+      "request": "检查以下状态句作为正文首句是否需要改写；已经清楚就保留原句，不加标题、解释或行动。",
+      "source_material": "报表已更新至周三，周四数据尚未到齐。",
+      "must_preserve": [
+        "报表已更新至周三，周四数据尚未到齐。"
+      ],
+      "expected_behaviors": [
+        "原样保留清楚的状态句"
+      ],
+      "forbidden_behaviors": [
+        "制造对仗",
+        "补充催办或期限",
+        "虚构缺失原因"
+      ]
+    },
+    {
+      "id": "relation-critical-condition-nearby",
+      "request": "为非项目成员写一个简短结论，必要时补一句解释。",
+      "source_material": "这次测试只在缓存命中的只读请求中观察到延迟降低。缓存未命中请求和写入请求没有测量，不能据此判断系统整体性能。材料没有提供降低幅度。",
+      "must_preserve": [
+        "本次测试",
+        "缓存命中",
+        "只读请求",
+        "其他请求未测量",
+        "整体性能未知"
+      ],
+      "expected_behaviors": [
+        "把缓存命中和只读条件留在主句或紧邻位置",
+        "保留其他请求未测量的边界"
+      ],
+      "forbidden_behaviors": [
+        "笼统写系统更快",
+        "把边界放到远处",
+        "虚构幅度"
+      ]
+    }
+  ],
   "cases": [
     {
       "id": "should-fix-zh-clusters",
