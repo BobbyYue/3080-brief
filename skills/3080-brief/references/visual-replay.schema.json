@@ -23,8 +23,15 @@
     "evaluation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["verdict", "main_judgment_claim_ids", "evidence_claim_ids", "action_or_boundary_claim_ids", "reading_path_clear", "unresolved_confusion_blocks_decision", "blocking_issues", "required_fixes"],
+      "required": ["verdict", "main_judgment_claim_ids", "evidence_claim_ids", "action_or_boundary_claim_ids", "reading_path_clear", "unresolved_confusion_blocks_decision", "blocking_issues", "required_fixes", "claim_replays", "replay_sha256", "ledger_sha256", "visual_spec_sha256"],
       "properties": {
+        "replay_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "ledger_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "visual_spec_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "claim_replays": {"type": "array", "items": {"type": "object", "required": ["claim_id", "reader_quote", "relation_preserved", "source_rationale"], "properties": {
+          "claim_id": {"type": "string"}, "reader_quote": {"type": "string", "minLength": 1},
+          "relation_preserved": {"type": "boolean"}, "source_rationale": {"type": "string", "minLength": 1}
+        }}},
         "verdict": {"enum": ["PASS", "FAIL"]},
         "main_judgment_claim_ids": {"type": "array", "items": {"type": "string"}},
         "evidence_claim_ids": {"type": "array", "items": {"type": "string"}},

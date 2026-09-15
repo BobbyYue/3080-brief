@@ -15,13 +15,14 @@ serialize writes to the same destination.
 
 Finish the non-appendix source snapshot, inventory, P0/P1 excerpts, claim
 ledger, protected relations, evidence ceilings, missing-input decisions, and
-reviewer inputs before rendering. Run `scripts/validate_review_readiness.py`
-after the final candidate and renders pass deterministic checks. A blocked
+reviewer inputs before rendering. After deterministic checks and the opening
+replay, run `scripts/validate_review_readiness.py --reader-answer-receipt RECEIPT`.
+A blocked
 receipt stops audit; do not use reviewers to discover an incomplete packet.
 
 ## One Full Audit On The Normal Path
 
-Use deterministic gates, Visual Blind Replay, and full-artifact Blind Reader
+Use deterministic gates, Visual Blind Replay, and opening-only Primary Blind Reader
 Replay to stabilize comprehension before the expensive three-reviewer audit.
 The normal path launches one complete Reader/Source/Visual batch per artifact.
 An additional complete batch is allowed only after a prior complete batch

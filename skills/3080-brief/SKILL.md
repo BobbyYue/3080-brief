@@ -46,6 +46,7 @@ Do not preload references. Read only resources whose condition is true.
 | Inventory sources and claims | [source-inventory-template.md](references/source-inventory-template.md), [claim-ledger.schema.json](references/claim-ledger.schema.json); add [evidence-and-risk-rules.md](references/evidence-and-risk-rules.md) for material data, experiment, causal, metric, or risk claims |
 | Plan batch execution and review readiness | [execution-efficiency.md](references/execution-efficiency.md); run `scripts/validate_review_readiness.py` before independent review |
 | Draft/revise reader-facing content | [source-faithful-expression.md](references/source-faithful-expression.md); add [reader-optimization.md](references/reader-optimization.md) for clarity/jargon failures and [expression-anti-patterns.md](references/expression-anti-patterns.md) only for a concrete wording signal |
+| Lock opening answers before prose | [required-reader-answers.md](references/required-reader-answers.md): reader/context/task, reading surface and all P0 answers; bind replay receipt in readiness |
 | Plan the cross-section reading path | [reading-layout-contract.md](references/reading-layout-contract.md); create the required `reading_path` object before rendering any format |
 | Plan the brief and visual | [brief.schema.json](references/brief.schema.json), [visual-spec.schema.json](references/visual-spec.schema.json), [visual-pattern-library.md](references/visual-pattern-library.md), [theme-selection.md](references/theme-selection.md); add [semantic-color-system.md](references/semantic-color-system.md) for directional values/statuses |
 | Build target-specific visuals | Feishu: [whiteboard-patterns.md](references/whiteboard-patterns.md), [feishu-doc-output.md](references/feishu-doc-output.md); HTML: [html-visualization.md](references/html-visualization.md) |
@@ -72,11 +73,11 @@ scripts/validate_visual_spec.py visual_spec.json claim_ledger.json
 scripts/validate_brief.py brief.json visual_spec.json
 ```
 
-Validate with `validate_whiteboard.sh` or `validate_html_output.py`. HTML requires the canonical composer, locked contract, build receipt, and geometry audit; unsigned HTML cannot be final. Fix failures, rerun affected checks, then run `validate_review_readiness.py`; blocked/stale receipts block review.
+Validate with `validate_whiteboard.sh` or `validate_html_output.py`. HTML requires the canonical composer, locked contract, build receipt and geometry audit. Fix failures, run the replays below, then validate readiness with the answer receipt; missing/stale evidence blocks audit.
 
 ### 7. Stabilize Comprehension Before Audit
 
-For the first candidate, run cropped-picture Visual Blind Replay; HTML also uses geometry and isolated full-page replay. Then run Blind Reader, starting with Primary. Resolve blockers before audit; fast mode uses disclosed self-checks.
+Run cropped-picture replay for the actual reader; every P0 must be understood. HTML also needs geometry and full-page replay. Primary reads only the extracted opening; bind its required-answer receipt in readiness. Resolve blockers before audit. Fast self-checks are disclosed, not independent validation.
 
 ### 8. Run The Final Independent Audit
 
@@ -88,4 +89,4 @@ Create the new output only after applicable gates pass. Render Feishu with nativ
 
 ## Delivery
 
-Return the generated link or absolute path, the source link/path, and concise verification notes: source unchanged; format/language basis; dependency/clarification status when relevant; applicable visual/full-page/Blind Reader replays and three-review status; visual validation; and Feishu live-preview status when applicable. If `lark-cli` returns `_notice.update`, mention `lark-cli update` only after completing the task.
+Return the output and source links/paths. Briefly report source preservation, format/language basis, applicable review and live-preview results, and unresolved dependencies. Mention a CLI update notice only after completing the task.

@@ -107,6 +107,7 @@ def command_plan(args):
     if "source" in changes or "content" in changes:
         checks = [
             "deterministic_source_and_content",
+            "required_opening_answers",
             "render_and_target_validation",
             "visual_blind_replay",
             "full_page_visual_replay",

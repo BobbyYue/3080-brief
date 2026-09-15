@@ -10,6 +10,7 @@ import tempfile
 from pathlib import Path
 
 from html_design_kit import echarts_option
+import reader_answers
 
 
 SKILL = Path(__file__).resolve().parents[1]
@@ -239,6 +240,9 @@ def main():
         built = run(
             sys.executable,
             str(SCRIPTS / "build_visual_replay_packet.py"),
+            "--reader-profile", "Fixture decision maker",
+            "--known-context", "Common metrics only",
+            "--reader-decision", "Judge fixture findings",
             "--visual-preview", str(preview),
             "--round", "1",
             "--output", str(packet),
@@ -270,6 +274,15 @@ def main():
             },
         }
         valid_path = tmp / "visual-replay-valid.json"
+        valid_report["evaluation"].update({
+            "replay_sha256": reader_answers.object_digest(valid_report["replay"]),
+            "ledger_sha256": reader_answers.object_digest(reader_answers.load(FIXTURES / "claim-ledger.json")),
+            "visual_spec_sha256": reader_answers.object_digest(reader_answers.load(FIXTURES / "visual-spec.json")),
+            "claim_replays": [
+                {"claim_id": "C01", "reader_quote": valid_report["replay"]["main_judgment"], "relation_preserved": True, "source_rationale": "Structural fixture, not semantic replay evidence"},
+                {"claim_id": "C02", "reader_quote": valid_report["replay"]["supporting_evidence"][0], "relation_preserved": True, "source_rationale": "Structural fixture, not semantic replay evidence"}
+            ]
+        })
         valid_path.write_text(json.dumps(valid_report, ensure_ascii=False), encoding="utf-8")
         run(
             sys.executable,
@@ -1122,9 +1135,41 @@ def main():
         }), encoding="utf-8")
         run(sys.executable, str(SCRIPTS / "validate_full_page_replay.py"), "--report", str(full_page_replay), "--preview", str(full_page_preview), "--html", str(rich_html_output))
         readiness_receipt = tmp_path / "review-readiness.json"
+        # These objects test evidence plumbing only. Fresh-context semantic cases
+        # separately test whether real readers recover the required information.
+        answer_plan = tmp_path / "reader-plan.json"
+        reader_answers.save(answer_plan, {
+            "version": reader_answers.CONTRACT_VERSION,
+            "reader": {"profile": "Fixture reader", "known_context": "No hidden project context", "decision": "Inspect fixture conclusion"},
+            "surfaces": [{"id": "opening", "mode": "between", "start": "## TLDR", "end": "## 汇总指标掩盖了真正差异"}],
+            "answers": [{"id": "A1", "question": "What is the core difference?", "expected_information": "Segmented difference", "source_location": "Fixture sections 1-2", "source_status": "supported", "required_on": ["opening"], "claim_ids": ["C01", "C02"]}]
+        })
+        answer_lock = tmp_path / "reader-lock.json"
+        reader_answers.save(answer_lock, reader_answers.lock_plan(answer_plan, FIXTURES / "source-data-analysis.md"))
+        answer_manifest = reader_answers.prepare(answer_lock, FIXTURES / "valid-brief.md", tmp_path / "reader-surfaces")
+        surface = answer_manifest["surfaces"][0]
+        responses = [{"surface_id": "opening", "surface_sha256": surface["sha256"], "reader_id": "fixture-reader",
+                      "findings": ["分层比较能保留高价值信号。"], "remaining_questions": []}]
+        evaluation = {"manifest_sha256": reader_answers.object_digest(answer_manifest), "response_sha256": reader_answers.object_digest(responses),
+                      "reviewer_id": "fixture-source", "plan_source_coverage": "pass", "source_coverage_evidence": "Structural fixture only",
+                      "source_fidelity": "pass", "questions": [],
+                      "answers": [{"answer_id": "A1", "surface_id": "opening", "status": "pass", "reader_quote": responses[0]["findings"][0], "rationale": "Structural fixture only"}]}
+        response_path, evaluation_path = tmp_path / "reader-responses.json", tmp_path / "reader-evaluation.json"
+        reader_answers.save(response_path, responses)
+        reader_answers.save(evaluation_path, evaluation)
+        answer_receipt = tmp_path / "reader-answer-receipt.json"
+        run(sys.executable, str(SCRIPTS / "reader_answers.py"), "verify", "--manifest", str(tmp_path / "reader-surfaces" / "surface-manifest.json"),
+            "--responses", str(response_path), "--evaluation", str(evaluation_path), "--output", str(answer_receipt))
+        audit_visual_replay = tmp_path / "audit-visual-replay.json"
+        audit_replay = json.loads(json.dumps(valid_report))
+        audit_replay["visual_artifact_id"] = hashlib.sha256(rich_html_output.read_bytes()).hexdigest()
+        audit_replay["evaluation"]["visual_spec_sha256"] = reader_answers.object_digest(reader_answers.load(FIXTURES / "html-visual-spec.json"))
+        reader_answers.save(audit_visual_replay, audit_replay)
         run(
             sys.executable,
             str(SCRIPTS / "validate_review_readiness.py"),
+            "--reader-answer-receipt", str(answer_receipt),
+            "--visual-replay", str(audit_visual_replay),
             "--source-snapshot", str(FIXTURES / "source-data-analysis.md"),
             "--inventory", str(SKILL / "references" / "source-inventory-template.md"),
             "--claim-ledger", str(FIXTURES / "claim-ledger.json"),

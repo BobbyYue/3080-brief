@@ -87,14 +87,14 @@ Fast mode may use the same criteria as a self-check and must disclose that indep
 
 ## Review Readiness Gate
 
-Follow [execution-efficiency.md](execution-efficiency.md). Before delegation,
+Follow [execution-efficiency.md](execution-efficiency.md). Before audit delegation,
 run `scripts/validate_review_readiness.py` against the final source snapshot,
 inventory, ledger, P0/P1 outline and excerpts, draft components, validation
-notes, and actual renders. Pass its unchanged receipt to
+notes, actual renders, and `--reader-answer-receipt` from the opening-only replay. Pass its unchanged receipt to
 `scripts/build_review_packet.py`. Missing or stale evidence blocks audit.
 
 After Visual Blind Replay passes, run [blind-reader-replay.md](blind-reader-replay.md)
-on the full rendered candidate. Resolve blocking comprehension defects before
+on the extracted opening for the actual Primary reader. Resolve blocking comprehension defects before
 building audit packets.
 
 For HTML, first run [full-page-visual-replay.md](full-page-visual-replay.md) on a
@@ -260,7 +260,7 @@ Use this loop:
 
 1. Complete source, claim, excerpt, and reviewer-input readiness.
 2. Draft and render; pass deterministic gates.
-3. Run Visual Blind Replay; for HTML, run geometry validation and Full-page Visual Replay; then run full-artifact Blind Reader Replay.
+3. Run Visual Blind Replay; for HTML, run geometry and Full-page Visual Replay; then run opening-only Primary and create its required-answer receipt.
 4. Fix blocking replay issues and rerun only affected pre-audit gates.
 5. Run `validate_review_readiness.py` and lock its passing receipt.
 6. Build one three-role packet set and launch all reviewers concurrently.

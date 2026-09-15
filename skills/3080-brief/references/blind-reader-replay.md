@@ -27,7 +27,17 @@ invalidating a completed audit.
 
 ### Primary Blind Reader
 
-**Role definition:** 理解业务、产品和常见指标，不了解技术实现，无决策能力。
+**Role definition:** Use the actual target reader, known context and decision from
+the pre-draft plan. A leader audience is a decision maker, not a default reader
+without decision authority. Do not add expected conclusions to the role.
+
+Primary starts with the actually extracted opening, not the full body. Follow
+[required-reader-answers.md](required-reader-answers.md); reuse this Primary
+replay as the opening-answer test. The raw findings and remaining questions are
+matched to every locked P0 answer by a separate source evaluator. Optional
+full-document reading or the three dynamic questions below cannot rescue a
+missing required answer in the opening. Secondary roles still independently
+derive their questions without receiving this answer plan.
 
 阅读文档后，根据具体内容自行提出并回答最关心的三个问题。
 

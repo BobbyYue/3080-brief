@@ -6,6 +6,7 @@ import hashlib
 import json
 import sys
 from pathlib import Path
+from reader_answers import object_digest
 
 
 def load_json(path, label):
@@ -61,6 +62,29 @@ def validate(report, preview, ledger, visual_spec):
             errors.append(f"evaluation.{field} contains claims not mapped to the visual: {sorted(unknown)}")
 
     if verdict == "PASS":
+        # Visible-token coverage and one understood anchor are not enough.
+        # Every decision-critical claim needs a source-evaluated raw replay.
+        for key, value in (("replay_sha256", replay), ("ledger_sha256", ledger), ("visual_spec_sha256", visual_spec)):
+            if evaluation.get(key) != object_digest(value):
+                errors.append(f"evaluation.{key} is missing or stale")
+        required_core = {cid for cid, claim in claims.items()
+                         if claim.get("priority") == "P0" and not claim.get("appendix")}
+        matches = evaluation.get("claim_replays", [])
+        if not isinstance(matches, list) or any(not isinstance(m, dict) for m in matches):
+            matches = []
+            errors.append("claim_replays must be an array of claim-level evaluations")
+        ids = [m.get("claim_id") for m in matches]
+        if len(ids) != len(set(ids)) or set(ids) != required_core:
+            errors.append("PASS requires exactly one understood replay for every non-appendix P0 claim")
+        visible_replay = "\n".join([str(replay.get("main_judgment", "")),
+                                    *map(str, replay.get("supporting_evidence", [])),
+                                    str(replay.get("next_action_or_boundary", ""))])
+        for match in matches:
+            quote = match.get("reader_quote")
+            if not quote or quote not in visible_replay:
+                errors.append("P0 replay must quote the actual blind reader, not the expected answer")
+            if match.get("relation_preserved") is not True or not match.get("source_rationale"):
+                errors.append("P0 replay must preserve its source relationship and material qualifiers")
         main_ids = set(evaluation.get("main_judgment_claim_ids") or [])
         evidence_ids = set(evaluation.get("evidence_claim_ids") or [])
         action_ids = set(evaluation.get("action_or_boundary_claim_ids") or [])

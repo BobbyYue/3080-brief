@@ -8,6 +8,8 @@ import hashlib
 import json
 import sys
 from pathlib import Path
+import reader_answer_gate
+import validate_visual_replay
 
 
 def digest(path: Path) -> str:
@@ -44,6 +46,8 @@ def main() -> int:
     parser.add_argument("--geometry-report", default="")
     parser.add_argument("--full-page-replay", default="")
     parser.add_argument("--output", required=True)
+    parser.add_argument("--reader-answer-receipt", required=True)
+    parser.add_argument("--visual-replay", default="")
     args = parser.parse_args()
 
     errors: list[str] = []
@@ -111,6 +115,23 @@ def main() -> int:
                 if not p01_ids:
                     errors.append("claim_ledger has no non-appendix P0/P1 claims")
 
+    errors.extend(reader_answer_gate.validate(args.reader_answer_receipt, args.draft,
+                                              args.source_snapshot, args.claim_ledger))
+    answer_path = Path(args.reader_answer_receipt)
+    visual_replay_evidence = None
+    if args.visual_spec:
+        replay_path = require_file(args.visual_replay, "visual replay", errors)
+        if replay_path is not None and args.visual_preview:
+            try:
+                replay_status, replay_errors = validate_visual_replay.validate(
+                    json.loads(replay_path.read_text(encoding="utf-8")), args.visual_preview,
+                    ledger, json.loads(Path(args.visual_spec).read_text(encoding="utf-8")))
+                errors.extend(replay_errors)
+                if replay_status != "PASS":
+                    errors.append("core visual comprehension did not pass")
+                visual_replay_evidence = {"path": str(replay_path.resolve()), "sha256": digest(replay_path)}
+            except (ValueError, OSError, KeyError, TypeError) as exc:
+                errors.append(str(exc))
     file_hashes = {key: digest(path) for key, path in paths.items() if path is not None}
     receipt = {
         "schema_version": 1,
@@ -118,6 +139,8 @@ def main() -> int:
         "files": file_hashes,
         "p01_claim_ids": p01_ids,
         "errors": errors,
+        "reader_answers": {"path": str(answer_path.resolve()), "sha256": digest(answer_path) if answer_path.is_file() else None},
+        "visual_replay_evidence": visual_replay_evidence,
     }
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)

@@ -4,6 +4,25 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-15
+
+### Added
+
+- Source-backed required-reader answers for the opening, including the intended audience, decision, necessary facts, and material conditions.
+- An opening-only replay receipt checked by review readiness, reviewer packets, and final artifact verification. Expected answers and source content are not exposed to the blind reader.
+- Per-claim visual comprehension checks: every non-appendix P0 claim must be recoverable from the picture, not only its dominant anchor.
+- Unit and regression checks for omitted answers, incomplete comparisons, stale replay evidence, and missing core visual claims.
+
+### Changed
+
+- Reuse existing reader roles and review limits; retain 80% value-weighted visual coverage and scoped revalidation.
+- Internal configuration advances from 20 to 21. The repository release version is 0.9.0.
+
+### Upgrade notes
+
+- Previous review bundles without the opening answer receipt or per-claim visual replay evidence must be regenerated before final verification can pass.
+- Offline checks do not certify a host's live Feishu behavior. No new live-host certification is claimed by this release.
+
 ## [0.8.1] - 2026-09-07
 
 ### Changed

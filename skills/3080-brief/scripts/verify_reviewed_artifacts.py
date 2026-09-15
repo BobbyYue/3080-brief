@@ -4,6 +4,7 @@ import hashlib
 import json
 import sys
 from pathlib import Path
+import reader_answer_gate
 
 
 def digest(path):
@@ -36,6 +37,11 @@ def main():
     args = parser.parse_args()
 
     reviewed = json.loads(Path(args.review_result).read_text(encoding="utf-8"))
+    readiness = json.loads(Path(args.readiness_receipt).read_text(encoding="utf-8"))
+    answer_errors = reader_answer_gate.validate_readiness_binding(readiness, args.draft, args.source_snapshot, args.claim_ledger, args.visual_spec, args.whiteboard_preview)
+    if answer_errors:
+        print("FAIL opening comprehension: " + "; ".join(answer_errors))
+        return 1
     hashes = {
         "source_snapshot": digest(args.source_snapshot),
         "inventory": digest(args.inventory),

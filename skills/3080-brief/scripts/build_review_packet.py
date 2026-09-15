@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import reader_answer_gate
 
 
 CONFIG = json.loads((Path(__file__).resolve().parents[1] / "config" / "3080-brief.json").read_text(encoding="utf-8"))
@@ -100,6 +101,9 @@ def validate_readiness(args):
     current = {key: value for key, value in current.items() if value}
     if current != receipt.get("files"):
         raise SystemExit("review inputs changed after readiness validation")
+    answer_errors = reader_answer_gate.validate_readiness_binding(receipt, args.draft, args.source_snapshot, args.claim_ledger, args.visual_spec, args.whiteboard_preview)
+    if answer_errors:
+        raise SystemExit("opening comprehension validation failed: " + "; ".join(answer_errors))
 
 
 def packet_for(role, args):

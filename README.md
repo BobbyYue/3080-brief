@@ -69,6 +69,7 @@ cover the core logic in one picture, and answer the reader's key questions in on
 - **Core-value extraction:** separates decision-critical conclusions, evidence, risks, and actions from background noise.
 - **Clear storyline:** turns fragmented or technical source logic into a coherent argument.
 - **Concrete expression:** value-bearing titles, headings, and leads state the actual object and source-supported result instead of relying on method labels or generic claims.
+- **Complete first read:** checks whether the opening answers this reader's essential questions and whether every decision-critical visual claim can be understood from the picture itself.
 - **Visual reasoning:** Feishu and HTML share one explicit composition, visible evidence values, theme, and semantic colors. HTML adds a bundled offline chart/diagram kit with an auditable native-SVG fallback, so the one-picture argument does not collapse into boxes plus prose.
 - **Reliable delivery:** preserves the source, traces important claims, matches the output format, and verifies the final artifact.
 
@@ -142,6 +143,8 @@ Missing Feishu dependencies block only that output path. The skill shows the sou
 </details>
 
 ## Development verification
+
+Version 0.9.0 requires an opening-answer receipt and per-claim evidence for the core visual. Older review bundles missing these records must be regenerated before final verification can pass. This reuses existing reviewers and scoped revalidation; it does not add a universal review round. See the [changelog](CHANGELOG.md) and [required-answer workflow](skills/3080-brief/references/required-reader-answers.md).
 
 Run the complete offline suite:
 
