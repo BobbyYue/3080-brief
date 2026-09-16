@@ -14,7 +14,7 @@ ROLE_GATES = {
         "The opening produces a useful judgment within 30 seconds without a fixed phrase template.",
         "The target reader can access relevant information, find the decision spine, restate the meaning accurately, and use it; revise sentence or paragraph patterns only when they obstruct that path.",
         "Every value-bearing title, heading, and lead identifies the actual object and supported fact, question, change, condition, tradeoff, or impact. Restate the key relationship and its adjacent qualifications; accept a clear single fact without forcing an outcome or contrast.",
-        "Expression edits are minimal and contextual; legitimate technical terms, uncertainty, passive voice, neutral tone, and punctuation are not penalized in isolation.",
+        "Check empty abstraction, template-driven structure, purposeless repetition and audience mismatch contextually. Preserve legitimate terms, uncertainty, neutral tone and useful overview/detail repetition. Mandatory TLDR units are not template defects.",
         "The title, TLDR, table, body, and visual use the declared output language; conversation language is not treated as an override.",
         "A capable newcomer can restate the problem, solution, memorable example, and next action when source-backed.",
         "The TLDR table answers real reader questions and does not become a terminology dump.",
@@ -29,14 +29,14 @@ ROLE_GATES = {
         "The declared source primary language is independently verified from the normalized non-appendix source, and output matches it unless the packet contains the user's exact explicit instruction requesting another language.",
         "The claim ledger covers valuable non-appendix source information and excludes appendix material.",
         "No causal, quantitative, or recommendation claim is stronger than its evidence.",
-        "Thin or blocked material is shortened or clarified rather than padded with external facts, invented specificity, experience, or emotion.",
+        "Thin or blocked material is shortened or clarified rather than padded with external facts, invented specificity, experience, or emotion. Check rhetorical overstatement against protected relations, including changes made to sound natural.",
         "Missing denominators, periods, samples, conflicts, mutable-source observation time or version markers, and inferences are visible and handled safely without invented dates.",
         "Every visual title and label stays at or below the mapped claim's evidence ceiling and preserves its protected relation.",
     ],
     "visual": [
         "Recompute visible coverage from claim visual_required_tokens; do not trust the declared coverage percentage or block mapping alone.",
         "The visual language matches the declared document output language, except for source-native proper nouns and necessary terms.",
-        "The preview uses content-fit visual encoding rather than boxes plus prose when chartable data exists.",
+        "The preview uses content-fit visual encoding rather than boxes plus prose when chartable data exists. Diagnose empty packaging by actual reading obstacles, not counts of cards, tables or repeated layouts; preserve required one-picture and table functions.",
         "Exactly one allowed theme was selected from document type, audience, tone, relationship, and density; its rationale is content-based rather than a silent default.",
         "The one-picture visual, body figures, and HTML page use the same theme while preserving the canonical semantic colors.",
         "The rendered board has a clear reading path, uses proximity to bind labels, captions, and sources to their objects, separates larger reader questions with wider gaps, and has no visible clipping, overlap, overflow, or misleading precision.",
@@ -165,6 +165,12 @@ def packet_for(role, args):
 ## Role-Specific PASS Gates
 
 {gates}
+
+For expression issues, include location + quote (or visual element), concrete
+reader impact, smallest fix and protected meaning in existing check reasons or
+issue fields. AI-like alone is not evidence. Pure style preference is nonblocking
+and cannot trigger another review round. Reuse existing roles and retry limits;
+any actual edit follows scoped revalidation for changed artifact layers.
 """
 
     if role == "reader":

@@ -61,12 +61,28 @@ Preserve legitimate hedging, passive voice, technical terms, and neutral tone wh
 
 Edit only after the source-grounded reader narrative is complete.
 
-1. Identify the concrete reading problem: ambiguity, repetition, vague abstraction, mechanical sequence, unsupported certainty, missing actor, overloaded sentence relationships, or paragraph topic drift.
-2. Change the smallest span that resolves that problem.
-3. Recheck the protected relation and assertion ceiling.
-4. Stop when the passage is clear, professional, and source-fit.
+1. Scan the stable draft for empty abstraction, template-driven structure, purposeless repetition, rhetorical overstatement, audience/channel mismatch, and visual packaging without reader value. This is expression review, not AI-authorship detection.
+2. In existing validation notes, record completion (including no issues found). For a detected signal record `location + quote -> reader impact -> confirmed/dismissed/unresolved -> smallest fix -> protected meaning`. An explicit user style mismatch can justify a local edit; "AI-like" alone cannot.
+3. Merge confirmed issues and revise the smallest spans once before independent review. If specificity requires missing evidence, retain the uncertainty, shorten, or clarify; never fabricate a benefit.
+4. Recheck protected relations, assertion ceilings, voice and intended action. Stop when the passage is clear, professional, and source-fit.
 
 Do not force first person, slang, rhetorical questions, emotion, deliberate mistakes, varied punctuation, or a personal voice. Do not rewrite a clear passage merely because it contains one listed pattern.
+
+Preserve the mandatory one-sentence judgment, one-picture summary and key-question
+table. They serve different reading tasks; repeating a conclusion across them
+is not automatically redundant. Generic headings need changing only when they
+hide the real section question or duplicate another label without a distinct
+job. Repeated layouts, three peer blocks, a numbered procedure and professional
+terms can all be appropriate. Judge actual reading effort, not form counts.
+
+Reuse the Reader reviewer for abstraction, repetition, structure and register;
+Source for rhetorical overstatement and preserved meaning; Visualization for
+empty packaging and reading obstacles. Each expression issue must quote or
+locate the element, name its reader impact and give the smallest fix plus meaning
+to protect in existing check reasons/issues. Pure style preference cannot fail
+publication or trigger another round. Material reader or fidelity failures use
+existing gates and retry limits. A changed artifact follows scoped revalidation;
+never reuse a pass for a changed layer. No new reviewer or extra retry budget.
 
 ## Make Value Expressions Concrete
 

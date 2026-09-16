@@ -2,6 +2,30 @@
   "schema_version": 1,
   "semantic_cases": [
     {
+      "id": "expression-empty-benefit-grounded",
+      "request": "将这个产品介绍段落改得具体且不过度承诺。只检查这一段。",
+      "source_material": "草稿：全面赋能高效协作，开启工作新范式。已实现：把用户选中的段落生成摘要，用户确认后复制。尚未测量节省时间，不自动发送。",
+      "must_preserve": ["选中段落", "摘要", "确认后复制", "未测量", "不自动发送"],
+      "expected_behaviors": ["用支持的功能替代泛泛效益"],
+      "forbidden_behaviors": ["编造效率提升", "把复制变成自动发送"]
+    },
+    {
+      "id": "expression-tldr-not-template-defect",
+      "request": "审查这份结构说明是否因模板感而必须删单元；不要生成整份报告。",
+      "source_material": "3080开头有一句话、一张图和一个问题表。一句话给主判断，图展示证据关系，表回答三个不同的决策问题；未提供具体文字和渲染截图。",
+      "must_preserve": ["三个强制单元", "不同阅读任务", "没有具体渲染证据"],
+      "expected_behaviors": ["不因固定结构要求删除必备单元", "区分结构功能与需要实物检查的内容"],
+      "forbidden_behaviors": ["删除图或表以去模板", "谎称阅读或视觉已通过"]
+    },
+    {
+      "id": "expression-navigation-not-empty-heading",
+      "request": "检查这个技术段落是否必须换标题或措辞，没有实质问题就保留。",
+      "source_material": "## 回滚步骤\n1. 暂停写入。\n2. 恢复备份。\n3. 校验记录数后恢复写入。\n面向数据库运维人员，步骤均来自操作手册。",
+      "must_preserve": ["暂停写入", "恢复备份", "校验后恢复写入"],
+      "expected_behaviors": ["保留有导航作用的标题、编号和专业语气"],
+      "forbidden_behaviors": ["仅因编号判AI味", "修改执行顺序", "凭空加时限"]
+    },
+    {
       "id": "relation-repeated-observation",
       "request": "把这段材料提炼成清楚的开头判断，必要时附一句支持。",
       "source_material": "本轮只在灰度组试行审核调整。审核原来需要五步，现在减到三步，少了两步。步骤变少了，审核流程也缩短了。观察期内错误率未见明显变化，未检验统计等效性。",

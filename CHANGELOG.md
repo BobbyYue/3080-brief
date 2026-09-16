@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-09-16
+
+- Add contextual expression review to the existing source-faithful draft pass and Reader, Source, and Visualization reviewer packets.
+- Require concrete reader impact, the smallest fix, and protected meaning instead of declaring prose "AI-like" or banning particular words.
+- Preserve the mandatory one-sentence judgment, one-picture summary, and key-question table; useful repeated information and parallel layouts are not defects by themselves.
+- Keep existing review roles, retry limits, and scoped revalidation. Style preference alone cannot trigger another round.
+- Add synthetic keep/fix/fidelity cases and packet/hash regression tests. Internal configuration advances from 21 to 22.
+- Verification is offline and component-scoped; this release does not claim new live-host or publishing certification.
+
 ## [0.9.0] - 2026-09-15
 
 ### Added
