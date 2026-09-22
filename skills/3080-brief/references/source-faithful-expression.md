@@ -59,6 +59,16 @@ Preserve legitimate hedging, passive voice, technical terms, and neutral tone wh
 
 ## Make The Minimum Effective Edit
 
+Make the required units complementary: the takeaway gives the judgment, the picture exposes the relationship, and the question table answers likely follow-ups. Preserve useful repetition, every P0 and the weighted-coverage denominator. Do not achieve brevity by hiding decisive evidence or shrinking labels.
+
+Keep interpretation-changing caveats beside claims; defer lookup-only detail and omit generic disclaimers. Examples and transitions can reduce reader effort without adding new facts. Any review request to add content must name the concrete misunderstanding prevented; completeness alone is insufficient.
+
+The existing reader/source/visual responses must complete their `reader_value` fields. `build_review_packet.py` creates `reader-value-inputs.json`; pass it to `aggregate_reviews.py --reader-value-inputs`. Missing, stale, unanchored or unresolved evidence blocks aggregation and final artifact verification. This uses the same three roles and existing retry limits. Fast mode must use the same axes in its disclosed self-check, never claim independent review.
+
+For explicitly requested Fast mode, run `editorial_gate.py prepare-fast --text FINAL_TEXT --source SOURCE --renders PREVIEW --output CHECK_DIR` (repeat file flags as needed). Complete its three role-specific records yourself, without launching reviewers. Run `aggregate_reviews.py CHECK_DIR/reader.json CHECK_DIR/source.json CHECK_DIR/visual.json --reader-value-inputs CHECK_DIR/reader-value-inputs.json --self-check --output RESULT.json`, then `editorial_gate.py verify-fast` with the same current file flags and `--result RESULT.json`. Missing/failed/stale records block this path too. It verifies editorial self-checks only; preserve all existing Fast hard gates and disclose skipped independent review.
+
+For scoped updates, `plan_review_scope.py verify` also requires `editorial_inputs` and `reader_value` in the existing receipt, bound to its `plan_id`. Use `reader_value.template` with expression/selection/meaning/unit_roles/presentation. Input entries use path and SHA256 and must match the after-snapshot content/source/render layers. Reuse unchanged semantic explanations after verifying their layer hashes; inspect changed rendering afresh. This adds no reviewer or retry round and cannot be bypassed with bare PASS flags.
+
 Edit only after the source-grounded reader narrative is complete.
 
 1. Scan the stable draft for empty abstraction, template-driven structure, purposeless repetition, rhetorical overstatement, audience/channel mismatch, and visual packaging without reader value. This is expression review, not AI-authorship detection.

@@ -12,9 +12,12 @@
     "blocking_issues",
     "unsupported_claims",
     "missing_coverage",
-    "required_fixes"
+    "required_fixes",
+    "reader_value"
   ],
   "properties": {
+    "review_method": {"enum": ["independent", "self-check"]},
+    "reader_value": {"type": "object", "required": ["version", "artifact_binding", "checks"]},
     "reviewer_role": {"type": "string", "enum": ["reader", "source", "visual"]},
     "artifact_set_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "review_round": {"type": "integer", "minimum": 1},

@@ -11,11 +11,15 @@ from pathlib import Path
 
 from html_design_kit import echarts_option
 import reader_answers
+import reader_value
+import editorial_gate
 
 
 SKILL = Path(__file__).resolve().parents[1]
 SCRIPTS = SKILL / "scripts"
 FIXTURES = SKILL / "evals" / "fixtures"
+sys.path.insert(0, str(SKILL / "tests"))
+from editorial_fixture import structural_review
 
 
 def run(*args, expect=0, env=None):
@@ -83,6 +87,12 @@ def test_scoped_review_planner():
         receipt = tmp / "receipt.json"
         receipt.write_text(json.dumps({
             "schema_version": 1,
+            "editorial_inputs": {
+                key: [{"path": str(after_files[layer]), "sha256": reader_value.sha256(after_files[layer])}]
+                for key, layer in (("text", "content"), ("source", "source"), ("renders", "layout_mobile"))
+            },
+            "reader_value": structural_review(("expression", "selection", "meaning", "unit_roles", "presentation"),
+                plan["plan_id"], after_files["content"].read_text(), after_files["source"].read_text(), after_files["layout_mobile"]),
             "plan_id": plan["plan_id"],
             "checks": {name: "PASS" for name in plan["required_checks"]},
             "reviews": {},
@@ -1247,6 +1257,9 @@ def main():
             raise SystemExit("role-specific review packets are not distinct")
         artifact_set_id = packet_texts[0].split("Artifact set ID: `", 1)[1].split("`", 1)[0]
         dynamic_reviews = []
+        editorial_bundle = json.loads((packets / "reader-value-inputs.json").read_text(encoding="utf-8"))
+        editorial_text = "\n".join(reader_value.read_text(e["path"]) for e in editorial_bundle["text"])
+        editorial_source = "\n".join(reader_value.read_text(e["path"]) for e in editorial_bundle["source"])
         for role in ("reader", "source", "visual"):
             review_path = tmp_path / f"{role}.json"
             review_path.write_text(json.dumps({
@@ -1259,10 +1272,12 @@ def main():
                 "unsupported_claims": [],
                 "missing_coverage": [],
                 "required_fixes": [],
+                "reader_value": structural_review(editorial_gate.AXES[role], artifact_set_id,
+                    editorial_text, editorial_source, editorial_bundle["renders"][0]["path"]),
             }), encoding="utf-8")
             dynamic_reviews.append(review_path)
         review_result = tmp_path / "review-result.json"
-        run(sys.executable, str(SCRIPTS / "aggregate_reviews.py"), *(str(path) for path in dynamic_reviews), "--output", str(review_result))
+        run(sys.executable, str(SCRIPTS / "aggregate_reviews.py"), *(str(path) for path in dynamic_reviews), "--reader-value-inputs", str(packets / "reader-value-inputs.json"), "--output", str(review_result))
         run(
             sys.executable,
             str(SCRIPTS / "verify_reviewed_artifacts.py"),
@@ -1451,6 +1466,7 @@ def main():
         str(FIXTURES / "review-reader.json"),
         str(FIXTURES / "review-source.json"),
         str(FIXTURES / "review-visual.json"),
+        expect=2,  # Legacy PASS strings cannot bypass mandatory evidence inputs.
     )
     trigger_suite = json.loads((SKILL / "evals" / "trigger_cases.json").read_text(encoding="utf-8"))
     boundary_suite = json.loads((SKILL / "evals" / "boundary_cases.json").read_text(encoding="utf-8"))

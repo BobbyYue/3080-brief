@@ -77,7 +77,7 @@ Validate with `validate_whiteboard.sh` or `validate_html_output.py`. HTML requir
 
 ### 7. Stabilize Comprehension Before Audit
 
-Run cropped-picture replay for the actual reader; every P0 must be understood. HTML also needs geometry and full-page replay. Primary reads only the extracted opening; bind its required-answer receipt in readiness. Resolve blockers before audit. Fast self-checks are disclosed, not independent validation.
+Run cropped-picture replay for the actual reader; every P0 must be understood. HTML also needs geometry and full-page replay. Primary reads only the extracted opening; bind its required-answer receipt in readiness. Resolve blockers before audit. All modes require `reader_value` evidence; Fast self-checks are disclosed, not independent validation.
 
 ### 8. Run The Final Independent Audit
 

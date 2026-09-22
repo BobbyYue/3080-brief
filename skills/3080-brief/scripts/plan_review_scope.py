@@ -6,6 +6,7 @@ import hashlib
 import json
 import sys
 from pathlib import Path
+import reader_value
 
 
 LAYERS = ("source", "content", "visual", "layout_desktop", "layout_mobile")
@@ -153,6 +154,8 @@ def command_plan(args):
         "required_reviews": required_reviews,
         "reused_reviews": reused_reviews,
         "stop_when_required_scope_passes": True,
+        "editorial_version": 1,
+        "after_layers": after["layers"],
     }
     plan["plan_id"] = stable_id(plan)
     write_json(args.output, plan)
@@ -166,6 +169,9 @@ def command_verify(args):
     plan = load_json(args.plan)
     receipt = load_json(args.receipt)
     errors = []
+    if stable_id({k: v for k, v in plan.items() if k != "plan_id"}) != plan.get("plan_id"):
+        errors.append("scope plan content changed")
+    errors.extend(validate_editorial_scope(plan, receipt))
     if receipt.get("schema_version") != 1:
         errors.append("receipt schema_version must be 1")
     if receipt.get("plan_id") != plan.get("plan_id"):
@@ -188,6 +194,37 @@ def command_verify(args):
         return 1
     print(f"PASS scoped release plan_id={plan['plan_id']}")
     return 0
+
+
+def validate_editorial_scope(plan, receipt):
+    """Reuse prior semantic judgments only after checking current layer bindings."""
+    errors = []
+    try:
+        if plan.get("editorial_version") != 1:
+            return ["scope plan predates mandatory editorial evidence; rebuild the plan"]
+        layers = plan["after_layers"]
+        inputs = receipt["editorial_inputs"]
+        render_layers = [name for name in plan["changed_layers"] if name in {"visual", "layout_desktop", "layout_mobile"}]
+        allowed_groups = {"text": ["content"], "source": ["source"],
+                          "renders": render_layers or ["visual", "layout_desktop", "layout_mobile"]}
+        for group, names in allowed_groups.items():
+            allowed = {e["sha256"] for name in names for e in layers[name].values()}
+            entries = inputs[group]
+            if not entries:
+                return [f"missing scoped editorial {group}"]
+            for entry in entries:
+                if reader_value.sha256(entry["path"]) != entry["sha256"] or entry["sha256"] not in allowed:
+                    errors.append(f"scoped editorial {group} is stale or outside the current layers")
+            if {entry["sha256"] for entry in entries} != allowed:
+                errors.append(f"scoped editorial {group} omits current relevant files")
+        text = "\n".join(reader_value.read_text(e["path"]) for e in inputs["text"])
+        source = "\n".join(reader_value.read_text(e["path"]) for e in inputs["source"])
+        errors.extend(reader_value.validate(receipt.get("reader_value"),
+            ("expression", "selection", "meaning", "unit_roles", "presentation"), plan["plan_id"],
+            text, source=source, renders=[e["path"] for e in inputs["renders"]]))
+    except (KeyError, OSError, ValueError, TypeError, AttributeError) as exc:
+        errors.append(f"missing or invalid scoped editorial evidence: {exc}")
+    return errors
 
 
 def build_parser():

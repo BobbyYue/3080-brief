@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-22
+
+- Make expression, content necessity, source fidelity, visible reading order, and distinct jobs for the three TLDR units mandatory evidence in the existing reviews.
+- Reject missing or stale evidence, unrelated-file substitutions, hidden-only anchors, and scoped updates that omit changed content. Preserve P0 coverage, weighted coverage, all three units, and existing review limits.
+- Require `--reader-value-inputs` for review aggregation. Final verification reopens the reviewed files and validates their relationship to the delivered artifact.
+- Fast mode uses explicit, artifact-bound self-check records and cannot be presented as independent review. Scoped updates also require current editorial evidence.
+- Add synthetic negative and valid-control regression tests. Internal configuration advances from 22 to 23.
+- Upgrade: regenerate review records using the updated packets. Normal output formats are unchanged; this release does not certify all host integrations or repair the JavaScript-disabled fallback renderer's annotation layout.
+
 ## [0.9.1] - 2026-09-16
 
 - Add contextual expression review to the existing source-faithful draft pass and Reader, Source, and Visualization reviewer packets.

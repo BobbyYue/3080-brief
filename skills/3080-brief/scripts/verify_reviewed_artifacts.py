@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 import reader_answer_gate
+import editorial_gate
 
 
 def digest(path):
@@ -37,6 +38,9 @@ def main():
     args = parser.parse_args()
 
     reviewed = json.loads(Path(args.review_result).read_text(encoding="utf-8"))
+    if reviewed.get("review_method") == "self-check":
+        print("FAIL: Fast self-check is not independent review; use editorial_gate.py verify-fast and disclose omissions")
+        return 1
     readiness = json.loads(Path(args.readiness_receipt).read_text(encoding="utf-8"))
     answer_errors = reader_answer_gate.validate_readiness_binding(readiness, args.draft, args.source_snapshot, args.claim_ledger, args.visual_spec, args.whiteboard_preview)
     if answer_errors:
@@ -63,6 +67,10 @@ def main():
     }
     hashes = {key: value for key, value in hashes.items() if value}
     artifact_set_id = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode("utf-8")).hexdigest()
+    editorial_errors = editorial_gate.verify_receipt(reviewed, editorial_gate.inputs(args, artifact_set_id))
+    if editorial_errors:
+        print("FAIL editorial review: " + "; ".join(editorial_errors))
+        return 1
     expected = reviewed.get("artifact_set_id")
     if reviewed.get("verdict") != "PASS":
         print("FAIL review result is not PASS")

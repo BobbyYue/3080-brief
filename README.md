@@ -144,7 +144,7 @@ Missing Feishu dependencies block only that output path. The skill shows the sou
 
 ## Development verification
 
-Version 0.9.1 adds contextual checks for empty, repetitive, overstated, or template-driven expression within the existing reviews. It preserves the three TLDR units, legitimate professional language, and review limits; style preference alone is not a release blocker.
+Version 0.10.0 requires passage-level review evidence for expression, necessary content, source fidelity, and visible reading order. The judgment, picture, and question table must serve distinct reader needs. Missing or stale records block verification in full, scoped, and explicit Fast workflows; Fast remains a disclosed self-check. Existing units, coverage requirements, and review limits stay in place. Regenerate affected reviews and pass the prepared `--reader-value-inputs` file when aggregating them.
 
 Version 0.9.0 requires an opening-answer receipt and per-claim evidence for the core visual. Older review bundles missing these records must be regenerated before final verification can pass. This reuses existing reviewers and scoped revalidation; it does not add a universal review round. See the [changelog](CHANGELOG.md) and [required-answer workflow](skills/3080-brief/references/required-reader-answers.md).
 

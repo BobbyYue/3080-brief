@@ -4,6 +4,8 @@ import hashlib
 import json
 from pathlib import Path
 import reader_answer_gate
+import editorial_gate
+import reader_value
 
 
 CONFIG = json.loads((Path(__file__).resolve().parents[1] / "config" / "3080-brief.json").read_text(encoding="utf-8"))
@@ -253,7 +255,10 @@ Return JSON only. Validate against `references/independent-review.schema.json`; 
 
 Return `FAIL` when required evidence is absent or a gate cannot be verified. Do not rewrite the brief.
 """
-    return common + evidence + output_contract, artifact_set_id
+    editorial = "\n## Mandatory Editorial Evidence\n\nComplete `reader_value` in the same response; no extra reviewer. An addition needs a concrete misunderstanding it prevents, not merely completeness. Record optional stylistic preferences as nonblocking. Keep audit fields out of the brief.\n\n"
+    editorial += "\n".join(f"- {axis}: {reader_value.GUIDANCE[axis]}" for axis in editorial_gate.AXES[role])
+    editorial += "\n\n```json\n" + json.dumps(reader_value.template(editorial_gate.AXES[role], artifact_set_id), ensure_ascii=False, indent=2) + "\n```\n"
+    return common + evidence + output_contract + editorial, artifact_set_id
 
 
 def main():
@@ -298,6 +303,9 @@ def main():
         print(target)
     if len(artifact_ids) != 1:
         raise SystemExit("review packets were not built from one artifact set")
+    inputs_path = output / "reader-value-inputs.json" if len(roles) > 1 else output.with_suffix(".inputs.json")
+    inputs_path.write_text(json.dumps(editorial_gate.inputs(args, artifact_set_id), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"Editorial inputs: {inputs_path}; pass as --reader-value-inputs to aggregate_reviews.py")
 
 
 if __name__ == "__main__":
