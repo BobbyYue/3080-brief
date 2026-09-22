@@ -144,7 +144,7 @@ Missing Feishu dependencies block only that output path. The skill shows the sou
 
 ## Development verification
 
-Version 0.10.0 requires passage-level review evidence for expression, necessary content, source fidelity, and visible reading order. The judgment, picture, and question table must serve distinct reader needs. Missing or stale records block verification in full, scoped, and explicit Fast workflows; Fast remains a disclosed self-check. Existing units, coverage requirements, and review limits stay in place. Regenerate affected reviews and pass the prepared `--reader-value-inputs` file when aggregating them.
+Version 0.11.0 adds source-grounded detail, progression and reading-flow checks to the existing reviews. The judgment, picture and question table retain distinct reader jobs; no invented scenes or suspense are added to thin sources. Full, scoped and explicit Fast workflows require version 2 reader-value evidence; Fast remains a disclosed self-check. Regenerate old reviews and pass the prepared `--reader-value-inputs` when aggregating them. See the [writing examples](skills/3080-brief/references/writing-craft.md).
 
 Version 0.9.0 requires an opening-answer receipt and per-claim evidence for the core visual. Older review bundles missing these records must be regenerated before final verification can pass. This reuses existing reviewers and scoped revalidation; it does not add a universal review round. See the [changelog](CHANGELOG.md) and [required-answer workflow](skills/3080-brief/references/required-reader-answers.md).
 

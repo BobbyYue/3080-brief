@@ -1,5 +1,5 @@
 {
-  "version": 23,
+  "version": 24,
   "reading_path_contract": {
     "required": true,
     "contract_version": "1.0",

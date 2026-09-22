@@ -59,6 +59,12 @@ Preserve legitimate hedging, passive voice, technical terms, and neutral tone wh
 
 ## Make The Minimum Effective Edit
 
+Apply [writing-craft.md](writing-craft.md) within this pass: supported details,
+purposeful progression and natural reading flow. Version 2 reader-value records
+require three anchored `expression.craft_checks` and `meaning.detail_support`.
+Retain the three mandatory TLDR units, source-only scope and existing reviewers.
+No invented story, hidden conclusion, sentence quota or extra style-only round.
+
 Make the required units complementary: the takeaway gives the judgment, the picture exposes the relationship, and the question table answers likely follow-ups. Preserve useful repetition, every P0 and the weighted-coverage denominator. Do not achieve brevity by hiding decisive evidence or shrinking labels.
 
 Keep interpretation-changing caveats beside claims; defer lookup-only detail and omit generic disclaimers. Examples and transitions can reduce reader effort without adding new facts. Any review request to add content must name the concrete misunderstanding prevented; completeness alone is insufficient.

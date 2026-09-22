@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-09-22
+
+- Add anchored detail, progression and reading-flow checks to existing editorial reviews, with source support for specificity.
+- Require version 2 review records in full, scoped and explicit Fast paths; old records must be regenerated.
+- Preserve all three TLDR units, coverage, source-only scope and review limits. Thin sources are not expanded with invented scenes.
+- Add fictional writing examples and fix/keep/fidelity cases with negative contract tests.
+
 ## [0.10.0] - 2026-09-22
 
 - Make expression, content necessity, source fidelity, visible reading order, and distinct jobs for the three TLDR units mandatory evidence in the existing reviews.
