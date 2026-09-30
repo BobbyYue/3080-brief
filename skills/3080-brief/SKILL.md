@@ -7,7 +7,7 @@ description: Create a new source-grounded decision brief in the source format by
 
 **30-second judgment, 80% in one picture**
 
-Create a new reader-first decision brief from a source document. Match the source format by default and keep the source unchanged.
+Create a new reader-first brief in the source format by default. Keep the source unchanged.
 
 ## Output Contract
 
@@ -37,7 +37,7 @@ When goals conflict, apply: source truth → explicit user requirements → read
 
 ## Conditional Routing
 
-Do not preload references. Read only resources whose condition is true.
+Read references only when their condition is true.
 
 | Need | Read / run |
 | --- | --- |
@@ -58,7 +58,7 @@ Do not preload references. Read only resources whose condition is true.
 Use `standard` by default. Use `fast` only when the user explicitly prioritizes speed or skips independent review; hard source, language, relation, assertion, TLDR, coverage, and visual gates still apply, while audit/replay are skipped and disclosed. Use `strict` when requested or when conclusions affect material resources, policy/rules, causal claims, risk, or broad rollout; it adds exact P0/P1 relation replay and configured reader escalation. Mode details and retry limits are in [review-loop.md](references/review-loop.md).
 
 1. **Route**: determine source/output type, language override, scope, constraints, and artifact lanes. For multiple briefs, follow the efficiency contract. For Feishu, check dependencies before fetch/write; installation or authentication needs separate approval.
-2. **Ground**: before rendering, inspect all material non-appendix evidence. Build `source_inventory.md`, untranslated `source_non_appendix.md`, P0/P1 excerpts, and `claim_ledger.json`; record language basis, exclusions, sufficiency, source identity, evidence ceilings, protected relations, chartable data, risks/actions, mappings, and omissions. Reopen the source only for a missing fact or dispute.
+2. **Ground**: before prose, inspect all material non-appendix evidence. Build `source_inventory.md`, untranslated `source_non_appendix.md`, P0/P1 excerpts and `claim_ledger.json`; record language, exclusions, sufficiency, identity, evidence ceilings, protected relations, chartable data, risks/actions, mappings and omissions. Use the required-answer plan to select the decisive relationship, evidence and limits; retain all P0. Reopen sources only for missing facts or disputes.
 3. **Clarify**: before drafting, ask up to three blocking questions only when ambiguity can change the main conclusion, metric meaning/scope, risk boundary, audience, next action, language, or protected relation. For non-blocking gaps, use explicit missing-source/inference labels. Shorten thin-source output instead of making it appear rich.
 4. **Draft**: create one `brief.json` conforming to [brief.schema.json](references/brief.schema.json), used by every renderer. Before rendering, create its mandatory `reading_path`: one reader decision plus exactly one reader question and density level for each body section. Build a Pyramid opening and a source-shaped reader path with short judgment headings. Run the source-faithful expression scan on the stable draft before review; record outcomes in existing validation notes, preserve mandatory TLDR units, and edit only confirmed reader problems without strengthening evidence.
 5. **Visualize**: create `visual_spec.json` before drawing and map every block to claim IDs. Choose the smallest content-fit relationship and exactly one allowed theme, with no fixed/silent default. Reach configured weighted coverage without omitting P0 claims. When three or more quantitative claims exist, or the conclusion depends on quantitative evidence, use a real quantitative encoding beyond boxes/prose; show a truthful boundary when extraction is unreliable. Keep semantic colors consistent across visual and body. Image generation is private-safe inspiration only, never the final evidence carrier. For HTML, also create reviewed `html_design.json` and preserve an auditable native-SVG fallback.

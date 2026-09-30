@@ -143,7 +143,7 @@ Standard 和 Strict 的首个候选版本必须完成视觉复述、Blind Reader
 
 ## 开发验证
 
-0.11.0 在已有审阅中检查具体细节、内容推进和阅读节奏。结论、图和问答表继续分别回答不同问题；不会为材料补故事、添悬念。完整审阅、局部更新和明确指定的 Fast 模式均需第 2 版检查记录，Fast 仍需披露为自检。原有覆盖要求和审阅次数不变。升级后重新生成旧记录，汇总时传入 `--reader-value-inputs`。见[写法对照案例](skills/3080-brief/references/writing-craft.md)。
+0.12.0 在压缩之前先找出原文中决定判断的关系、证据和限制。已有审阅需说明修改带来的具体阅读收益，没有收益就保留原文。结论、图和问答表继续分别回答不同问题，所有 P0 与加权覆盖要求不变。[技巧对应案例](skills/3080-brief/references/writing-craft-cases.md)和[完整段落案例](skills/3080-brief/references/writing-composition-examples.md)仅在需要时读取，不能作为补充原文事实的材料。完整审阅、局部更新和明确指定的 Fast 模式沿用第 2 版记录及原有轮次；Fast 仍需披露为自检，汇总时传入 `--reader-value-inputs`。
 
 0.9.0 版本要求开头必答信息回执，以及核心图中逐项结论的理解证据。旧审阅包若缺少这些记录，需重新生成后才能通过最终验收。这些检查复用已有读者和按改动范围复核的机制，不统一增加一轮审稿。详见[版本说明](CHANGELOG.md)和[必答信息流程](skills/3080-brief/references/required-reader-answers.md)。
 

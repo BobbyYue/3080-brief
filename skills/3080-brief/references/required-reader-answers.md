@@ -17,6 +17,12 @@ surface. Record the supported answer and source location, or an explicit
 source-unknown. Check the plan against all decision-critical source findings;
 do not quietly omit a difficult finding to make a draft pass.
 
+Use these existing answers to select the central comparison, condition or
+tradeoff and its evidence before wording the judgment. Separate supporting
+detail from decisive limits; brevity must not move a limit beyond the reader's
+chosen surface. Allocate different jobs to takeaway, picture and questions,
+with purposeful overlap and full P0 coverage. No new planning form is needed.
+
 Examples of task-dependent required information:
 - An analytical finding may need the actual feature, compared groups, direction,
   outcome and a material scope condition. Put decisive magnitude nearby when it

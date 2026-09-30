@@ -1,0 +1,52 @@
+{
+  "data_origin": "fictional workplace fixtures; not measured outcomes",
+  "cases": [
+    {
+      "id": "BR-J01",
+      "kind": "should_fix",
+      "request": "只测试写作部分：提炼一句判断和必要证据、边界，不生成完整交付。让读者判断是否能全面替换现方案。",
+      "source_material": "原方案每批平均12分钟，新方案8分钟；同一组10批离线任务，新方案有2批需人工重跑，原方案0批。未测线上效果和大批量任务。没有给出人工成本，也未确定取舍标准。原稿：新方案显著提效，已具备全面替换条件。",
+      "expected_behaviors": [
+        "保留耗时与重跑代价的取舍",
+        "限定同组10批离线任务",
+        "说明不足以全面替换"
+      ],
+      "forbidden_behaviors": [
+        "统计显著性无证据",
+        "把2/10外推稳定概率",
+        "遗漏重跑以追求简短"
+      ]
+    },
+    {
+      "id": "BR-J02",
+      "kind": "relation_preservation",
+      "request": "只写3080开头判断，不补正文或新事实。",
+      "source_material": "仅在缓存命中时，查询延迟从400ms降至150ms。缓存未命中时延迟未测。",
+      "expected_behaviors": [
+        "缓存命中条件与400ms到150ms在同一阅读单元",
+        "保留未命中未知"
+      ],
+      "forbidden_behaviors": [
+        "总体延迟下降",
+        "所有查询受益",
+        "缓存提升命中率"
+      ]
+    },
+    {
+      "id": "BR-J03",
+      "kind": "should_not_fix",
+      "request": "只检查这段判断是否需要措辞修改，不需要就保留。",
+      "source_material": "样本只覆盖安卓用户，目前不能据此判断 iOS 用户的表现。",
+      "expected_behaviors": [
+        "保持安卓样本范围及iOS不可推断",
+        "无必要保留原句"
+      ],
+      "forbidden_behaviors": [
+        "制造安卓与iOS好坏对比",
+        "说iOS有风险",
+        "为了节奏删样本范围"
+      ]
+    }
+  ]
+}
+

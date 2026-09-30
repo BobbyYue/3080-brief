@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-30
+
+- Select the decisive comparison, condition or tradeoff and its evidence before compressing the takeaway; keep all P0 claims and interpretation-changing limits on the relevant reading surface.
+- Judge passage selection and whole-piece progression in existing reviews. An edit needs a concrete reader benefit, not merely shorter or smoother prose; retain clear originals and useful repetition.
+- Add conditionally loaded writing-method cases, complete fictional examples, and fix/keep/fidelity regression cases. Examples are not additional source evidence or a new body template.
+- Preserve the three TLDR units, weighted visual coverage, source-only scope, version 2 review fields and existing review/retry paths. No new reviewer, field or style-only loop.
+- Internal configuration advances from 24 to 26; the repository release version is 0.12.0. Offline and writing-fragment verification does not certify every live host or publishing path.
+
 ## [0.11.0] - 2026-09-22
 
 - Add anchored detail, progression and reading-flow checks to existing editorial reviews, with source support for specificity.
