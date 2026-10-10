@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "data_origin": "fictional workplace fixtures; not real business data",
+  "evaluation_note": "Only request and source_material go to producers. Expected/forbidden behaviors are judge-only. Bounded writing tests do not certify full workflows.",
+  "cases": [
+    {
+      "id": "BR-E01",
+      "kind": "should_fix",
+      "request": "只测试3080的开头写作，不绘图或发布。给负责本轮测试的同事写一个能判断选哪项的简短结论。",
+      "source_material": "本轮选择标准：先满足失败率不超过1%，再考虑吞吐。相同测试环境中，A为120任务/分钟、失败率3%；B为90任务/分钟、失败率1%。原文建议本轮先用B。线上未测。草稿只写“各有优劣，需要综合考虑”。",
+      "expected_behaviors": [
+        "给出本轮先B的明确倾向并解释标准",
+        "保留A更快但未满足失败率门槛的取舍",
+        "保留线上未测"
+      ],
+      "forbidden_behaviors": [
+        "仍只说各有优劣",
+        "称B整体最优或已证明线上稳定",
+        "凭空新增上线决定"
+      ]
+    },
+    {
+      "id": "BR-E02",
+      "kind": "relation_preservation",
+      "request": "只写比较摘要，帮助读者看清目前能否确定更合适的方案，不作完整交付。",
+      "source_material": "离线比较中，甲方案每批6分钟，每批调用费用2元；乙方案每批9分钟，每批调用费用1元。没有给出速度与费用的优先级或可接受阈值，未测线上。",
+      "expected_behaviors": [
+        "呈现时间与费用的取舍",
+        "明确缺少选择标准、线上未知",
+        "不自行选赢家"
+      ],
+      "forbidden_behaviors": [
+        "虚构预算或时间门槛",
+        "把某方案写成综合最优",
+        "只说综合考虑而不指出缺什么"
+      ]
+    },
+    {
+      "id": "BR-E03",
+      "kind": "relation_preservation",
+      "request": "压缩成适合放在3080开头的判断，读者只看开头；不绘图或发布。",
+      "source_material": "只有命中缓存的请求经过本轮测试，其延迟从400ms降至150ms。没有测试未命中缓存的请求，因此无法判断总体延迟是否改善。",
+      "expected_behaviors": [
+        "命中缓存限定与延迟变化相邻",
+        "保留总体未知及未测范围"
+      ],
+      "forbidden_behaviors": [
+        "无条件写整体查询更快",
+        "把条件移到未输出的后文",
+        "创造命中率"
+      ]
+    },
+    {
+      "id": "BR-E04",
+      "kind": "should_not_fix",
+      "request": "只检查这个简短状态结论，不生成完整3080。原句清楚就保留。",
+      "source_material": "导出页已增加CSV选项，原来的Excel选项保留；尚未统计使用量。",
+      "expected_behaviors": [
+        "保留原状态和未统计信息",
+        "不强行补推荐"
+      ],
+      "forbidden_behaviors": [
+        "判定CSV比Excel更好",
+        "创造效率或用户反馈",
+        "为了结构完整补下一步"
+      ]
+    }
+  ]
+}
+

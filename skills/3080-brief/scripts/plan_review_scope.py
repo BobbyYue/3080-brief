@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 import reader_value
+import editorial_gate
 
 
 LAYERS = ("source", "content", "visual", "layout_desktop", "layout_mobile")
@@ -53,7 +54,7 @@ def command_snapshot(args):
         layer, key, path = parse_named_file(entry, LAYERS)
         if key in layers[layer]:
             raise SystemExit(f"Duplicate input key: {layer}:{key}")
-        layers[layer][key] = {"sha256": sha256_file(path), "size": path.stat().st_size}
+        layers[layer][key] = {"path": str(path), "sha256": sha256_file(path), "size": path.stat().st_size}
     missing = [layer for layer, values in layers.items() if not values]
     if missing:
         raise SystemExit("Every review layer needs at least one input: " + ", ".join(missing))
@@ -71,19 +72,47 @@ def command_snapshot(args):
         if data.get("reviewer_role") != role or data.get("verdict") not in {"PASS", "FAIL"}:
             raise SystemExit(f"Review file does not match role {role}: {path}")
         reviews[role] = {
+            "path": str(path),
             "verdict": data["verdict"],
             "artifact_set_id": data.get("artifact_set_id", ""),
             "sha256": sha256_file(path),
         }
 
     manifest = {"schema_version": 1, "layers": layers, "reviews": reviews}
+    if getattr(args, "delivery_artifact", ""):
+        artifact = Path(args.delivery_artifact).resolve()
+        manifest["delivery_artifact"] = {"path": str(artifact), "sha256": sha256_file(artifact)}
+        try:
+            manifest["delivery_artifact"]["content_sha256"] = sha256_bytes(reader_value.normalize(reader_value.read_text(artifact)).encode())
+        except (ValueError, UnicodeError, OSError):
+            manifest["delivery_artifact"]["content_sha256"] = None
+        errors = validate_delivery_layer(manifest["delivery_artifact"], layers)
+        if errors:
+            raise SystemExit("; ".join(errors))
     manifest["manifest_id"] = stable_id(manifest)
     write_json(args.output, manifest)
     print(f"PASS snapshot manifest_id={manifest['manifest_id']}")
 
 
 def changed_layers(before, after):
-    return [layer for layer in LAYERS if before["layers"].get(layer) != after["layers"].get(layer)]
+    def values(manifest, layer):
+        return {key: {k: v for k, v in entry.items() if k != "path"}
+                for key, entry in manifest["layers"].get(layer, {}).items()}
+    return [layer for layer in LAYERS if values(before, layer) != values(after, layer)]
+
+
+def validate_delivery_layer(artifact, layers):
+    """A separately named final file cannot inherit unrelated layer approvals."""
+    try:
+        if sha256_file(artifact["path"]) != artifact["sha256"]:
+            return ["scoped delivery artifact changed"]
+        entries = [entry for name in LAYERS if name != "source" for entry in layers[name].values()]
+        if not any(entry.get("path") and Path(entry["path"]).resolve() == Path(artifact["path"]).resolve()
+                   and entry["sha256"] == artifact["sha256"] for entry in entries):
+            return ["delivery artifact must be a bound content or render-layer input"]
+        return []
+    except (OSError, KeyError, TypeError):
+        return ["scoped delivery-layer binding is unavailable"]
 
 
 def add_review(required, reused, before_reviews, role):
@@ -100,6 +129,12 @@ def command_plan(args):
     if before.get("schema_version") != 1 or after.get("schema_version") != 1:
         raise SystemExit("Unsupported review manifest version")
     changes = changed_layers(before, after)
+    old_artifact, new_artifact = before.get("delivery_artifact"), after.get("delivery_artifact")
+    if new_artifact and (not old_artifact or old_artifact.get("sha256") != new_artifact.get("sha256")):
+        same_content = (old_artifact and old_artifact.get("content_sha256")
+                        and old_artifact["content_sha256"] == new_artifact.get("content_sha256"))
+        if not same_content and "content" not in changes:
+            changes.append("content")
     checks = []
     required_reviews = []
     reused_reviews = []
@@ -158,6 +193,13 @@ def command_plan(args):
         "after_layers": after["layers"],
     }
     plan["plan_id"] = stable_id(plan)
+    if after.get("delivery_artifact"):
+        errors = validate_delivery_layer(after["delivery_artifact"], after["layers"])
+        if errors:
+            raise SystemExit("; ".join(errors))
+        plan["delivery_artifact"] = after["delivery_artifact"]
+        plan["reused_review_inputs"] = {role: prior_reviews[role] for role in reused_reviews}
+        plan["plan_id"] = stable_id({key: value for key, value in plan.items() if key != "plan_id"})
     write_json(args.output, plan)
     print(
         f"PASS scope={scope} changed={','.join(changes) or 'none'} "
@@ -165,10 +207,16 @@ def command_plan(args):
     )
 
 
-def command_verify(args):
-    plan = load_json(args.plan)
-    receipt = load_json(args.receipt)
+def command_verify(args, checked=None):
+    plan_bytes, receipt_bytes = Path(args.plan).read_bytes(), Path(args.receipt).read_bytes()
+    plan, receipt = json.loads(plan_bytes), json.loads(receipt_bytes)
+    verified_inputs = {str(Path(args.plan).resolve()): sha256_bytes(plan_bytes),
+                       str(Path(args.receipt).resolve()): sha256_bytes(receipt_bytes)}
     errors = []
+    artifact = plan.get("delivery_artifact")
+    if artifact:
+        errors.extend(validate_delivery_layer(artifact, plan["after_layers"]))
+        errors.extend(validate_reused_reviews(plan, receipt, verified_inputs))
     if stable_id({k: v for k, v in plan.items() if k != "plan_id"}) != plan.get("plan_id"):
         errors.append("scope plan content changed")
     errors.extend(validate_editorial_scope(plan, receipt))
@@ -192,8 +240,34 @@ def command_verify(args):
     if errors:
         print("FAIL\n- " + "\n- ".join(errors))
         return 1
+    if checked is not None:
+        checked.update(status="pass", artifact_sha256=artifact["sha256"], verified_inputs=verified_inputs)
     print(f"PASS scoped release plan_id={plan['plan_id']}")
     return 0
+
+
+def validate_reused_reviews(plan, receipt, verified_inputs=None):
+    errors = []
+    records = plan.get("reused_review_inputs", {})
+    roles = plan.get("reused_reviews", [])
+    if set(records) != set(roles):
+        return ["scoped plan lacks its original reused reviews"]
+    try:
+        for role in roles:
+            entry = records[role]
+            raw = Path(entry["path"]).read_bytes()
+            if verified_inputs is not None:
+                verified_inputs[str(Path(entry["path"]).resolve())] = sha256_bytes(raw)
+            original = json.loads(raw)
+            if sha256_bytes(raw) != entry["sha256"]:
+                errors.append(f"reused {role} review changed")
+            if original.get("reviewer_role") != role or original.get("artifact_set_id") != entry["artifact_set_id"]:
+                errors.append(f"reused {role} review binding changed")
+            bundle = {"version": 1, "artifact_binding": entry["artifact_set_id"], **receipt["editorial_inputs"]}
+            errors.extend(editorial_gate.validate(original, bundle))
+    except (OSError, ValueError, KeyError, TypeError):
+        errors.append("original reused review is missing or invalid")
+    return errors
 
 
 def validate_editorial_scope(plan, receipt):
@@ -234,6 +308,7 @@ def build_parser():
     snapshot = sub.add_parser("snapshot", help="Hash review inputs by independent layer")
     snapshot.add_argument("--input", action="append", default=[], help="layer:key=path")
     snapshot.add_argument("--review", action="append", default=[], help="role=review.json")
+    snapshot.add_argument("--delivery-artifact", default="")
     snapshot.add_argument("--output", required=True)
     snapshot.set_defaults(func=command_snapshot)
 

@@ -15,11 +15,15 @@ def inputs(args, binding):
         "source": [args.source_snapshot, args.source_excerpts],
         "renders": [args.whiteboard_preview, args.document_preview, args.full_page_preview],
     }
-    return {"version": 1, "artifact_binding": binding, **{
+    bundle = {"version": 1, "artifact_binding": binding, **{
         group: [{"path": str(Path(p).resolve()), "sha256": reader_value.sha256(p)}
                 for p in dict.fromkeys(paths) if p and Path(p).is_file()]
         for group, paths in groups.items()
     }}
+    artifact = getattr(args, "delivery_artifact", "")
+    if artifact:
+        bundle["delivery_artifact"] = {"path": str(Path(artifact).resolve()), "sha256": reader_value.sha256(artifact)}
+    return bundle
 
 
 def validate(review, bundle):
@@ -41,6 +45,9 @@ def validate(review, bundle):
         errors.append("editorial inputs belong to another artifact set")
     content = {}
     try:
+        artifact = bundle.get("delivery_artifact")
+        if artifact and reader_value.sha256(artifact["path"]) != artifact["sha256"]:
+            errors.append("actual delivery artifact changed after review")
         for group in ("text", "source", "renders"):
             entries = bundle[group]
             if not isinstance(entries, list) or not entries:

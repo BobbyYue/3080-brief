@@ -83,6 +83,7 @@ def validate_readiness(args):
     if receipt.get("schema_version") != 1 or receipt.get("status") != "ready" or receipt.get("errors") not in ([], None):
         raise SystemExit("review readiness receipt is not ready")
     current = {
+        "delivery_artifact": digest(getattr(args, "delivery_artifact", "")),
         "source_snapshot": digest(args.source_snapshot),
         "inventory": digest(args.inventory),
         "claim_ledger": digest(args.claim_ledger),
@@ -110,6 +111,7 @@ def validate_readiness(args):
 
 def packet_for(role, args):
     hashes = {
+        "delivery_artifact": digest(getattr(args, "delivery_artifact", "")),
         "source_snapshot": digest(args.source_snapshot),
         "inventory": digest(args.inventory),
         "claim_ledger": digest(args.claim_ledger),
@@ -140,6 +142,8 @@ def packet_for(role, args):
 - Reviewer role: {ROLE_NAMES[role]}
 - Review round: {args.round}
 - Artifact set ID: `{artifact_set_id}`
+- Exact local delivery artifact: {getattr(args, 'delivery_artifact', '') or 'Not bound; checked delivery is unavailable.'}
+- Inspect that artifact with its supplied preview; verify it agrees with the draft. Hash identity alone is not content-equivalence evidence.
 - Isolation: do not request, infer, or reference another reviewer's opinion.
 
 ## Artifact Hashes
@@ -270,6 +274,7 @@ def main():
     parser.add_argument("--tldr", required=True)
     parser.add_argument("--body", required=True)
     parser.add_argument("--draft", default="")
+    parser.add_argument("--delivery-artifact", default="")
     parser.add_argument("--user-request", default="")
     parser.add_argument("--source-outline", default="")
     parser.add_argument("--source-excerpts", default="")

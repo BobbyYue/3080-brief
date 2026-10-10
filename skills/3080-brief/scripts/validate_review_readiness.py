@@ -35,6 +35,7 @@ def main() -> int:
     parser.add_argument("--tldr", required=True)
     parser.add_argument("--body", required=True)
     parser.add_argument("--draft", required=True)
+    parser.add_argument("--delivery-artifact", default="", help="Exact local file to hand to the reader or native publisher")
     parser.add_argument("--source-outline", required=True)
     parser.add_argument("--source-excerpts", required=True)
     parser.add_argument("--validation-notes", required=True)
@@ -64,6 +65,7 @@ def main() -> int:
         "document_preview": args.document_preview,
     }
     optional = {
+        "delivery_artifact": args.delivery_artifact,
         "visual_spec": args.visual_spec,
         "html_design_plan": args.html_design_plan,
         "visual_preview": args.visual_preview,

@@ -8,6 +8,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import build_review_packet as review
+import editorial_gate
+import reader_value
 
 
 class ExpressionPacketTests(unittest.TestCase):
@@ -26,6 +28,8 @@ class ExpressionPacketTests(unittest.TestCase):
             for role in review.ROLE_NAMES:
                 packet, identity = review.packet_for(role, args)
                 ids.add(identity)
+                for axis in editorial_gate.AXES[role]:
+                    self.assertIn(reader_value.GUIDANCE[axis], packet)
                 for text in ("location + quote", "protected meaning", "nonblocking", "scoped revalidation"):
                     self.assertIn(text, packet)
             self.assertEqual(len(ids), 1)

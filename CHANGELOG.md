@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-10-10
+
+- Strengthen source-shaped openings, natural syntax, necessary caveats and distinct jobs for the judgment, picture and table. Keep every P0 claim and the existing weighted coverage requirement.
+- Add a checked-delivery CLI for standard and scoped review paths. Bind the actual local delivery file during readiness and review, then return its exact checked bytes rather than a regenerated copy.
+- Require scoped final files to belong to reviewed content/render layers; detect visible-content changes even when labeled layout-only. Retain and revalidate original reused review records without restarting valid full audits.
+- Bind delivery to the digest actually consumed by verification, closing the reproduced A-to-B-to-A file-change race. Add missing/stale-review, detached-file, exact-output and valid-reuse regressions.
+- Upgrade: include `--delivery-artifact` in readiness, review packets and before/after scope snapshots; include the same file in an appropriate layer. Regenerate affected plans. Internal configuration advances to 29; repository version is 0.13.0.
+- Fast, repair-exhausted drafts and live/native publishing retain their existing policies and are not newly enforced by this wrapper. No extra reviewer or retry round is added. Offline tests do not certify model judgments or host integration.
+
 ## [0.12.0] - 2026-09-30
 
 - Select the decisive comparison, condition or tradeoff and its evidence before compressing the takeaway; keep all P0 claims and interpretation-changing limits on the relevant reading surface.

@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "data_origin": "fictional workplace fixtures, not real people or measured business results",
+  "evaluation_note": "Observation tags organize maintenance coverage, not universal claims about human cognition or runtime rules. Give only request/source to producers; keep expected and forbidden behaviors for a separate judge.",
+  "cases": [
+    {
+      "id": "BR-C01",
+      "kind": "should_fix",
+      "focus": [
+        "relevance"
+      ],
+      "observations": [
+        "H02",
+        "H07",
+        "A05"
+      ],
+      "request": "只写3080开头的判断和关键依据，不生成完整产物。",
+      "source_material": "本次测试的第一要求是失败率不超过1%。相同环境中A每分钟120个任务、失败率3%；B每分钟90个任务、失败率1%。原文建议本轮先B。线上尚未测试。草稿是“二者各有优势，应结合实际综合考虑”。",
+      "expected_behaviors": [
+        "给出本轮先B并说明门槛",
+        "保留A更快但不满足失败率要求",
+        "线上未测紧邻判断或依据"
+      ],
+      "forbidden_behaviors": [
+        "仍不给倾向只列优缺点",
+        "称B线上已验证",
+        "编造更多指标"
+      ]
+    },
+    {
+      "id": "BR-C02",
+      "kind": "relation_preservation",
+      "focus": [
+        "relevance",
+        "progression"
+      ],
+      "observations": [
+        "H04",
+        "H03"
+      ],
+      "request": "只给一句判断和一张对比图的内容安排，不绘图或发布。",
+      "source_material": "同一组10批离线任务，新方案每批平均8分钟，旧方案12分钟；新方案2批需人工重跑，旧方案0批。未测线上和更大批量，也没有人工成本数据。没有确定速度和重跑之间的选择标准。",
+      "expected_behaviors": [
+        "把速度与重跑代价作为图的主要对比",
+        "分清分钟与批次两个单位和10批离线范围",
+        "保留未测范围和缺少标准，不给无依据赢家"
+      ],
+      "forbidden_behaviors": [
+        "以一组通用价值卡片代替比较关系",
+        "把分钟与批次混为一个可比较总量",
+        "突出速度却隐藏重跑或未测边界"
+      ]
+    },
+    {
+      "id": "BR-C03",
+      "kind": "relation_preservation",
+      "focus": [
+        "caveats"
+      ],
+      "observations": [
+        "A01",
+        "H02"
+      ],
+      "request": "整理成3080的开头结论，仅输出文字。",
+      "source_material": "原文称本轮仅测缓存命中的请求，延迟从400ms降至150ms，未命中缓存的请求未测。草稿另外重复“技术发展日新月异，具体情况应具体分析，不能一概而论”，没有其他实际限制。",
+      "expected_behaviors": [
+        "保留缓存命中范围、数值和未测信息",
+        "将具体条件放在结论旁",
+        "去除没有独立意义的宏观提醒"
+      ],
+      "forbidden_behaviors": [
+        "声称总体延迟下降",
+        "删掉未测范围换取果断",
+        "把通用提醒扩成一个章节"
+      ]
+    },
+    {
+      "id": "BR-C04",
+      "kind": "should_fix",
+      "focus": [
+        "syntax",
+        "progression"
+      ],
+      "observations": [
+        "A02",
+        "A03",
+        "A04"
+      ],
+      "request": "只改写这段总结，不生成图表或完整文档。",
+      "source_material": "原文事实：三张导出表可以按用户ID合并，其他匹配方式尚未支持。草稿：“通过多源信息协同聚合机制实现数据对齐能力的有效提升。这一能力即多源信息对齐闭环。总结而言，该机制有效促进三表对齐。”没有时间收益或准确率数据。",
+      "expected_behaviors": [
+        "直接写三张表按用户ID合并",
+        "保留其他匹配方式未支持",
+        "去掉虚构标签和重复结论"
+      ],
+      "forbidden_behaviors": [
+        "发明另一种术语",
+        "承诺提升准确率或节省时间",
+        "将未支持写成即将支持"
+      ]
+    },
+    {
+      "id": "BR-C05",
+      "kind": "should_not_fix",
+      "focus": [
+        "relevance"
+      ],
+      "observations": [
+        "H06",
+        "A01"
+      ],
+      "request": "只检查这句状态总结是否需要修改。",
+      "source_material": "导出页已增加CSV选项，Excel选项保留，使用量尚未统计。",
+      "expected_behaviors": [
+        "保留清楚的事实和未知",
+        "不制造故事或推广价值"
+      ],
+      "forbidden_behaviors": [
+        "补好评或效率收益",
+        "强行提出推荐或下一步",
+        "扩写背景以填满结构"
+      ]
+    },
+    {
+      "id": "BR-C06",
+      "kind": "relation_preservation",
+      "focus": [
+        "caveats"
+      ],
+      "observations": [
+        "H07",
+        "A05"
+      ],
+      "request": "只提炼方案比较的一句话结论。",
+      "source_material": "离线测试中，甲每批6分钟、调用费用2元；乙每批9分钟、调用费用1元。原文没有给速度与费用的优先级，也未测试线上。",
+      "expected_behaviors": [
+        "讲清更快与更便宜的取舍",
+        "指出缺少选择标准或不能据此判定更合适",
+        "保留离线范围"
+      ],
+      "forbidden_behaviors": [
+        "凭空挑赢家",
+        "把两者写成一样好",
+        "假装来源提供了优先级"
+      ]
+    }
+  ]
+}
+

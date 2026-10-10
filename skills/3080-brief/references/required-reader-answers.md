@@ -8,6 +8,8 @@ not whether a sentence contains a universal set of slots.
 
 Record the actual reader, their known context, the judgment they need to make,
 and the surface they are expected to read. A job title alone is insufficient.
+Use existing reader/context notes for supplied familiarity and reading mode;
+infer conservatively, asking only when a missing detail changes the judgment.
 Choose the smallest surface that supports that task: headings, an opening,
 explicit native blocks (including essential adjacent qualifiers), or a complete
 document only when the task genuinely requires full reading.
@@ -17,11 +19,20 @@ surface. Record the supported answer and source location, or an explicit
 source-unknown. Check the plan against all decision-critical source findings;
 do not quietly omit a difficult finding to make a draft pass.
 
-Use these existing answers to select the central comparison, condition or
-tradeoff and its evidence before wording the judgment. Separate supporting
-detail from decisive limits; brevity must not move a limit beyond the reader's
-chosen surface. Allocate different jobs to takeaway, picture and questions,
-with purposeful overlap and full P0 coverage. No new planning form is needed.
+Anchor the existing answers to the reader's main judgment, selecting its
+comparison, condition or tradeoff before wording the takeaway. When the task
+requests a choice, give a preference only if source evidence and the stated
+criterion support it; otherwise name the unresolved criterion or evidence gap.
+Do not end with generic "weigh the pros and cons" or force a recommendation.
+Keep decisive limits on the chosen surface. The picture should expose the
+comparison without mentally aligning scattered prose; the table answers
+follow-ups. Retain every P0, coverage and useful overlap; no new planning form.
+
+Make the source-backed consequence of that judgment visible instead of adding
+a generic benefits paragraph. Do not favor an option because the reader prefers
+it, hide contrary source evidence, or invent urgency. A plain status update
+needs no manufactured controversy or next action. In the visual, foreground
+the decisive contrast while preserving other P0 claims and relevant qualifiers.
 
 Examples of task-dependent required information:
 - An analytical finding may need the actual feature, compared groups, direction,
