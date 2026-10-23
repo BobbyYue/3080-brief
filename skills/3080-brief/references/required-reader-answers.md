@@ -53,6 +53,15 @@ Keep prose natural; stop when the intended judgment is easy and accurate.
 
 ## Portable Plan And Commands
 
+The same plan must include `expression_plan`: existing `lead_answer_ids`,
+`opening_move` (`direct`, `correction`, `comparison`, or `instruction`), a
+reader-specific `opening_reason`, and `essential_boundaries` (empty if none).
+Each boundary references one `answer_id` with a concrete `reason` and
+`placement` (`claim-adjacent`, `section-once`, or `method-note`). These are
+placement choices, not a once-only quota. Lock them before prose; functional
+lifecycle initialization derives them from this plan and checks for drift.
+See [direct expression](direct-expression.md) for comparison and false positives.
+
 Save a plan with this structure (replace all example content with actual facts):
 
 ```json
@@ -62,6 +71,12 @@ Save a plan with this structure (replace all example content with actual facts):
     "profile": "PM and RD leaders deciding whether a pilot merits further testing",
     "known_context": "Know common product metrics, not this pilot",
     "decision": "Judge the observed benefit and the remaining decision"
+  },
+  "expression_plan": {
+    "lead_answer_ids": ["A1"],
+    "opening_move": "direct",
+    "opening_reason": "The reader needs the pilot finding before deciding on further testing.",
+    "essential_boundaries": [{"answer_id": "A1", "placement": "claim-adjacent", "reason": "Keep the pilot scope with the finding so it is not read as a rollout result."}]
   },
   "surfaces": [{"id": "opening", "mode": "between", "start": "## Summary", "end": "## Details"}],
   "answers": [{

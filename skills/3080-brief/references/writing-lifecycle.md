@@ -45,6 +45,17 @@ answer plan still bind their native sources and exact result; an inherited plan
 link remains checked. These are identity/field checks, not automatic proof that
 two plans or a draft are semantically equivalent.
 
+Functional plans also require `expression_plan`, derived unchanged from the
+locked required-answer plan. Each complete unit record requires a current
+`expression_review`, prepared with `direct_expression.py prepare --text UNIT
+--stage during --output REVIEW`. Compare faithful alternatives and record
+cumulative effort inside the unit. After fixes, regenerate for the actual
+text. The existing final Reader evaluates the complete reading path with
+`reader_value` version 5; it does not inherit the author's retention reasons.
+See [direct expression](direct-expression.md). Necessary negatives remain;
+word counts and pattern matches are never quality thresholds. The implementation
+binding includes the comparison module, so changing it invalidates old runs.
+
 Use `review-finish ... --verdict fail` for a failed native result, retaining
 unresolved reader impact in its issue list. The API's `issues` argument can
 record that impact when a native result's issue fields differ. A parallel

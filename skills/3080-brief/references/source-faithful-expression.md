@@ -1,6 +1,6 @@
 # Source-Faithful Expression
 
-Read this reference only after the first reader-structured draft exists, or when source sufficiency, claim strength, templated language, or false-positive risk needs attention. Do not use it to choose the body structure.
+Use this reference for source-faithful drafting and revision. Before prose, lock the expression fields in the existing required-answer plan; use [direct-expression.md](direct-expression.md) for comparison records. This reference does not prescribe a body structure.
 
 ## Execution Order
 
@@ -60,7 +60,7 @@ Preserve legitimate hedging, passive voice, technical terms, and neutral tone wh
 ## Make The Minimum Effective Edit
 
 Apply [writing-craft.md](writing-craft.md) within this pass: supported details,
-purposeful progression and natural reading flow. Version 2 reader-value records
+purposeful progression and natural reading flow. Version 5 reader-value records
 require three anchored `expression.craft_checks` and `meaning.detail_support`.
 Retain the three mandatory TLDR units, source-only scope and existing reviewers.
 No invented story, hidden conclusion, sentence quota or extra style-only round.

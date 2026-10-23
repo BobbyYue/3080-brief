@@ -378,7 +378,8 @@ def validate_editorial_scope(plan, receipt, *, incomplete=False):
         else:
             errors.extend(reader_value.validate(receipt.get("reader_value"),
                 ("expression", "selection", "meaning", "unit_roles", "presentation"), plan["plan_id"],
-                text, source=source, renders=[e["path"] for e in inputs["renders"]]))
+                text, source=source, renders=[e["path"] for e in inputs["renders"]],
+                expression_text=editorial_gate.expression_text(inputs, candidate)))
     except (KeyError, OSError, ValueError, TypeError, AttributeError) as exc:
         errors.append(f"missing or invalid scoped editorial evidence: {exc}")
     return errors

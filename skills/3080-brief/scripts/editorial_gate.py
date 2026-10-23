@@ -35,6 +35,20 @@ def inputs(args, binding):
     return bundle
 
 
+def expression_text(bundle, candidate=None):
+    """Read the actual candidate once, not concatenated authoring evidence."""
+    candidate = candidate or bundle.get("delivery_artifact") or bundle.get("body_candidate")
+    if not candidate:
+        raise ValueError("direct expression requires the actual reading candidate")
+    body_completion.read_ref(candidate, decode=False)
+    snapshot = bundle.get("body_visible_text")
+    if snapshot:
+        if snapshot.get("candidate_sha256") != candidate["sha256"]:
+            raise ValueError("direct expression visible snapshot belongs to another candidate")
+        return body_completion.read_ref(snapshot)
+    return body_completion.candidate_text(candidate["path"])
+
+
 def validate(review, bundle):
     errors = []
     role = review.get("reviewer_role")
@@ -70,7 +84,8 @@ def validate(review, bundle):
         source = "\n".join(reader_value.read_text(e["path"]) for e in content["source"])
         errors.extend(reader_value.validate(review.get("reader_value"), AXES[role],
             bundle["artifact_binding"], text, source=source,
-            renders=[e["path"] for e in content["renders"]]))
+            renders=[e["path"] for e in content["renders"]],
+            expression_text=expression_text(bundle) if "expression" in AXES[role] else None))
     except (OSError, ValueError, KeyError, TypeError) as exc:
         errors.append(f"invalid editorial evidence: {exc}")
     return errors
@@ -150,7 +165,7 @@ def main():
                       "review_round": 1, "review_method": "self-check", "verdict": "FAIL",
                       "checks": [{"name": "reader value", "result": "FAIL", "reason": ""}],
                       "blocking_issues": [], "unsupported_claims": [], "missing_coverage": [], "required_fixes": [],
-                      "reader_value": reader_value.template(axes, bundle["artifact_binding"], "\n".join(reader_value.read_text(e['path']) for e in bundle['text']), "\n".join(reader_value.read_text(e['path']) for e in bundle['source']))}
+                      "reader_value": reader_value.template(axes, bundle["artifact_binding"], "\n".join(reader_value.read_text(e['path']) for e in bundle['text']), "\n".join(reader_value.read_text(e['path']) for e in bundle['source']), expression_text=expression_text(bundle) if "expression" in axes else None)}
             if role in body_completion.ROLES:
                 review["body_completion"] = body_completion.template(bundle["body_completion"], role)
                 (args.output / (role + "-body-evidence.md")).write_text(

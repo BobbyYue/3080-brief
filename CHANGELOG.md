@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-23
+
+- Require direct-expression planning, text-bound unit comparisons and a final whole-document check in the existing Reader review. Compare corrective or cautionary wording with equally accurate direct alternatives, while preserving necessary prohibitions, refusals, negative findings and uncertainty.
+- Check cumulative effort across titles, the takeaway, visual labels, the question table and body. Pattern counts select inspection candidates; they are not word bans or automatic rewrite thresholds. Useful repetition across the three TLDR units remains valid.
+- Use the actual candidate's reading surface once, including its existing bound rendered-text snapshot where needed. Supporting excerpts and visual-specification metadata do not create artificial duplicate occurrences or another rendering pass.
+- Reject missing, stale and unresolved comparison evidence in full, scoped and explicit Fast delivery. Treat an adequately recorded request for revision as a content failure, not a transport error; preserve the three-round labeled-draft exit.
+- Upgrade: add `expression_plan` to the locked required-answer plan, `expression_review` to complete-unit records and version 5 `reader_value` evidence to existing reviews. Regenerate affected records without silently resetting ongoing runs or backfilling PASS. See [direct expression](skills/3080-brief/references/direct-expression.md).
+- Internal configuration advances from 35 to 36. The entrypoint remains 92 lines, with no additional reviewer or review round. The offline suite contains 382 unit tests, including synthetic keep/fix, meaning-preservation and workflow regressions; it does not establish measured reader preference or guaranteed writing quality.
+- Retain the existing Claude Code example and its v0.14.0 generation provenance. This release updates the Skill and documentation, not the article's reviewed HTML.
+
 ## [0.14.0] - 2026-10-23
 
 - Require a source-grounded body plan before prose. Map planned reader questions to visible explanations and check them during rendering, review readiness and checked delivery. Empty bodies, heading-only bodies, overview-only answers, stale plans and hidden-only explanations no longer pass as complete articles.

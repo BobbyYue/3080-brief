@@ -20,6 +20,7 @@ SCRIPTS = SKILL / "scripts"
 FIXTURES = SKILL / "evals" / "fixtures"
 sys.path.insert(0, str(SKILL / "tests"))
 from editorial_fixture import structural_review
+from expression_fixture import structural_expression_plan
 from body_fixture import make_body, structural_body
 import body_completion
 
@@ -1180,6 +1181,7 @@ def main():
         answer_plan = tmp_path / "reader-plan.json"
         reader_answers.save(answer_plan, {
             "version": reader_answers.CONTRACT_VERSION,
+            "expression_plan": structural_expression_plan(),
             "reader": {"profile": "Fixture reader", "known_context": "No hidden project context", "decision": "Inspect fixture conclusion"},
             "surfaces": [{"id": "opening", "mode": "between", "start": "## TLDR", "end": "## 汇总指标掩盖了真正差异"}],
             "answers": [{"id": "A1", "question": "What is the core difference?", "expected_information": "Segmented difference", "source_location": "Fixture sections 1-2", "source_status": "supported", "required_on": ["opening"], "claim_ids": ["C01", "C02"]}]
@@ -1307,7 +1309,8 @@ def main():
                 "required_fixes": [],
                 "body_completion": structural_body(audit_body, role),
                 "reader_value": structural_review(editorial_gate.AXES[role], artifact_set_id,
-                    editorial_text, editorial_source, editorial_bundle["renders"][0]["path"]),
+                    editorial_text, editorial_source, editorial_bundle["renders"][0]["path"],
+                    expression_text=editorial_gate.expression_text(editorial_bundle)),
             }), encoding="utf-8")
             dynamic_reviews.append(review_path)
         review_result = tmp_path / "review-result.json"

@@ -17,6 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import reader_answers as answers
+from expression_fixture import structural_expression_plan
 
 
 class ReaderAnswersTests(unittest.TestCase):
@@ -43,6 +44,7 @@ class ReaderAnswersTests(unittest.TestCase):
         )
         self.plan = {
             "version": answers.CONTRACT_VERSION,
+            "expression_plan": structural_expression_plan("result"),
             "reader": {
                 "profile": "A fixture reader outside the project",
                 "known_context": "No project history",

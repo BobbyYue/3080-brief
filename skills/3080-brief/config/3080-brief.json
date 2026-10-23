@@ -1,5 +1,5 @@
 {
-  "version": 35,
+  "version": 36,
   "managed_execution": {
     "policy": "config/execution-policy.json",
     "controller": "scripts/writing_execution.py",

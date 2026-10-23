@@ -20,7 +20,7 @@ class DraftDeliveryTests(unittest.TestCase):
         self.addCleanup(self.fixture.doCleanups)
         self.base = self.fixture.base
 
-    def prepare_failure(self, rounds=3, prior_verdicts=(), body_failure=False):
+    def prepare_failure(self, rounds=3, prior_verdicts=(), body_failure=False, expression_failure=False):
         for index, path in enumerate(self.fixture.reviews):
             original = json.loads(path.read_text())
             original["review_round"] = rounds
@@ -32,6 +32,9 @@ class DraftDeliveryTests(unittest.TestCase):
                 if body_failure:
                     original["body_completion"]["requirements"][0].update(
                         status="fail", reason="Synthetic body explanation omits the source-supported condition.")
+                if expression_failure:
+                    original["reader_value"]["checks"]["expression"]["direct_expression"]["whole_text"].update(
+                        decision="revise", reading_effect="Synthetic unresolved cumulative reading burden.")
             path.write_text(json.dumps(original))
         result = self.fixture.cli("aggregate_reviews.py", *self.fixture.reviews,
             "--reader-value-inputs", self.fixture.inputs_path, "--output", self.fixture.result)
@@ -82,6 +85,16 @@ class DraftDeliveryTests(unittest.TestCase):
         result = self.fixture.cli("deliver.py", "draft", *self.args[:-2])
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(result.stdout, "")
+
+    def test_expression_failure_keeps_three_round_draft_without_claiming_acceptance(self):
+        self.prepare_failure(expression_failure=True)
+        result = self.fixture.cli("deliver.py", "draft", *self.args)
+        self.fixture.assert_ok(result)
+        envelope = json.loads(result.stdout)
+        self.assertEqual(envelope["delivery_state"], "draft")
+        self.assertTrue(envelope["user_question_required"])
+        self.assertFalse(envelope["external_action_authorized"])
+        self.assertNotEqual(self.fixture.cli("deliver.py", *self.args).returncode, 0)
 
     def test_failed_task_cannot_use_complete_exit(self):
         self.prepare_failure()

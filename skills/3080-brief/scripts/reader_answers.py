@@ -3,13 +3,14 @@
 
 This module validates evidence bindings and completeness, not semantic truth.
 Reader responses remain blind; a separate source reviewer evaluates them.
-The same version is vendored in Reader's Seat and 3080 Brief for portability.
+This package-local variant requires the pre-draft expression plan for 3080.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import direct_expression
 import re
 from html.parser import HTMLParser
 from pathlib import Path
@@ -105,6 +106,7 @@ def plan_errors(plan):
     for sid in ids:
         if not any(sid in a.get("required_on", []) for a in answers):
             errors.append(f"{sid}: surface has no reader-required answers")
+    errors.extend(direct_expression.plan_errors(plan.get("expression_plan"), answers))
     return errors
 
 

@@ -8,7 +8,7 @@
 
 The source is Lydia Hallie's *Maximizing the value of your Claude Code sessions*, published by Anthropic on August 14, 2026 and retrieved on October 22, 2026. The source remains unchanged; the linked page is a separate English synopsis.
 
-This example was regenerated with the current installed 3080 Brief on October 23, 2026, using configuration revision **35**. It uses the skill's HTML composer, an embedded interactive chart, and a native SVG fallback. Example-specific rendering fixes keep mobile table values together and make annotations and the fallback readable. It can be read online or opened locally without network dependencies.
+This example was regenerated on October 23, 2026 using 3080 Brief configuration revision **35**, released as **v0.14.0**. The v0.15.0 Skill update leaves its reviewed HTML unchanged. It uses the skill's HTML composer, an embedded interactive chart, and a native SVG fallback. Example-specific rendering fixes keep mobile table values together and make annotations and the fallback readable. It can be read online or opened locally without network dependencies.
 
 The README preview is a screenshot of the page's main figure, not a mockup. Both language editions link to this same English HTML. The overview is followed by six explanatory body sections, including cache conditions, the differences between /clear, /compact and /rewind, and the costs as well as benefits of delegation.
 

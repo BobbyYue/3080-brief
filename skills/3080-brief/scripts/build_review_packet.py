@@ -18,6 +18,7 @@ ROLE_GATES = {
         "The target reader can access relevant information, find the decision spine, restate the meaning accurately, and use it; revise sentence or paragraph patterns only when they obstruct that path.",
         "Every value-bearing title, heading, and lead identifies the actual object and supported fact, question, change, condition, tradeoff, or impact. Restate the key relationship and its adjacent qualifications; accept a clear single fact without forcing an outcome or contrast.",
         "Check empty abstraction, template-driven structure, purposeless repetition and audience mismatch contextually. Preserve legitimate terms, uncertainty, neutral tone and useful overview/detail repetition. Mandatory TLDR units are not template defects.",
+        "Independently compare corrective wording with equally accurate direct alternatives, including headings, visual labels, TLDR and body as one reading path. Judge cumulative effort; do not inherit the author's keep rationales. Retain necessary prohibitions, refusals, negative findings and useful recurrence across the three TLDR units. Accuracy alone does not settle expression quality.",
         "The title, TLDR, table, body, and visual use the declared output language; conversation language is not treated as an override.",
         "A capable newcomer can restate the problem, solution, memorable example, and next action when source-backed.",
         "The TLDR table answers real reader questions and does not become a terminology dump.",
@@ -270,10 +271,15 @@ Return `FAIL` when required evidence is absent or a gate cannot be verified. Do 
 """
     editorial = "\n## Mandatory Editorial Evidence\n\nComplete `reader_value` in the same response; no extra reviewer. An addition needs a concrete misunderstanding it prevents, not merely completeness. Record optional stylistic preferences as nonblocking. Keep audit fields out of the brief.\n\n"
     editorial += "\n".join(f"- {axis}: {reader_value.GUIDANCE[axis]}" for axis in editorial_gate.AXES[role])
-    review_text = "\n".join(reader_value.read_text(e['path']) for e in editorial_gate.inputs(args, artifact_set_id)['text'])
-    source_text = "\n".join(reader_value.read_text(e['path']) for e in editorial_gate.inputs(args, artifact_set_id)['source']) if role == 'source' else ''
-    editorial += "\n\n```json\n" + json.dumps(reader_value.template(editorial_gate.AXES[role], artifact_set_id, review_text, source_text), ensure_ascii=False, indent=2) + "\n```\n"
-    body_evidence = body_completion.packet(editorial_gate.inputs(args, artifact_set_id)["body_completion"], role) if role in body_completion.ROLES else ""
+    bundle = editorial_gate.inputs(args, artifact_set_id)
+    review_text = "\n".join(reader_value.read_text(e['path']) for e in bundle['text'])
+    source_text = "\n".join(reader_value.read_text(e['path']) for e in bundle['source']) if role == 'source' else ''
+    direct_text = editorial_gate.expression_text(bundle) if role == 'reader' else None
+    if role == 'reader':
+        surface = bundle.get('body_visible_text') or bundle.get('delivery_artifact') or bundle['body_candidate']
+        editorial += "\nDirect-expression reading surface: " + surface['path'] + ". Inspect this candidate once in reading order; overlapping TLDR/body excerpts and visual-spec metadata are not extra occurrences.\n"
+    editorial += "\n\n```json\n" + json.dumps(reader_value.template(editorial_gate.AXES[role], artifact_set_id, review_text, source_text, expression_text=direct_text), ensure_ascii=False, indent=2) + "\n```\n"
+    body_evidence = body_completion.packet(bundle["body_completion"], role) if role in body_completion.ROLES else ""
     return common + evidence + output_contract + editorial + body_evidence, artifact_set_id
 
 

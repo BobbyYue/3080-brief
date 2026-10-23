@@ -10,6 +10,7 @@ import reader_answers
 
 def native_plan_fields(plan):
     return {"task": plan["reader"]["decision"],
+            "expression_plan": plan["expression_plan"],
             "reader": {"knowledge": plan["reader"]["known_context"], "need": plan["reader"]["decision"]},
             "required_answers": [{"id": item["id"], "question": item["question"],
                 "expected": item["expected_information"], "source_location": item["source_location"]}
@@ -48,7 +49,7 @@ def verify_native_context(module, run, artifact, sources, reader_lock):
             if lock["source"]["sha256"] not in native_hashes:
                 raise delivery.DeliveryBlocked("Reader plan and native review use different sources")
             if any(plan.get(key) != value for key, value in native_plan_fields(original).items()):
-                raise delivery.DeliveryBlocked("Task, reader or answers drifted from the native plan")
+                raise delivery.DeliveryBlocked("Task, reader, answers or expression plan drifted from the native plan")
         allowed = {".html": {"html"}, ".htm": {"html"}, ".docx": {"word"},
                    ".pdf": {"pdf"}, ".pptx": {"slides"}, ".md": {"markdown", "md", "text"},
                    ".txt": {"text", "markdown"}, ".xml": {"feishu", "xml"}}
