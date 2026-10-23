@@ -6,15 +6,17 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Agent Skill](https://img.shields.io/badge/Agent_Skill-open_format-0B7A55.svg)](https://agentskills.io/)
 
-[Chinese (Simplified)](README.zh-CN.md) · [Quick start](#quick-start) · [Worked example](docs/examples/claude-code-session-value.md) · [Latest release](https://github.com/BobbyYue/3080-brief/releases/latest)
+[Chinese (Simplified)](README.zh-CN.md) · [Quick start](#quick-start) · [Read the HTML example](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html) · [Latest release](https://github.com/BobbyYue/3080-brief/releases/latest)
 
 An open-source **AI Agent Skill** that turns source documents into reader-first decision briefs: a 30-second executive summary, one auditable visual, a key-question table, and a clear storyline. It preserves the source and can create a new brief in Feishu/Lark, Markdown, Word/docx, or self-contained HTML when the host supports that format.
 
-<p align="center"><strong>① Original article on the left → ② 3080 Brief output on the right</strong></p>
+## See a real example
 
-[![The original Claude article compared with the 3080 Brief output](docs/assets/claude-code-comparison.png)](docs/examples/claude-code-session-value.md)
+[**Read the English HTML brief →**](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html) · [Original article](https://claude.com/resources/articles/maximizing-the-value-of-your-claude-code-sessions) · [Example details](docs/examples/claude-code-session-value.md)
 
-> **Real output example:** [Anthropic's five-minute article](https://claude.com/blog/maximizing-the-value-of-your-claude-code-sessions) explains token pricing, prompt caching, context growth, session length, and subagents across multiple sections. The 3080 Brief turns it into one operating judgment, one five-step routine, and a clear order for what to check first, while keeping the original as the source of truth. [Open the complete example →](docs/examples/claude-code-session-value.md)
+This example uses Anthropic's *Maximizing the value of your Claude Code sessions*. It was regenerated on October 22, 2026 with the current installed 3080 Brief. The English page contains the takeaway, a source-grounded visual, and a key-question table. Click the preview to read it in your browser; no download or sign-in is required.
+
+[![One-picture summary from the regenerated English HTML brief](docs/assets/claude-code-session-value-preview.png)](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html)
 
 ## What you get
 

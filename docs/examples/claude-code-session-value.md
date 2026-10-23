@@ -1,59 +1,30 @@
-# Maximizing Claude Code Session Value | 3080 Brief
+# Claude Code session value: English HTML example
 
-> **Source:** [Maximizing the value of your Claude Code sessions](https://claude.com/blog/maximizing-the-value-of-your-claude-code-sessions), Claude by Anthropic, published August 14, 2026; retrieved August 18, 2026.
->
-> The original article remains unchanged. This is a separate, source-grounded decision brief.
+[**Read the rendered brief**](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html) · [HTML file in this repository](claude-code-session-value.html) · [Original article](https://claude.com/resources/articles/maximizing-the-value-of-your-claude-code-sessions)
 
-![The original Claude article compared with the 3080 Brief output](../assets/claude-code-comparison.png)
+[![Actual one-picture preview of the English brief](../assets/claude-code-session-value-preview.png)](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html)
 
-## 30-second judgment
+## About this example
 
-> Treat every Claude Code session as a context budget: keep each session short and relevant, set model and effort before starting, and isolate noisy work so tokens serve the current task instead of accumulated history.
->
-> Every later turn resends the conversation so far. Cached history is cheaper, but it still consumes context and attention.
->
-> When a session becomes expensive, the article's rough priority order is: long sessions, excess context, an oversized model or effort level, then prompt-cache breaks.
->
-> Practical routine: inspect startup context, attach only what is needed, quiet or offload noisy output, then clear or compact at a clean boundary.
+The source is Lydia Hallie's *Maximizing the value of your Claude Code sessions*, published by Anthropic on August 14, 2026 and retrieved on October 22, 2026. The source remains unchanged; the linked page is a separate English synopsis.
 
-## One-picture summary
+This example was regenerated with the current installed 3080 Brief on October 22, 2026, using configuration revision **33**. It uses the skill's HTML composer, an embedded interactive chart, and a native SVG fallback. Example-specific rendering fixes keep mobile table values together and make annotations and the fallback readable. It can be read online or opened locally without network dependencies.
 
-![Five session habits and the four cost drivers to check first](../assets/claude-code-session-value.svg)
+The README preview is a screenshot of the new page's main figure, not a mockup or the old example. Both language editions link to this same English HTML. A header-contrast correction on October 23 left the content unchanged.
 
-The priority bars show order only, not measured cost magnitude.
+## Scope and verification
 
-## Key questions
+- Product behavior and price ratios are attributed to the dated source, not presented as independently verified current tariffs or measured savings.
+- Detailed command options remain in the original article; this is a compact brief, not a replacement manual.
+- [Generation record](claude-code-session-value.provenance.json) identifies the generator snapshot and published HTML checksum.
+- This update changes the READMEs and example only. It does not change the installable skill package or create a new release tag.
 
-| Reader question | Practical answer | Why it matters |
-| --- | --- | --- |
-| What should I change first? | Use `/clear` between different tasks. | The full conversation is sent again on every later turn, so irrelevant history compounds. |
-| Why set model and effort at the start? | Changing model, effort, or fast mode mid-conversation can trigger a full re-prefill. | Those choices affect the prompt-cache key. |
-| How do I keep context lean? | Inspect `/context`, `@`-mention needed files once, and suppress or offload noisy command output. | Files and command results remain in the conversation and are reconsidered on later turns. |
-| When should I compact, rewind, or use a subagent? | Compact after a completed phase or before a break; rewind recent wrong turns; isolate noisy work. | Each action removes a different kind of context cost. |
+## Embedded asset licenses
 
-## Storyline
+The generated page embeds Apache ECharts and selected fonts. Their notices remain available in this repository:
 
-### 1. Treat the session as a context budget
-
-Everything added to the conversation is sent again on every later turn. Prompt caching lowers the price of repeated history, but does not remove its context load. Efficiency therefore depends on how much enters the context and how long it remains there.
-
-### 2. Start deliberately
-
-Choose the model, effort level, and fast mode before work begins when possible. Run `/context` in a fresh session and remove unnecessary standing instructions or unused tools.
-
-### 3. Keep additions lean
-
-Attach needed files directly, reduce noisy command output, and use a subagent when log-heavy work is worth isolating. The goal is not to minimize tokens indiscriminately; it is to keep them focused on the requested task.
-
-### 4. Reset at clean boundaries
-
-Use `/clear` between tasks, `/compact` after a completed phase or before a break, and `/rewind` when only recent turns went wrong.
-
-## Evidence boundary
-
-- The source reports cache reads at `0.1x` input price, cache writes at up to `2x`, and output at roughly `5x` input. These are dated Claude Code product economics, not universal benchmark measurements.
-- The source labels its curves as illustrative rather than benchmark data.
-- The four cost drivers are presented in a rough qualitative order; this brief does not turn that order into a quantitative cost split.
-- Product behavior and pricing may change after the source publication date.
-
-[Read the original article →](https://claude.com/blog/maximizing-the-value-of-your-claude-code-sessions)
+- [Apache ECharts license](../../skills/3080-brief/assets/html-kit/licenses/ECHARTS-LICENSE.txt)
+- [Bricolage Grotesque font license](../../skills/3080-brief/assets/html-kit/fonts/BricolageGrotesque-OFL.txt)
+- [Work Sans font license](../../skills/3080-brief/assets/html-kit/fonts/WorkSans-OFL.txt)
+- [JetBrains Mono font license](../../skills/3080-brief/assets/html-kit/fonts/JetBrainsMono-OFL.txt)
+- [Theme adaptation license](../../skills/3080-brief/assets/themes/LICENSE.beautiful-feishu-whiteboard.txt)

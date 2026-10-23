@@ -6,15 +6,17 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Agent Skill](https://img.shields.io/badge/Agent_Skill-open_format-0B7A55.svg)](https://agentskills.io/)
 
-[English](README.md) · [快速开始](#快速开始) · [完整案例](docs/examples/claude-code-session-value.md) · [最新版本](https://github.com/BobbyYue/3080-brief/releases/latest)
+[English](README.md) · [快速开始](#快速开始) · [直接阅读 HTML 案例](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html) · [最新版本](https://github.com/BobbyYue/3080-brief/releases/latest)
 
 一个开源 **AI Agent Skill**：把源文档重建为读者视角的决策简报，包括 30 秒判断、一张可追溯的主线图、一个关键问题表和一条清晰故事线。它不修改源文档；宿主支持时，可新建飞书/Lark、Markdown、Word/docx 或自包含 HTML 格式的简报。
 
-<p align="center"><strong>① 左侧是原文章 → ② 右侧是 3080 Brief 产出</strong></p>
+## 先看一个真实案例
 
-[![Claude 原文章与 3080 Brief 产出的对照](docs/assets/claude-code-comparison.png)](docs/examples/claude-code-session-value.md)
+[**直接阅读英文 HTML 简报 →**](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html) · [阅读原文章](https://claude.com/resources/articles/maximizing-the-value-of-your-claude-code-sessions) · [案例说明](docs/examples/claude-code-session-value.md)
 
-> **真实产出案例：** [Anthropic 的 5 分钟文章](https://claude.com/blog/maximizing-the-value-of-your-claude-code-sessions)把 token 定价、提示缓存、上下文增长、会话长度和子代理分散在多个章节中。3080 Brief 在保留原文作为事实来源的前提下，把它整理成一个操作判断、一套五步流程和一份明确的排查优先级。由于源文章为英文，案例按源语言输出。 [查看完整案例 →](docs/examples/claude-code-session-value.md)
+仍以 Anthropic 的《Maximizing the value of your Claude Code sessions》为例，使用当前安装的最新版 3080 Brief，于 2026 年 10 月 22 日重新生成英文 HTML 简报。页面包括核心判断、一张主线图和关键问题表；点击下方预览即可直接阅读，无需下载或登录。
+
+[![重新生成的英文 HTML 简报中的主线图](docs/assets/claude-code-session-value-preview.png)](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html)
 
 ## 你会得到什么
 
