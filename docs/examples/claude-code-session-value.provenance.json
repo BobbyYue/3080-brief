@@ -1,6 +1,5 @@
 {
-  "generated_at": "2026-10-22",
-  "presentation_repaired_at": "2026-10-23",
+  "generated_at": "2026-10-23",
   "source": {
     "url": "https://claude.com/resources/articles/maximizing-the-value-of-your-claude-code-sessions",
     "title": "Maximizing the value of your Claude Code sessions",
@@ -11,43 +10,31 @@
   "output": {
     "file": "claude-code-session-value.html",
     "language": "en",
-    "sha256": "3555c3f72aca2eb54d9fa8413ccb56ea1e38f0a9c6cc664c5dcb166c1c8923cb",
-    "bytes": 2585075,
-    "self_contained": true
+    "sha256": "be7e0984aaf130a0a64475f7e820c0b31dee08b9dbbd516d0d72660b983c41e7",
+    "bytes": 2596061,
+    "self_contained": true,
+    "body_sections": 6
   },
   "generator": {
     "skill": "3080-brief",
-    "configuration_revision": 33,
-    "skill_md_sha256": "cb071ded64292d66bd7827d0b9cbcc733994d57ad3eb38f71d563a9a71ffc18a",
-    "config_sha256": "4330db6b589f38cba3fa09f9312a068e3ad73b76110f5d14dff541920810a419",
-    "scope": "Installed canonical snapshot plus example-only renderer repairs; the repository skill package and release version are unchanged.",
-    "example_only_repairs": [
-      "Keep mobile table values together.",
-      "Use readable annotation text and a responsive native SVG fallback.",
-      "Use the existing dark accent for the header label."
-    ]
+    "configuration_revision": 35,
+    "skill_md_sha256": "b81446bc2969c027ae91426b65b78c5790a5d2060437538a109abb05463dd371",
+    "body_completion_program_sha256": "122bff968f7ad3afea6399535022cb36bfc8da103db3aec1df1807e0737684f8",
+    "scope": "Installed body-completeness upgrade and existing example-only rendering repairs. This repository update does not replace the installable skill package or create a release tag."
   },
   "verification": {
-    "status": "targeted-repair-verified",
-    "user_authorized_continuation": true,
-    "retained_independent_reviews": {
-      "reader": {
-        "verdict": "PASS",
-        "review_sha256": "9871ea42f6812d96078f3310117459a16f60976a942a7068680376641deb2013"
-      },
-      "source": {
-        "verdict": "PASS",
-        "review_sha256": "71d808e2b71651eb1e8c862f57114b6db3cf0bcdf06d1ba89d79ef46f6f64b9a"
-      }
-    },
-    "content_and_visual_spec_unchanged": true,
-    "targeted_visual_review_sha256": "ef189081cf005faf2ddc0f97287d090d092752a09390dc6cfbec1d941625f913",
-    "targeted_verification_sha256": "0185c3d45f38391dc87bb0ace8481f12202b670bc8477d38356818c108b8cb27",
-    "full_document_audit_restarted": false,
-    "header_contrast_ratio": 6.13,
+    "status": "checked",
+    "independent_audit_round": 2,
+    "roles": [
+      "reader",
+      "source",
+      "visual"
+    ],
+    "review_sha256": "d3436964b806f9383ed655188b3aa5172d981ff587bf90a0d33f7f6dd186b67c",
+    "body_explanations_checked": true,
     "desktop": "1440x1100",
     "mobile": "390x844",
     "javascript_enabled_and_disabled": true,
-    "boundary": "A user-authorized presentation-only repair reuses prior content reviews. Automated checks and isolated AI reviews do not establish measured human comprehension or cost savings."
+    "boundary": "Automated integrity checks and isolated AI reviews do not establish measured human comprehension or savings."
   }
 }

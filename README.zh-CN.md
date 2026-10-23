@@ -14,7 +14,7 @@
 
 [**直接阅读英文 HTML 简报 →**](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html) · [阅读原文章](https://claude.com/resources/articles/maximizing-the-value-of-your-claude-code-sessions) · [案例说明](docs/examples/claude-code-session-value.md)
 
-仍以 Anthropic 的《Maximizing the value of your Claude Code sessions》为例，使用当前安装的最新版 3080 Brief，于 2026 年 10 月 22 日重新生成英文 HTML 简报。页面包括核心判断、一张主线图和关键问题表；点击下方预览即可直接阅读，无需下载或登录。
+仍以 Anthropic 的《Maximizing the value of your Claude Code sessions》为例，使用当前安装的最新版 3080 Brief，于 2026 年 10 月 23 日重新生成英文 HTML 简报。开头是核心判断、主线图和关键问题表；后面的六个正文章节解释会话成本、缓存机制、上下文选择、命令区别和子任务的取舍。点击下方预览即可阅读完整文章，无需下载或登录。
 
 [![重新生成的英文 HTML 简报中的主线图](docs/assets/claude-code-session-value-preview.png)](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html)
 

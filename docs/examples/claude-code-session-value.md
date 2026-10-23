@@ -8,14 +8,15 @@
 
 The source is Lydia Hallie's *Maximizing the value of your Claude Code sessions*, published by Anthropic on August 14, 2026 and retrieved on October 22, 2026. The source remains unchanged; the linked page is a separate English synopsis.
 
-This example was regenerated with the current installed 3080 Brief on October 22, 2026, using configuration revision **33**. It uses the skill's HTML composer, an embedded interactive chart, and a native SVG fallback. Example-specific rendering fixes keep mobile table values together and make annotations and the fallback readable. It can be read online or opened locally without network dependencies.
+This example was regenerated with the current installed 3080 Brief on October 23, 2026, using configuration revision **35**. It uses the skill's HTML composer, an embedded interactive chart, and a native SVG fallback. Example-specific rendering fixes keep mobile table values together and make annotations and the fallback readable. It can be read online or opened locally without network dependencies.
 
-The README preview is a screenshot of the new page's main figure, not a mockup or the old example. Both language editions link to this same English HTML. A header-contrast correction on October 23 left the content unchanged.
+The README preview is a screenshot of the page's main figure, not a mockup. Both language editions link to this same English HTML. The overview is followed by six explanatory body sections, including cache conditions, the differences between /clear, /compact and /rewind, and the costs as well as benefits of delegation.
 
 ## Scope and verification
 
 - Product behavior and price ratios are attributed to the dated source, not presented as independently verified current tariffs or measured savings.
-- Detailed command options remain in the original article; this is a compact brief, not a replacement manual.
+- The body explains the mechanisms and practical choices behind the overview. Lookup-only command options remain in the original article; this is an explanatory brief, not a replacement manual.
+- This generation uses the installed body-completeness upgrade: planned reader questions are mapped to visible explanations and checked in the existing independent review. Word count or a list of headings alone does not establish completeness.
 - [Generation record](claude-code-session-value.provenance.json) identifies the generator snapshot and published HTML checksum.
 - This update changes the READMEs and example only. It does not change the installable skill package or create a new release tag.
 
