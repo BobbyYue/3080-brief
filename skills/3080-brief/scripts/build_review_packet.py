@@ -6,6 +6,7 @@ from pathlib import Path
 import reader_answer_gate
 import editorial_gate
 import reader_value
+import body_completion
 
 
 CONFIG = json.loads((Path(__file__).resolve().parents[1] / "config" / "3080-brief.json").read_text(encoding="utf-8"))
@@ -89,6 +90,8 @@ def validate_readiness(args):
         "claim_ledger": digest(args.claim_ledger),
         "tldr": digest(args.tldr),
         "body": digest(args.body),
+        "brief_json": digest(args.brief_json),
+        "body_visible_text": digest(args.body_visible_text),
         "draft": digest(args.draft),
         "source_outline": digest(args.source_outline),
         "source_excerpts": digest(args.source_excerpts),
@@ -104,6 +107,10 @@ def validate_readiness(args):
     current = {key: value for key, value in current.items() if value}
     if current != receipt.get("files"):
         raise SystemExit("review inputs changed after readiness validation")
+    body_record = body_completion.context(args.brief_json, source_snapshot=args.source_snapshot,
+        claim_ledger=args.claim_ledger, source_outline=args.source_outline, user_request=args.user_request)
+    if body_record != receipt.get("body_completion"):
+        raise SystemExit("body completion changed after readiness validation")
     answer_errors = reader_answer_gate.validate_readiness_binding(receipt, args.draft, args.source_snapshot, args.claim_ledger, args.visual_spec, args.whiteboard_preview)
     if answer_errors:
         raise SystemExit("opening comprehension validation failed: " + "; ".join(answer_errors))
@@ -117,6 +124,8 @@ def packet_for(role, args):
         "claim_ledger": digest(args.claim_ledger),
         "tldr": digest(args.tldr),
         "body": digest(args.body),
+        "brief_json": digest(args.brief_json),
+        "body_visible_text": digest(args.body_visible_text),
         "draft": digest(args.draft),
         "visual_spec": digest(args.visual_spec),
         "html_design_plan": digest(args.html_design_plan),
@@ -261,8 +270,11 @@ Return `FAIL` when required evidence is absent or a gate cannot be verified. Do 
 """
     editorial = "\n## Mandatory Editorial Evidence\n\nComplete `reader_value` in the same response; no extra reviewer. An addition needs a concrete misunderstanding it prevents, not merely completeness. Record optional stylistic preferences as nonblocking. Keep audit fields out of the brief.\n\n"
     editorial += "\n".join(f"- {axis}: {reader_value.GUIDANCE[axis]}" for axis in editorial_gate.AXES[role])
-    editorial += "\n\n```json\n" + json.dumps(reader_value.template(editorial_gate.AXES[role], artifact_set_id), ensure_ascii=False, indent=2) + "\n```\n"
-    return common + evidence + output_contract + editorial, artifact_set_id
+    review_text = "\n".join(reader_value.read_text(e['path']) for e in editorial_gate.inputs(args, artifact_set_id)['text'])
+    source_text = "\n".join(reader_value.read_text(e['path']) for e in editorial_gate.inputs(args, artifact_set_id)['source']) if role == 'source' else ''
+    editorial += "\n\n```json\n" + json.dumps(reader_value.template(editorial_gate.AXES[role], artifact_set_id, review_text, source_text), ensure_ascii=False, indent=2) + "\n```\n"
+    body_evidence = body_completion.packet(editorial_gate.inputs(args, artifact_set_id)["body_completion"], role) if role in body_completion.ROLES else ""
+    return common + evidence + output_contract + editorial + body_evidence, artifact_set_id
 
 
 def main():
@@ -273,6 +285,8 @@ def main():
     parser.add_argument("--claim-ledger", required=True)
     parser.add_argument("--tldr", required=True)
     parser.add_argument("--body", required=True)
+    parser.add_argument("--brief-json", required=True)
+    parser.add_argument("--body-visible-text", default="")
     parser.add_argument("--draft", default="")
     parser.add_argument("--delivery-artifact", default="")
     parser.add_argument("--user-request", default="")
@@ -290,6 +304,7 @@ def main():
     parser.add_argument("--readiness-receipt", required=True)
     parser.add_argument("--round", type=int, default=1)
     parser.add_argument("--output", required=True, help="Output file for one role, or directory for --role all")
+    parser.add_argument("--lifecycle-run", help="Register exact packets with the managed writing task")
     args = parser.parse_args()
     validate_readiness(args)
 
@@ -310,6 +325,12 @@ def main():
         raise SystemExit("review packets were not built from one artifact set")
     inputs_path = output / "reader-value-inputs.json" if len(roles) > 1 else output.with_suffix(".inputs.json")
     inputs_path.write_text(json.dumps(editorial_gate.inputs(args, artifact_set_id), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if args.lifecycle_run:
+        if args.role != "all":
+            raise SystemExit("Managed packet registration requires the complete native role set")
+        import writing_execution
+        writing_execution.register_packets(args.lifecycle_run,
+            {role: output / f"review_packet_{role}.md" for role in roles}, inputs_path)
     print(f"Editorial inputs: {inputs_path}; pass as --reader-value-inputs to aggregate_reviews.py")
 
 

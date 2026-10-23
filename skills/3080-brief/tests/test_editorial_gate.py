@@ -12,6 +12,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import reader_value
 import editorial_gate
 from editorial_fixture import structural_review
+from body_fixture import make_body, structural_body
+import body_completion
 
 
 class EditorialGateTests(unittest.TestCase):
@@ -22,9 +24,11 @@ class EditorialGateTests(unittest.TestCase):
         self.text.write_text("A meets the response limit; B is more accurate in this internal sample.")
         self.render = self.base / "render.png"
         self.render.write_bytes(b"STRUCTURAL FIXTURE NOT A REAL RENDER")
+        self.brief_json, self.body_record = make_body(self.base, self.text, self.text)
         def entry(path):
             return {"path": str(path), "sha256": reader_value.sha256(path)}
         self.bundle = {"version": 1, "artifact_binding": "a" * 64,
+                       "body_completion": self.body_record, "body_candidate": entry(self.text),
                        "text": [entry(self.text)], "source": [entry(self.text)], "renders": [entry(self.render)]}
         self.inputs = self.save("inputs.json", self.bundle)
         self.reviews = []
@@ -33,6 +37,8 @@ class EditorialGateTests(unittest.TestCase):
                       "verdict": "PASS", "checks": [{"name": "structural", "result": "PASS", "reason": "STRUCTURAL FIXTURE"}],
                       "blocking_issues": [], "unsupported_claims": [], "missing_coverage": [], "required_fixes": [],
                       "reader_value": structural_review(editorial_gate.AXES[role], "a" * 64, self.text.read_text(), self.text.read_text(), self.render)}
+            if role in body_completion.ROLES:
+                review["body_completion"] = structural_body(self.body_record, role)
             self.reviews.append(self.save(role + ".json", review))
         self.result = self.base / "aggregate.json"
 
@@ -63,11 +69,44 @@ class EditorialGateTests(unittest.TestCase):
         self.reviews[0].write_text(json.dumps(payload))
         self.assertEqual(self.aggregate().returncode, 1)
 
+    def test_missing_context_comparison_blocks_aggregation(self):
+        payload = json.loads(self.reviews[0].read_text())
+        del payload['reader_value']['checks']['selection']['context_review']
+        self.reviews[0].write_text(json.dumps(payload))
+        self.assertEqual(self.aggregate().returncode, 1)
+
     def test_unresolved_visual_does_not_pass(self):
         payload = json.loads(self.reviews[2].read_text())
         payload["reader_value"]["checks"]["presentation"].update(status="fail", action="revise")
         self.reviews[2].write_text(json.dumps(payload))
         self.assertEqual(self.aggregate().returncode, 1)
+
+    def test_missing_source_attribution_blocks_actual_aggregation(self):
+        payload = json.loads(self.reviews[1].read_text())
+        del payload['reader_value']['checks']['meaning']['source_attribution']
+        self.reviews[1].write_text(json.dumps(payload))
+        self.assertEqual(self.aggregate().returncode, 1)
+
+    def test_source_reader_disagreement_blocks_actual_aggregation(self):
+        from context_fixture import structural_attribution
+        text = '报告称流程已更新，但效果尚未确认。'
+        self.text.write_text(text)
+        self.brief_json, self.body_record = make_body(self.base, self.text, self.text)
+        text = self.text.read_text()
+        self.bundle.update(body_completion=self.body_record, body_candidate=body_completion.ref(self.text))
+        for group in ('text', 'source'):
+            self.bundle[group][0]['sha256'] = reader_value.sha256(self.text)
+        self.inputs.write_text(json.dumps(self.bundle))
+        for path, role in zip(self.reviews, editorial_gate.AXES):
+            payload = json.loads(path.read_text())
+            payload['reader_value'] = structural_review(editorial_gate.AXES[role], 'a' * 64, text, text, self.render)
+            if role in body_completion.ROLES:
+                payload['body_completion'] = structural_body(self.body_record, role)
+            if role == 'reader':
+                payload['reader_value']['checks']['selection']['context_review']['attribution_replay']['items'][0]['kind'] = 'source-fact'
+            path.write_text(json.dumps(payload))
+        self.assertEqual(self.aggregate().returncode, 1)
+        self.assertIn('reader/source disagreement', self.result.read_text())
 
     def test_final_gate_requires_original_bound_reviews(self):
         self.assertEqual(self.aggregate().returncode, 0)
@@ -92,9 +131,10 @@ class EditorialGateTests(unittest.TestCase):
         layers = {name: {"file": {"sha256": reader_value.sha256(self.text)}}
                   for name in ("content", "source", "visual", "layout_desktop", "layout_mobile")}
         layers["layout_desktop"]["file"]["sha256"] = reader_value.sha256(self.render)
-        plan = {"editorial_version": 1, "plan_id": "plan", "changed_layers": ["layout_desktop"], "after_layers": layers}
+        plan = {"editorial_version": 1, "plan_id": "plan", "changed_layers": ["layout_desktop"], "after_layers": layers,
+                "body_completion": self.body_record}
         self.assertTrue(plan_review_scope.validate_editorial_scope(plan, {}))
-        receipt = {"editorial_inputs": {key: self.bundle[key] for key in ("text", "source", "renders")},
+        receipt = {"editorial_inputs": {key: self.bundle[key] for key in ("text", "source", "renders", "body_completion", "body_candidate")},
                    "reader_value": structural_review(("expression", "selection", "meaning", "unit_roles", "presentation"), "plan", self.text.read_text(), self.text.read_text(), self.render)}
         self.assertEqual(plan_review_scope.validate_editorial_scope(plan, receipt), [])
         changed_body = self.base / "changed-body.md"
@@ -114,7 +154,8 @@ class EditorialGateTests(unittest.TestCase):
     def test_fast_mode_is_checked_without_claiming_independence(self):
         folder = self.base / "fast"
         command = [sys.executable, str(ROOT / "scripts/editorial_gate.py")]
-        inputs = ["--text", str(self.text), "--source", str(self.text), "--renders", str(self.render)]
+        inputs = ["--text", str(self.text), "--source", str(self.text), "--renders", str(self.render),
+                  "--brief-json", str(self.brief_json)]
         result = subprocess.run(command + ["prepare-fast", *inputs, "--output", str(folder)], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         bundle = json.loads((folder / "reader-value-inputs.json").read_text())
@@ -126,6 +167,8 @@ class EditorialGateTests(unittest.TestCase):
             data = json.loads(path.read_text())
             data.update(verdict="PASS", checks=[{"name": "fixture", "result": "PASS", "reason": "Structural self-check fixture"}],
                         reader_value=structural_review(editorial_gate.AXES[data["reviewer_role"]], bundle["artifact_binding"], self.text.read_text(), self.text.read_text(), self.render))
+            if data["reviewer_role"] in body_completion.ROLES:
+                data["body_completion"] = structural_body(self.body_record, data["reviewer_role"])
             path.write_text(json.dumps(data))
         self.assertEqual(subprocess.run(aggregate, capture_output=True).returncode, 0)
         result = subprocess.run(command + ["verify-fast", *inputs, "--result", str(self.result)], capture_output=True, text=True)

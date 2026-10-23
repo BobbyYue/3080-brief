@@ -1,6 +1,7 @@
 {
   "title": "3080 Brief｜Synthetic Evaluation Brief",
   "language": "zh-CN",
+  "body_plan": {"path": "evals/fixtures/body-plan.lock.json", "sha256": "a02e067e909d8cfefe77f0b5b77e2fe2abd9d1b2105e84fcf5146adcd8fbe74e"},
   "context": {
     "document_type": "data analysis",
     "audience": "cross-functional",
@@ -46,6 +47,7 @@
       "blocks": [
         {
           "type": "paragraph",
+          "answers": ["B1"],
           "text": [
             {"text": "汇总结果为 "},
             {"text": "42", "semantic_direction": "neutral", "strong": true},
@@ -66,6 +68,7 @@
       "blocks": [
         {
           "type": "callout",
+          "answers": ["B2"],
           "tone": "warning",
           "title": "当前边界",
           "text": [

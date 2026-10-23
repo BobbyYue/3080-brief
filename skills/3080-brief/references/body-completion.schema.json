@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "3080 Body Plan Input and Existing Reviewer Evidence",
+  "$ref": "#/$defs/plan_input",
+  "$defs": {
+    "reference": {
+      "type": "object", "required": ["path", "sha256"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+      "additionalProperties": false
+    },
+    "strings": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "plan_input": {
+      "type": "object", "additionalProperties": false,
+      "required": ["scope", "requirements", "excluded_claims"],
+      "properties": {
+        "scope": {"enum": ["full", "summary-only"]},
+        "requirements": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["id", "question", "claim_ids", "answer_requires"],
+          "properties": {"id": {"type": "string", "minLength": 1}, "question": {"type": "string", "minLength": 1},
+                         "claim_ids": {"$ref": "#/$defs/strings"}, "answer_requires": {"$ref": "#/$defs/strings"}}
+        }},
+        "excluded_claims": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["claim_id", "reason"],
+          "properties": {"claim_id": {"type": "string", "minLength": 1}, "reason": {"type": "string", "minLength": 1}}
+        }},
+        "summary_only_request_quote": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {"if": {"properties": {"scope": {"const": "full"}}}, "then": {"properties": {"requirements": {"minItems": 1}}}},
+        {"if": {"properties": {"scope": {"const": "summary-only"}}}, "then": {"required": ["summary_only_request_quote"], "properties": {"requirements": {"maxItems": 0}}}}
+      ]
+    },
+    "judgment": {
+      "type": "object", "required": ["status", "reason"],
+      "properties": {"status": {"enum": ["pass", "fail"]}, "reason": {"type": "string", "minLength": 1}}
+    },
+    "review": {
+      "type": "object", "required": ["version", "evidence_sha256", "scope_check", "requirements", "excluded_claims"],
+      "properties": {
+        "version": {"const": 1}, "evidence_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "scope_check": {"allOf": [{"$ref": "#/$defs/judgment"}, {"required": ["request_quote", "outline_quote"], "properties": {
+          "request_quote": {"type": "string", "minLength": 1}, "outline_quote": {"type": "string", "minLength": 1}
+        }}]},
+        "requirements": {"type": "array", "items": {"allOf": [{"$ref": "#/$defs/judgment"}, {
+          "required": ["id", "quotes"], "properties": {
+            "id": {"type": "string", "minLength": 1}, "source_quote": {"type": "string", "minLength": 1},
+            "quotes": {"type": "array", "minItems": 1, "items": {
+              "type": "object", "required": ["block", "quote"], "properties": {
+                "block": {"type": "string", "minLength": 1}, "quote": {"type": "string", "minLength": 1}
+              }
+            }}
+          }
+        }]}},
+        "excluded_claims": {"type": "array", "items": {"allOf": [{"$ref": "#/$defs/judgment"}, {
+          "required": ["claim_id"], "properties": {"claim_id": {"type": "string", "minLength": 1}}
+        }]}}
+      }
+    }
+  }
+}

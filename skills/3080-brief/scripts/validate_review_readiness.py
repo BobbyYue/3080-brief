@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 import reader_answer_gate
 import validate_visual_replay
+import body_completion
 
 
 def digest(path: Path) -> str:
@@ -34,6 +35,8 @@ def main() -> int:
     parser.add_argument("--claim-ledger", required=True)
     parser.add_argument("--tldr", required=True)
     parser.add_argument("--body", required=True)
+    parser.add_argument("--brief-json", required=True, help="Structured brief with locked body_plan and answer mappings")
+    parser.add_argument("--body-visible-text", default="")
     parser.add_argument("--draft", required=True)
     parser.add_argument("--delivery-artifact", default="", help="Exact local file to hand to the reader or native publisher")
     parser.add_argument("--source-outline", required=True)
@@ -58,6 +61,7 @@ def main() -> int:
         "claim_ledger": args.claim_ledger,
         "tldr": args.tldr,
         "body": args.body,
+        "brief_json": args.brief_json,
         "draft": args.draft,
         "source_outline": args.source_outline,
         "source_excerpts": args.source_excerpts,
@@ -65,6 +69,7 @@ def main() -> int:
         "document_preview": args.document_preview,
     }
     optional = {
+        "body_visible_text": args.body_visible_text,
         "delivery_artifact": args.delivery_artifact,
         "visual_spec": args.visual_spec,
         "html_design_plan": args.html_design_plan,
@@ -134,6 +139,15 @@ def main() -> int:
                 visual_replay_evidence = {"path": str(replay_path.resolve()), "sha256": digest(replay_path)}
             except (ValueError, OSError, KeyError, TypeError) as exc:
                 errors.append(str(exc))
+    body_record = None
+    try:
+        body_record = body_completion.context(args.brief_json, source_snapshot=args.source_snapshot,
+            claim_ledger=args.claim_ledger, source_outline=args.source_outline)
+        errors.extend(body_completion.candidate_errors(body_completion.current(body_record),
+            args.delivery_artifact or args.draft,
+            body_completion.visible_ref(args.body_visible_text, args.delivery_artifact or args.draft)))
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
+        errors.append("body completion: " + str(exc))
     file_hashes = {key: digest(path) for key, path in paths.items() if path is not None}
     receipt = {
         "schema_version": 1,
@@ -143,6 +157,7 @@ def main() -> int:
         "errors": errors,
         "reader_answers": {"path": str(answer_path.resolve()), "sha256": digest(answer_path) if answer_path.is_file() else None},
         "visual_replay_evidence": visual_replay_evidence,
+        "body_completion": body_record,
     }
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)

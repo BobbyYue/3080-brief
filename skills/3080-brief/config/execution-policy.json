@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skill": "3080-brief",
+  "max_rounds": 3,
+  "max_technical_attempts": 2,
+  "roles": ["reader", "source", "visual"],
+  "dependencies": {},
+  "rules": [
+    {"id": "current-stages", "stage": "candidate", "owner": "writing_lifecycle.session and registered checkpoints", "kind": "code"},
+    {"id": "reproducible-measurement", "stage": "candidate", "owner": "writing_lifecycle.measure_data", "kind": "code"},
+    {"id": "actual-artifact", "stage": "candidate", "owner": "writing_lifecycle.artifact_text", "kind": "code"},
+    {"id": "captured-review", "stage": "delivery", "owner": "writing_execution.verify_reviews", "kind": "execution"},
+    {"id": "native-acceptance", "stage": "delivery", "owner": "verify_reviewed_artifacts or plan_review_scope or editorial_gate", "kind": "native"}
+  ]
+}

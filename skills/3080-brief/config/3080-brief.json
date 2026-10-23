@@ -1,11 +1,35 @@
 {
-  "version": 29,
+  "version": 35,
+  "managed_execution": {
+    "policy": "config/execution-policy.json",
+    "controller": "scripts/writing_execution.py",
+    "required_at_checked_exit": true
+  },
+  "writing_lifecycle": {
+    "profile": "functional",
+    "required_at_delivery": true,
+    "run_state": "lifecycle.json",
+    "verifier": "scripts/writing_lifecycle.py",
+    "reference": "references/writing-lifecycle.md",
+    "draft_after_completed_rounds": 3
+  },
   "reading_path_contract": {
     "required": true,
     "contract_version": "1.0",
-    "allowed_section_density": ["light", "balanced", "dense"],
-    "dense_block_types": ["table", "figure"],
-    "allowed_section_opening_types": ["paragraph", "bullets", "callout"],
+    "allowed_section_density": [
+      "light",
+      "balanced",
+      "dense"
+    ],
+    "dense_block_types": [
+      "table",
+      "figure"
+    ],
+    "allowed_section_opening_types": [
+      "paragraph",
+      "bullets",
+      "callout"
+    ],
     "require_section_question": true,
     "require_takeaway_before_dense_evidence": true,
     "require_prose_bridge_between_dense_blocks": true,
@@ -36,7 +60,11 @@
       "P1": 2,
       "P2": 1
     },
-    "countable_statuses": ["covered", "partial", "omitted"],
+    "countable_statuses": [
+      "covered",
+      "partial",
+      "omitted"
+    ],
     "partial_credit": 0.5,
     "require_visible_tokens": true
   },
@@ -76,7 +104,13 @@
     "registry": "assets/themes/beautiful-feishu-themes.json",
     "source_library": "beautiful-feishu-whiteboard",
     "same_theme_for_visual_and_html": true,
-    "selection_basis": ["document_type", "audience", "tone", "information_relationship", "density"],
+    "selection_basis": [
+      "document_type",
+      "audience",
+      "tone",
+      "information_relationship",
+      "density"
+    ],
     "default_theme_allowed": false,
     "content_fit_rationale_required": true
   },
@@ -99,10 +133,17 @@
     "design_plan_schema": "references/html-design.schema.json",
     "asset_manifest": "assets/html-kit/asset-manifest.json",
     "asset_mode": "inline_selected_only",
-    "renderers": ["native-svg", "echarts", "mermaid", "semantic-html"],
+    "renderers": [
+      "native-svg",
+      "echarts",
+      "mermaid",
+      "semantic-html"
+    ],
     "native_svg_fallback_required": true,
     "critical_information_may_require_interaction": false,
-    "collapsed_priority_allowed": ["P2"],
+    "collapsed_priority_allowed": [
+      "P2"
+    ],
     "minimum_body_font_px": 14,
     "minimum_caption_font_px": 12,
     "one_picture_min_width_height_ratio": 1.2,
@@ -114,15 +155,38 @@
   },
   "tldr": {
     "default_title": "TLDR",
-    "default_table_headers": ["问题", "结论", "为什么"],
-    "english_table_headers": ["Question", "Conclusion", "Why"],
-      "opening_unit": {
-        "primary_judgment_count": 1,
-        "support_lines_min": 1,
-        "support_lines_max": 3,
-        "allowed_support_roles": ["evidence", "action", "boundary"],
-        "fixed_label_prefixes": ["结论", "证据", "行动", "下一步", "边界", "Conclusion", "Evidence", "Action", "Next step", "Boundary"],
-        "fixed_label_failure_count": 2
+    "default_table_headers": [
+      "问题",
+      "结论",
+      "为什么"
+    ],
+    "english_table_headers": [
+      "Question",
+      "Conclusion",
+      "Why"
+    ],
+    "opening_unit": {
+      "primary_judgment_count": 1,
+      "support_lines_min": 1,
+      "support_lines_max": 3,
+      "allowed_support_roles": [
+        "evidence",
+        "action",
+        "boundary"
+      ],
+      "fixed_label_prefixes": [
+        "结论",
+        "证据",
+        "行动",
+        "下一步",
+        "边界",
+        "Conclusion",
+        "Evidence",
+        "Action",
+        "Next step",
+        "Boundary"
+      ],
+      "fixed_label_failure_count": 2
     },
     "questions_min": 3,
     "questions_max": 5
@@ -190,7 +254,10 @@
     "实际输出必须插入可编辑白板"
   ],
   "expression_quality": {
-    "required_relation_priorities": ["P0", "P1"],
+    "required_relation_priorities": [
+      "P0",
+      "P1"
+    ],
     "claim_strength_order": [
       "unknown",
       "reported",
@@ -237,58 +304,120 @@
     "style_warning_groups": [
       {
         "id": "vague_abstraction_zh",
-        "languages": ["zh"],
+        "languages": [
+          "zh"
+        ],
         "minimum_hits": 2,
-        "patterns": ["有价值", "值得关注", "整体有效", "整体不错", "优化提升", "继续观察", "带来提升"],
+        "patterns": [
+          "有价值",
+          "值得关注",
+          "整体有效",
+          "整体不错",
+          "优化提升",
+          "继续观察",
+          "带来提升"
+        ],
         "message": "multiple vague value claims appear without source-specific meaning"
       },
       {
         "id": "mechanical_sequence_zh",
-        "languages": ["zh"],
+        "languages": [
+          "zh"
+        ],
         "minimum_hits": 3,
-        "patterns": ["首先", "其次", "再次", "最后", "综上所述"],
+        "patterns": [
+          "首先",
+          "其次",
+          "再次",
+          "最后",
+          "综上所述"
+        ],
         "message": "mechanical sequencing may be substituting for a reader-fit reasoning path"
       },
       {
         "id": "binary_reframe_zh",
-        "languages": ["zh"],
+        "languages": [
+          "zh"
+        ],
         "minimum_hits": 2,
-        "patterns": ["不是.{0,28}?而是", "并非.{0,28}?而是"],
+        "patterns": [
+          "不是.{0,28}?而是",
+          "并非.{0,28}?而是"
+        ],
         "message": "repeated binary reframing may sound formulaic; keep only distinctions that change meaning"
       },
       {
         "id": "inflated_certainty_zh",
-        "languages": ["zh"],
+        "languages": [
+          "zh"
+        ],
         "minimum_hits": 2,
-        "patterns": ["彻底解决", "完全证明", "毫无风险", "必然导致", "颠覆性", "革命性"],
+        "patterns": [
+          "彻底解决",
+          "完全证明",
+          "毫无风险",
+          "必然导致",
+          "颠覆性",
+          "革命性"
+        ],
         "message": "repeated absolute wording may exceed the source evidence ceiling"
       },
       {
         "id": "vague_abstraction_en",
-        "languages": ["en"],
+        "languages": [
+          "en"
+        ],
         "minimum_hits": 2,
-        "patterns": ["\\bvaluable\\b", "\\bworth noting\\b", "\\bmeaningful improvement\\b", "\\boverall effective\\b", "\\bworth watching\\b"],
+        "patterns": [
+          "\\bvaluable\\b",
+          "\\bworth noting\\b",
+          "\\bmeaningful improvement\\b",
+          "\\boverall effective\\b",
+          "\\bworth watching\\b"
+        ],
         "message": "multiple vague value claims appear without source-specific meaning"
       },
       {
         "id": "mechanical_sequence_en",
-        "languages": ["en"],
+        "languages": [
+          "en"
+        ],
         "minimum_hits": 3,
-        "patterns": ["\\bfirst(?:ly)?\\b", "\\bsecond(?:ly)?\\b", "\\bthird(?:ly)?\\b", "\\bfinally\\b", "\\bin conclusion\\b"],
+        "patterns": [
+          "\\bfirst(?:ly)?\\b",
+          "\\bsecond(?:ly)?\\b",
+          "\\bthird(?:ly)?\\b",
+          "\\bfinally\\b",
+          "\\bin conclusion\\b"
+        ],
         "message": "mechanical sequencing may be substituting for a reader-fit reasoning path"
       },
       {
         "id": "binary_reframe_en",
-        "languages": ["en"],
+        "languages": [
+          "en"
+        ],
         "minimum_hits": 2,
-        "patterns": ["\\bnot (?:just|merely).{0,80}?\\bbut\\b", "\\bnot about.{0,80}?\\babout\\b"],
+        "patterns": [
+          "\\bnot (?:just|merely).{0,80}?\\bbut\\b",
+          "\\bnot about.{0,80}?\\babout\\b"
+        ],
         "message": "repeated binary reframing may sound formulaic; keep only distinctions that change meaning"
       },
       {
         "id": "inflated_certainty_en",
-        "languages": ["en"],
+        "languages": [
+          "en"
+        ],
         "minimum_hits": 2,
-        "patterns": ["\\bfully solved\\b", "\\bproves conclusively\\b", "\\bno risk\\b", "\\binevitably\\b", "\\brevolutionary\\b", "\\bgame-changing\\b"],
+        "patterns": [
+          "\\bfully solved\\b",
+          "\\bproves conclusively\\b",
+          "\\bno risk\\b",
+          "\\binevitably\\b",
+          "\\brevolutionary\\b",
+          "\\bgame-changing\\b"
+        ],
         "message": "repeated absolute wording may exceed the source evidence ceiling"
       }
     ]

@@ -81,9 +81,9 @@ def pack(artifact, inputs, verify):
     if is_draft and not result.get("issues"):
         raise DeliveryBlocked("Incomplete drafts must identify unresolved issues")
     context = digest(json.dumps(before, sort_keys=True).encode())
-    return {
+    envelope = {
         "schema_version": 1,
-        "delivery_state": "draft" if is_draft else "checked",
+        "delivery_state": "draft" if is_draft else ("self-checked" if result.get("review_method") == "self-check" else "checked"),
         "verification_scope": "local-candidate-only",
         "review_method": result.get("review_method", "not-attested"),
         "external_action_authorized": False,
@@ -95,6 +95,9 @@ def pack(artifact, inputs, verify):
         "user_notice_required": is_draft,
         "user_question_required": is_draft,
     }
+    if "lifecycle" in result:
+        envelope["lifecycle"] = result["lifecycle"]
+    return envelope
 
 
 def emit(envelope, output=None):

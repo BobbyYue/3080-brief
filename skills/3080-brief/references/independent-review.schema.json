@@ -16,6 +16,7 @@
     "reader_value"
   ],
   "properties": {
+    "body_completion": {"$ref": "body-completion.schema.json#/$defs/review"},
     "review_method": {"enum": ["independent", "self-check"]},
     "reader_value": {"type": "object", "required": ["version", "artifact_binding", "checks"]},
     "reviewer_role": {"type": "string", "enum": ["reader", "source", "visual"]},
@@ -39,5 +40,9 @@
     "unsupported_claims": {"type": "array", "items": {"type": "string"}},
     "missing_coverage": {"type": "array", "items": {"type": "string"}},
     "required_fixes": {"type": "array", "items": {"type": "string"}}
-  }
+  },
+  "allOf": [{
+    "if": {"properties": {"reviewer_role": {"enum": ["reader", "source"]}}},
+    "then": {"required": ["body_completion"]}
+  }]
 }

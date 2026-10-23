@@ -20,6 +20,8 @@ SCRIPTS = SKILL / "scripts"
 FIXTURES = SKILL / "evals" / "fixtures"
 sys.path.insert(0, str(SKILL / "tests"))
 from editorial_fixture import structural_review
+from body_fixture import make_body, structural_body
+import body_completion
 
 
 def run(*args, expect=0, env=None):
@@ -44,6 +46,8 @@ def test_scoped_review_planner():
             before_files[layer] = before
             after_files[layer] = after
         after_files["layout_mobile"].write_text("repaired mobile layout\n", encoding="utf-8")
+        brief_json, body_record = make_body(tmp, after_files["content"], after_files["source"])
+        before_files["content"].write_bytes(after_files["content"].read_bytes())
 
         reviews = {}
         for role, verdict in (("reader", "PASS"), ("source", "PASS"), ("visual", "FAIL")):
@@ -53,12 +57,17 @@ def test_scoped_review_planner():
                 "artifact_set_id": "fixture-artifact",
                 "review_round": 1,
                 "verdict": verdict,
+                "checks": [{"name": "Synthetic", "result": verdict, "reason": "SYNTHETIC STRUCTURAL FIXTURE"}],
+                "blocking_issues": [], "unsupported_claims": [], "missing_coverage": [], "required_fixes": [],
+                "body_completion": structural_body(body_record, role),
+                "reader_value": structural_review(editorial_gate.AXES[role], "fixture-artifact",
+                    after_files["content"].read_text(), after_files["source"].read_text(), after_files["layout_mobile"]),
             }), encoding="utf-8")
             reviews[role] = path
 
         before_manifest = tmp / "before.json"
         after_manifest = tmp / "after.json"
-        base_command = [sys.executable, str(SCRIPTS / "plan_review_scope.py"), "snapshot"]
+        base_command = [sys.executable, str(SCRIPTS / "plan_review_scope.py"), "snapshot", "--brief-json", str(brief_json)]
         before_args = base_command + sum(
             [["--input", f"{layer}:fixture={path}"] for layer, path in before_files.items()], []
         ) + sum(
@@ -79,23 +88,34 @@ def test_scoped_review_planner():
         plan = json.loads(plan_path.read_text(encoding="utf-8"))
         if plan.get("scope") != "layout_only" or plan.get("changed_layers") != ["layout_mobile"]:
             raise SystemExit("scoped review planner did not isolate a mobile-only layout change")
-        if plan.get("required_reviews") or set(plan.get("reused_reviews", [])) != {"reader", "source"}:
+        if plan.get("required_reviews") != ["visual"] or set(plan.get("reused_reviews", [])) != {"reader", "source"}:
             raise SystemExit("scoped review planner did not preserve unaffected PASS roles")
         if set(plan.get("required_checks", [])) != {"target_validator", "mobile_geometry", "mobile_visual_review"}:
             raise SystemExit("mobile-only scope contains unnecessary or missing checks")
 
         receipt = tmp / "receipt.json"
+        visual_result = tmp / "repaired-visual-review.json"
+        visual_result.write_text(json.dumps({
+            "reviewer_role": "visual", "artifact_set_id": plan["plan_id"], "review_round": 2,
+            "verdict": "PASS", "checks": [{"name": "Synthetic scoped layout check", "result": "PASS", "reason": "STRUCTURAL FIXTURE ONLY"}],
+            "blocking_issues": [], "unsupported_claims": [], "missing_coverage": [], "required_fixes": [],
+            "reader_value": structural_review(("presentation",), plan["plan_id"],
+                after_files["content"].read_text(), after_files["source"].read_text(), after_files["layout_mobile"])
+        }), encoding="utf-8")
         receipt.write_text(json.dumps({
             "schema_version": 1,
             "editorial_inputs": {
+                "body_completion": body_record, "body_candidate": body_completion.ref(after_files["content"]),
+                **{
                 key: [{"path": str(after_files[layer]), "sha256": reader_value.sha256(after_files[layer])}]
                 for key, layer in (("text", "content"), ("source", "source"), ("renders", "layout_mobile"))
-            },
+            }},
             "reader_value": structural_review(("expression", "selection", "meaning", "unit_roles", "presentation"),
                 plan["plan_id"], after_files["content"].read_text(), after_files["source"].read_text(), after_files["layout_mobile"]),
             "plan_id": plan["plan_id"],
             "checks": {name: "PASS" for name in plan["required_checks"]},
-            "reviews": {},
+            "reviews": {"visual": "PASS"},
+            "review_results": {"visual": {"path": str(visual_result), "sha256": reader_value.sha256(visual_result)}},
         }), encoding="utf-8")
         run(
             sys.executable, str(SCRIPTS / "plan_review_scope.py"), "verify",
@@ -110,6 +130,7 @@ def test_scoped_review_planner():
         )
 
         after_files["content"].write_text("changed conclusion\n", encoding="utf-8")
+        make_body(tmp, after_files["content"], after_files["source"])
         run(*after_args)
         run(
             sys.executable, str(SCRIPTS / "plan_review_scope.py"), "plan",
@@ -1145,6 +1166,15 @@ def main():
         }), encoding="utf-8")
         run(sys.executable, str(SCRIPTS / "validate_full_page_replay.py"), "--report", str(full_page_replay), "--preview", str(full_page_preview), "--html", str(rich_html_output))
         readiness_receipt = tmp_path / "review-readiness.json"
+        audit_draft = tmp_path / "synthetic-audit-draft.md"
+        document = json.loads((FIXTURES / "html-brief.json").read_text(encoding="utf-8"))
+        # Newly generated structural fixture, never a rewrite of real evidence.
+        audit_draft.write_text((FIXTURES / "valid-brief.md").read_text(encoding="utf-8").split("## 汇总指标掩盖了真正差异", 1)[0] + "\n" +
+            "\n".join("## " + section["heading"] + "\n" + "\n".join(
+                part for block in section["blocks"] for part in body_completion.block_parts(block))
+                for section in document["body"]), encoding="utf-8")
+        audit_brief, audit_body = make_body(tmp_path, audit_draft, FIXTURES / "source-data-analysis.md",
+            ledger=FIXTURES / "claim-ledger.json", outline=source_outline, document=document)
         # These objects test evidence plumbing only. Fresh-context semantic cases
         # separately test whether real readers recover the required information.
         answer_plan = tmp_path / "reader-plan.json"
@@ -1156,7 +1186,7 @@ def main():
         })
         answer_lock = tmp_path / "reader-lock.json"
         reader_answers.save(answer_lock, reader_answers.lock_plan(answer_plan, FIXTURES / "source-data-analysis.md"))
-        answer_manifest = reader_answers.prepare(answer_lock, FIXTURES / "valid-brief.md", tmp_path / "reader-surfaces")
+        answer_manifest = reader_answers.prepare(answer_lock, audit_draft, tmp_path / "reader-surfaces")
         surface = answer_manifest["surfaces"][0]
         responses = [{"surface_id": "opening", "surface_sha256": surface["sha256"], "reader_id": "fixture-reader",
                       "findings": ["分层比较能保留高价值信号。"], "remaining_questions": []}]
@@ -1178,14 +1208,15 @@ def main():
         run(
             sys.executable,
             str(SCRIPTS / "validate_review_readiness.py"),
+            "--brief-json", str(audit_brief),
             "--reader-answer-receipt", str(answer_receipt),
             "--visual-replay", str(audit_visual_replay),
             "--source-snapshot", str(FIXTURES / "source-data-analysis.md"),
             "--inventory", str(SKILL / "references" / "source-inventory-template.md"),
             "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
             "--tldr", str(FIXTURES / "valid-brief.md"),
-            "--body", str(FIXTURES / "valid-brief.md"),
-            "--draft", str(FIXTURES / "valid-brief.md"),
+            "--body", str(audit_draft),
+            "--draft", str(audit_draft),
             "--source-outline", str(source_outline),
             "--source-excerpts", str(source_excerpts),
             "--validation-notes", str(validation_notes),
@@ -1202,13 +1233,14 @@ def main():
         run(
             sys.executable,
             str(SCRIPTS / "build_review_packet.py"),
+            "--brief-json", str(audit_brief),
             "--role", "all",
             "--source-snapshot", str(FIXTURES / "source-data-analysis.md"),
             "--inventory", str(SKILL / "references" / "source-inventory-template.md"),
             "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
             "--tldr", str(FIXTURES / "valid-brief.md"),
-            "--body", str(FIXTURES / "valid-brief.md"),
-            "--draft", str(FIXTURES / "valid-brief.md"),
+            "--body", str(audit_draft),
+            "--draft", str(audit_draft),
             "--source-outline", str(source_outline),
             "--source-excerpts", str(source_excerpts),
             "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
@@ -1228,13 +1260,14 @@ def main():
         stale_failure = run(
             sys.executable,
             str(SCRIPTS / "build_review_packet.py"),
+            "--brief-json", str(audit_brief),
             "--role", "all",
             "--source-snapshot", str(FIXTURES / "source-data-analysis.md"),
             "--inventory", str(SKILL / "references" / "source-inventory-template.md"),
             "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
             "--tldr", str(FIXTURES / "valid-brief.md"),
-            "--body", str(FIXTURES / "valid-brief.md"),
-            "--draft", str(FIXTURES / "valid-brief.md"),
+            "--body", str(audit_draft),
+            "--draft", str(audit_draft),
             "--source-outline", str(source_outline),
             "--source-excerpts", str(source_excerpts),
             "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
@@ -1272,6 +1305,7 @@ def main():
                 "unsupported_claims": [],
                 "missing_coverage": [],
                 "required_fixes": [],
+                "body_completion": structural_body(audit_body, role),
                 "reader_value": structural_review(editorial_gate.AXES[role], artifact_set_id,
                     editorial_text, editorial_source, editorial_bundle["renders"][0]["path"]),
             }), encoding="utf-8")
@@ -1281,13 +1315,14 @@ def main():
         run(
             sys.executable,
             str(SCRIPTS / "verify_reviewed_artifacts.py"),
+            "--brief-json", str(audit_brief),
             "--review-result", str(review_result),
             "--source-snapshot", str(FIXTURES / "source-data-analysis.md"),
             "--inventory", str(SKILL / "references" / "source-inventory-template.md"),
             "--claim-ledger", str(FIXTURES / "claim-ledger.json"),
             "--tldr", str(FIXTURES / "valid-brief.md"),
-            "--body", str(FIXTURES / "valid-brief.md"),
-            "--draft", str(FIXTURES / "valid-brief.md"),
+            "--body", str(audit_draft),
+            "--draft", str(audit_draft),
             "--visual-spec", str(FIXTURES / "html-visual-spec.json"),
             "--html-design-plan", str(FIXTURES / "html-design.json"),
             "--validation-notes", str(validation_notes),

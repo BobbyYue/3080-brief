@@ -1,0 +1,48 @@
+{
+  "scope": "full",
+  "requirements": [
+    {
+      "id": "B1",
+      "question": "What does segmentation reveal?",
+      "claim_ids": [
+        "C01",
+        "C02"
+      ],
+      "answer_requires": [
+        "Explain aggregate and segmented results without claiming a proven mechanism."
+      ]
+    },
+    {
+      "id": "B2",
+      "question": "What limits expansion?",
+      "claim_ids": [
+        "C03",
+        "C04"
+      ],
+      "answer_requires": [
+        "Explain the unverified mechanism and stability condition before expansion."
+      ]
+    }
+  ],
+  "excluded_claims": [],
+  "version": 1,
+  "state": "locked",
+  "inputs": {
+    "user_request": {
+      "path": "evals/fixtures/body-request.md",
+      "sha256": "41c7d8f899d87c6f39779253e35b707bddd930af7c7ce3221e31a9b0d90a05d4"
+    },
+    "source_snapshot": {
+      "path": "evals/fixtures/source-data-analysis.md",
+      "sha256": "95f02f957946991046201c44643832bea9622f87f253d06e9bc13b112a26cb74"
+    },
+    "claim_ledger": {
+      "path": "evals/fixtures/claim-ledger.json",
+      "sha256": "359fb44ab088ffe2183e62d8c05ed873281e23616828b6ef2b271c8d15a52dbc"
+    },
+    "source_outline": {
+      "path": "evals/fixtures/body-outline.md",
+      "sha256": "b81572fcc8462f75777ce570712178b0d90c162da323b5e00d13cb0a5f0bb33d"
+    }
+  }
+}

@@ -30,6 +30,12 @@ Do not use the final HTML hash alone to invalidate every prior result. The final
 
 Use the union when multiple layers changed. A failed or missing prior review cannot be reused; add that role to the required scope.
 
+The planner computes the union even when one change selects a broader named
+route. A visual change must not hide a simultaneous desktop/mobile layout
+check. These are checks for supplied changed layers, not a new requirement to
+add a mobile deliverable. Deduplicate identical checks; reuse only still-valid
+original reviews, with captured provenance and final scope verification.
+
 ## Executable flow
 
 1. After a review batch, create a baseline manifest with `scripts/plan_review_scope.py snapshot` and attach the available Reader/Source/Visual reports.

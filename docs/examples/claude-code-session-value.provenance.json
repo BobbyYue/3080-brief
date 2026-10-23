@@ -20,7 +20,7 @@
     "configuration_revision": 35,
     "skill_md_sha256": "b81446bc2969c027ae91426b65b78c5790a5d2060437538a109abb05463dd371",
     "body_completion_program_sha256": "122bff968f7ad3afea6399535022cb36bfc8da103db3aec1df1807e0737684f8",
-    "scope": "Installed body-completeness upgrade and existing example-only rendering repairs. This repository update does not replace the installable skill package or create a release tag."
+    "scope": "Installed body-completeness upgrade, synchronized in release v0.14.0 at configuration revision 35, plus existing example-only rendering repairs. The published HTML retains its reviewed bytes; those rendering repairs are not part of the installable package."
   },
   "verification": {
     "status": "checked",

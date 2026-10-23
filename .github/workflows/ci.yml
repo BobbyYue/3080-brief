@@ -10,7 +10,7 @@ permissions:
 jobs:
   skill-validation:
     name: Validate on Python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -22,6 +22,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Run offline skill validation and evals
         run: bash skills/3080-brief/scripts/self_test.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check the native review bridge with synthetic tool returns
+        run: node skills/3080-brief/tests/test_writing_host.js
       - name: Keep the English README English
         run: python -c 'from pathlib import Path; import re; text = Path("README.md").read_text(encoding="utf-8"); assert not re.search(r"[\u3400-\u9fff]", text), "README.md contains Chinese characters"'
       - name: Reject local state and common secret patterns

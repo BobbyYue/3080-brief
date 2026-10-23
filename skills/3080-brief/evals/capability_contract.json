@@ -234,9 +234,9 @@
     },
     {
       "id": "DEL-01",
-      "requirement": "Delivery verifies format, language, source integrity, visual state, reviews, replay, and artifact hashes.",
+      "requirement": "Delivery verifies native task/source/format/visual/review/replay bindings and the functional lifecycle before returning exact bytes. Fast remains self-checked; after three completed batches a current failure permits only a labeled, unpublishable draft.",
       "owner": {"file": "SKILL.md", "marker": "## Delivery"},
-      "enforced_by": ["scripts/verify_reviewed_artifacts.py", "scripts/run_evals.py"]
+      "enforced_by": ["scripts/deliver.py", "scripts/lifecycle_delivery.py", "scripts/writing_lifecycle.py", "scripts/verify_reviewed_artifacts.py", "tests/test_checked_delivery_cli.py", "tests/test_checked_delivery_scoped.py", "tests/test_checked_delivery_draft.py", "tests/test_checked_delivery_fast.py", "tests/test_lifecycle_delivery.py", "scripts/run_evals.py"]
     },
     {
       "id": "CTX-01",

@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-10-23
+
+- Require a source-grounded body plan before prose. Map planned reader questions to visible explanations and check them during rendering, review readiness and checked delivery. Empty bodies, heading-only bodies, overview-only answers, stale plans and hidden-only explanations no longer pass as complete articles.
+- Keep full explanatory bodies as the default. Summary-only output requires an explicit user request and reviewed exclusions; thin sources may still have concise bodies. There is no minimum word or section count, extra reviewer or extra review round.
+- Add managed task identity, original review-return capture, bounded recovery and checked full, scoped, Fast and three-round draft exits. Preserve independent review evidence and bind the final output to the bytes actually checked; Fast remains a disclosed self-check.
+- Add contextual content-value and source-attribution checks to existing reviews. Reuse unchanged measurements, compact repeated transport context and release dependent review work when its input is ready. These changes do not establish measured speedups or human comprehension.
+- Publish the complete English Claude Code example with six explanatory body sections; both README editions link to the same online article. Its example-specific rendering repairs remain separate from the installable package.
+- Pin CI to Ubuntu 24.04 so the existing Python 3.9, 3.11 and 3.12 matrix can run. All public test fixtures are synthetic; task-local review records and source material are excluded.
+- Upgrade: initialize a managed lifecycle before writing; lock the body plan against the request, sources and claim ledger; supply the current brief and visible-body evidence where required. Old review bundles cannot be retroactively labeled as managed acceptance. See [managed execution](skills/3080-brief/references/writing-execution.md) and [body completeness](skills/3080-brief/references/reading-layout-contract.md).
+- Internal configuration advances from 29 to 35; repository version is 0.14.0. Enforcement applies to the cooperating workflow, not every host action. A working review backend is required for independent acceptance; no new host-wide integration or semantic-quality guarantee is claimed.
+
 ## [0.13.0] - 2026-10-10
 
 - Strengthen source-shaped openings, natural syntax, necessary caveats and distinct jobs for the judgment, picture and table. Keep every P0 claim and the existing weighted coverage requirement.

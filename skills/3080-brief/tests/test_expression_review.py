@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import build_review_packet as review
 import editorial_gate
 import reader_value
+from body_fixture import make_body
 
 
 class ExpressionPacketTests(unittest.TestCase):
@@ -17,13 +18,16 @@ class ExpressionPacketTests(unittest.TestCase):
         fields = ("source_snapshot inventory claim_ledger tldr body draft user_request "
                   "source_outline source_excerpts visual_spec html_design_plan validation_notes "
                   "whiteboard_summary whiteboard_preview document_preview full_page_preview "
-                  "geometry_report full_page_replay readiness_receipt").split()
+                  "geometry_report full_page_replay readiness_receipt body_visible_text brief_json").split()
         args = argparse.Namespace(**dict.fromkeys(fields, ""), round=1)
         self.assertEqual(set(review.ROLE_NAMES), {"reader", "source", "visual"})
         with tempfile.TemporaryDirectory() as directory:
             draft = Path(directory) / "draft.md"
             draft.write_text("A bounded finding.", encoding="utf-8")
             args.draft = str(draft)
+            source = Path(directory) / "source.md"
+            source.write_text("Synthetic source and limits.")
+            args.brief_json, _ = make_body(directory, draft, source)
             ids = set()
             for role in review.ROLE_NAMES:
                 packet, identity = review.packet_for(role, args)

@@ -18,7 +18,7 @@ The README preview is a screenshot of the page's main figure, not a mockup. Both
 - The body explains the mechanisms and practical choices behind the overview. Lookup-only command options remain in the original article; this is an explanatory brief, not a replacement manual.
 - This generation uses the installed body-completeness upgrade: planned reader questions are mapped to visible explanations and checked in the existing independent review. Word count or a list of headings alone does not establish completeness.
 - [Generation record](claude-code-session-value.provenance.json) identifies the generator snapshot and published HTML checksum.
-- This update changes the READMEs and example only. It does not change the installable skill package or create a new release tag.
+- The body-completeness upgrade is included in [v0.14.0](https://github.com/BobbyYue/3080-brief/releases/tag/v0.14.0), which synchronizes the installable skill at configuration revision 35. The example's HTML is unchanged from its reviewed version; the rendering repairs described above remain example-specific.
 
 ## Embedded asset licenses
 

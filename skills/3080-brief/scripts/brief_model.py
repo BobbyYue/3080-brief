@@ -2,6 +2,7 @@
 """Shared validation and visual-subset helpers for 3080 document renderers."""
 
 import json
+import body_completion
 
 
 SEMANTIC_DIRECTIONS = {"favorable", "unfavorable", "warning", "neutral", "unknown"}
@@ -35,6 +36,10 @@ def validate_rich_text(value, label, errors):
 def validate_document(document, visual_spec=None, config=None):
     errors = []
     warnings = []
+    try:
+        body_completion.inspect(document)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
+        errors.append("body completion: " + str(exc))
     if not str(document.get("title", "")).casefold().startswith("3080 brief"):
         errors.append("title must start with 3080 Brief")
     if not document.get("language"):

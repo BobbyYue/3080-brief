@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 import editorial_gate
 import reader_value
+import source_attribution
 
 
 DEFAULT_CONFIG = Path(__file__).resolve().parents[1] / "config" / "3080-brief.json"
@@ -32,6 +33,10 @@ def main():
             issues.append("Fast role checks must disclose self-check method")
     if len(reviews) != len(expected_roles) or set(roles) != expected_roles or len(set(roles)) != len(expected_roles):
         issues.append(f"expected exactly reader/source/visual reviews, got {roles}")
+    elif not issues:
+        by_role = {review['reviewer_role']: review for review in reviews}
+        issues.extend(source_attribution.compare(by_role['source']['reader_value']['checks']['meaning']['source_attribution'],
+            by_role['reader']['reader_value']['checks']['selection']['context_review']['attribution_replay']))
     artifact_ids = {review.get("artifact_set_id") for review in reviews}
     rounds = {review.get("review_round") for review in reviews}
     if None in artifact_ids or len(artifact_ids) != 1:

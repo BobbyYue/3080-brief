@@ -1,0 +1,8 @@
+{
+  "scope": "full",
+  "requirements": [
+    {"id": "B1", "question": "What does segmentation reveal?", "claim_ids": ["C01", "C02"], "answer_requires": ["Explain aggregate and segmented results without claiming a proven mechanism."]},
+    {"id": "B2", "question": "What limits expansion?", "claim_ids": ["C03", "C04"], "answer_requires": ["Explain the unverified mechanism and stability condition before expansion."]}
+  ],
+  "excluded_claims": []
+}
