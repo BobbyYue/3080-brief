@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-10-25
+
+- Bind checked delivery to the actual evidence files and current caller context. Reject changed evidence, conflicting references, stale tasks and output-option abbreviations that could bypass a blocked delivery.
+- Add `scripts/host_delivery.py` for applications to validate and consume the exact checked output. This supplies an integration point; it does not install an interceptor or deploy any application.
+- Separate writing instructions from final-reader content in the existing contextual review, including paraphrased instruction echoes. Preserve useful methodology, disclosures, genuine recipient instructions and quoted material.
+- Add `scripts/evaluate_judgments.py` and a synthetic format example for frozen reviewer-calibration results, with missing/error/abstention accounting. No real human benchmark or semantic-quality certification is claimed.
+- Synchronize installed configuration revision 38. Keep the existing report examples and their historical provenance unchanged; this release adds no reviewer or review round.
+
 ## [0.15.0] - 2026-10-23
 
 - Require direct-expression planning, text-bound unit comparisons and a final whole-document check in the existing Reader review. Compare corrective or cautionary wording with equally accurate direct alternatives, while preserving necessary prohibitions, refusals, negative findings and uncertainty.

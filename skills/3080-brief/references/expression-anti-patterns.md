@@ -153,6 +153,14 @@ Symptom: the document or board explains how it was summarized, which style was c
 
 Correction: show the claim and evidence directly. Keep prompts, style names, source-processing notes, and tool rationale outside the artifact.
 
+An instruction can leak without naming a tool: a request to be professional but
+readable becomes "This report uses professional yet readable language", or a
+request to avoid hype becomes "This section does not exaggerate". Implement the
+request instead of narrating compliance. Review titles, prose, table/visual labels,
+and captions, including paraphrases. Use the existing [context review](context-value.md#instructioncontent-boundary),
+not a broader automatic ban. Reader-needed methodology, evidence limits, explicit
+quotations, and the requested 3080 TLDR format remain valid.
+
 ### Source Reference Competes With Content
 
 Symptom: source metadata becomes a standalone high-emphasis section.

@@ -1,13 +1,13 @@
 ---
 name: 3080-brief
-description: Create a new source-grounded decision brief in the source format by default (Feishu/Lark, Word/docx, Markdown, or self-contained HTML) with a reader-fit Pyramid opening, one editable or auditable visual covering at least 80% of value-weighted non-appendix claims, and one key-question table. Use when the user names 3080-brief, 3080 brief, 3080skill, 读者视角总结, 3080总结, 3080summary, or 3080-onepager, or asks for a new reader-perspective/cross-functional decision brief with both a 30-second takeaway and one-picture summary. Do not use for editing or polishing the source in place, a generic summary with no 3080/reader/visual requirement, or standalone whiteboard styling. Never modify the source; source-back every number, conclusion, risk, and action.
+description: Create a new source-grounded decision brief in Feishu/Lark, Word/docx, Markdown or self-contained HTML; default to source format. Include a reader-fit Pyramid opening, one editable or auditable visual covering at least 80% of value-weighted non-appendix claims, and a key-question table. Use for 3080-brief, 3080 brief, 3080skill, 读者视角总结, 3080总结, 3080summary, 3080-onepager, or reader-perspective/cross-functional briefs requesting a 30-second takeaway and one-picture summary. Do not use for editing or polishing sources, generic summary without a 3080/reader/visual requirement, or standalone whiteboard styling. Preserve the source and ground claims in it.
 ---
 
 # 3080 Brief
 
 **30-second judgment, 80% in one picture**
 
-Create a new reader-first brief in the source format by default. Keep the source unchanged.
+Create a new brief in the source format by default; keep the source unchanged.
 
 ## Output Contract
 
@@ -32,6 +32,7 @@ When goals conflict, apply: source truth → explicit user requirements → read
 - Every rendered brief must carry the mandatory `reading_path` contract in [reading-layout-contract.md](references/reading-layout-contract.md). Lock the body plan before prose; map visible answers, section questions and density. Full body is the default. Shared validation and existing Reader/Source judgments enforce completeness across formats, Fast and scoped delivery, without length quotas.
 - For each value-bearing title, heading, and lead, identify the specific object and supported fact, question, change, condition, tradeoff, or impact. Express the reader's key relationship with the fewest necessary words, preserving decisive qualifiers nearby; record it in the existing object-action/result map without inventing an outcome or forcing a contrast.
 - Keep prompts, internal process/method language, style names, tool notes, and placeholders out of the artifact. Machine restrictions and semantic colors live in [config/3080-brief.json](config/3080-brief.json).
+- Implement user writing requirements; do not repeat or paraphrase them as claims, headings, captions, or visual labels. Use the existing [context review](references/context-value.md#instructioncontent-boundary) for instruction echoes; preserve necessary methods, evidence limits, and explicitly requested reader-facing content, including the named TLDR format.
 - Keep generated time, owner, version, location, permissions, and sharing defaults unless requested or operationally required.
 - Use `lark-doc` for Feishu docs, `documents:documents` for Word, `lark-whiteboard` for live Feishu preview, and `beautiful-feishu-whiteboard` for Feishu style selection.
 
@@ -55,13 +56,13 @@ Read references only when their condition is true.
 
 ## Runtime
 
-Use `standard` by default. Use `fast` only when the user explicitly prioritizes speed or skips independent review; hard source, language, relation, assertion, TLDR, coverage, and visual gates still apply, while audit/replay are skipped and disclosed. Use `strict` when requested or when conclusions affect material resources, policy/rules, causal claims, risk, or broad rollout; it adds exact P0/P1 relation replay and configured reader escalation. Mode details and retry limits are in [review-loop.md](references/review-loop.md).
+Use `standard` by default. `fast` requires explicit user choice: retain source, language, relation, assertion, TLDR, coverage and visual checks; disclose skipped audits/replays. Use `strict` for requested rigor or material resources, policy, causal claims, risk or broad rollout; add exact P0/P1 relation replay and configured reader escalation. See [review-loop.md](references/review-loop.md) for modes and retry limits.
 
 1. **Route**: determine source/output type, language override, scope, constraints, and artifact lanes. For multiple briefs, follow the efficiency contract. For Feishu, check dependencies before fetch/write; installation or authentication needs separate approval.
 2. **Ground**: inspect material non-appendix evidence before prose. Build `source_inventory.md`, untranslated `source_non_appendix.md`, P0/P1 excerpts and `claim_ledger.json`, retaining language, exclusions, sufficiency, identity, evidence ceilings, protected relations, data, risks/actions and omissions. Lock all P0 answers; reopen sources only for gaps/disputes. Initialize a `functional` run per [writing-lifecycle.md](references/writing-lifecycle.md).
 3. **Clarify**: before drafting, ask up to three blocking questions only when ambiguity can change the main conclusion, metric meaning/scope, risk boundary, audience, next action, language, or protected relation. For non-blocking gaps, use explicit missing-source/inference labels. Shorten thin-source output instead of making it appear rich.
 4. **Draft**: create `brief.json` per [brief.schema.json](references/brief.schema.json); create its mandatory `reading_path`: one reader decision, one question and density per section. Lock `expression_plan` with required answers. Use a source-shaped Pyramid opening and judgment headings. Each unit checkpoint needs text-bound `expression_review`: compare direct alternatives and repeated framing, preserving necessary negatives and TLDR units.
-5. **Visualize**: create `visual_spec.json` before drawing and map every block to claim IDs. Choose the smallest content-fit relationship and exactly one allowed theme, with no fixed/silent default. Reach configured weighted coverage without omitting P0 claims. When three or more quantitative claims exist, or the conclusion depends on quantitative evidence, use a real quantitative encoding beyond boxes/prose; show a truthful boundary when extraction is unreliable. Keep semantic colors consistent across visual and body. Image generation is private-safe inspiration only, never the final evidence carrier. For HTML, also create reviewed `html_design.json` and preserve an auditable native-SVG fallback.
+5. **Visualize**: map `visual_spec.json` blocks to claims before drawing. Choose one content-fit relationship and allowed theme, without a silent default. Meet weighted coverage and retain every P0. Use quantitative encoding when three or more quantitative claims exist or numbers determine the conclusion; disclose unreliable extraction. Keep semantic colors consistent. Generated images are private-safe inspiration, never final evidence. HTML needs reviewed `html_design.json` and an auditable native-SVG fallback.
 6. **Gate and readiness**: create authorized native previews, measure the whole candidate and disposition signals in-run; inspect actual layout. Run checks before review:
 
 ```bash
@@ -85,8 +86,8 @@ Send the first ready candidate to Reader, Source, and Visualization reviewers co
 
 ### 9. Verify And Deliver
 
-Create authorized Feishu/Word previews before layout checks; checked-deliver afterward. Inspect native XML and the live board. For HTML, use `html_runtime_contract.py` and `build_html_brief.py ... --design-plan html_design.json --contract ... --receipt ...`; validate HTML, receipt, geometry, rich/fallback views and full-page replay. Verify source unchanged, format/language, citation, TLDR, coverage, theme/colors, accessibility, hashes and dependencies.
+Inspect authorized Feishu/Word previews, native XML and the live board before checked delivery. For HTML, use `html_runtime_contract.py` and `build_html_brief.py ... --design-plan html_design.json --contract ... --receipt ...`; check HTML, receipt, geometry, rich/fallback views and full-page replay. Verify source unchanged, format/language, citations, TLDR, coverage, theme/colors, accessibility, hashes and dependencies.
 
 ## Delivery
 
-Before units start [managed execution](references/writing-execution.md) with the host task ID. Map native packets, collect original returns and bind [checked delivery](references/checked-delivery.md) to that run. Fast stays self-checked. Return links and limits; CLI notices last.
+Start [managed execution](references/writing-execution.md) before units; bind native packets, original returns and [checked delivery](references/checked-delivery.md) to that task. Fast stays self-checked. Host adapters use [host_delivery.py](scripts/host_delivery.py); integration and calibration details are in [host-integration.md](references/host-integration.md). Return links and limits; CLI notices last.

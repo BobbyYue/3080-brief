@@ -14,7 +14,7 @@
 
 [**直接阅读英文 HTML 简报 →**](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html) · [阅读原文章](https://claude.com/resources/articles/maximizing-the-value-of-your-claude-code-sessions) · [案例说明](docs/examples/claude-code-session-value.md)
 
-仍以 Anthropic 的《Maximizing the value of your Claude Code sessions》为例，使用 3080 Brief 配置修订 35（已发布为 v0.14.0），于 2026 年 10 月 23 日重新生成英文 HTML 简报。开头是核心判断、主线图和关键问题表；后面的六个正文章节解释会话成本、缓存机制、上下文选择、命令区别和子任务的取舍。点击下方预览即可阅读完整文章，无需下载或登录。本次 v0.15.0 的 Skill 更新保留这篇案例原样。
+仍以 Anthropic 的《Maximizing the value of your Claude Code sessions》为例，使用 3080 Brief 配置修订 35（已发布为 v0.14.0），于 2026 年 10 月 23 日重新生成英文 HTML 简报。开头是核心判断、主线图和关键问题表；后面的六个正文章节解释会话成本、缓存机制、上下文选择、命令区别和子任务的取舍。点击下方预览即可阅读完整文章，无需下载或登录。本次 v0.16.0 的 Skill 更新保留这篇案例原样。
 
 [![重新生成的英文 HTML 简报中的主线图](docs/assets/claude-code-session-value-preview.png)](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html)
 
@@ -144,6 +144,8 @@ Standard 和 Strict 的首个候选版本必须完成视觉复述、Blind Reader
 </details>
 
 ## 开发验证
+
+0.16.0 加强[检查后交付的连接](skills/3080-brief/references/host-integration.md)：核对实际证据文件及当前任务后，才返回检查过的内容；并在原有上下文审读中区分写作指令与读者真正需要的信息。应用仍须主动接入，不会因安装 Skill 自动获得全局拦截。新增的判断校准工具统计漏判、误改和遗漏运行，不认证写作质量。详见[版本说明](CHANGELOG.md)。
 
 0.15.0 将[直接表达检查](skills/3080-brief/references/direct-expression.md)接入写前、写中和成稿审阅：比较反复纠偏、提醒与同样准确的直接说法，再检查它们对整篇阅读的累积影响。必要的禁令、拒绝、否定结论和有用的重复仍可保留。已有审阅和交付程序要求提供当前稿件的比较记录，不增加审阅人、轮次或禁用词门槛。新任务需包含 `expression_plan`、段落单元的 `expression_review` 及第 5 版 `reader_value` 记录。
 

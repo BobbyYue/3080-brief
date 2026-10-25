@@ -14,7 +14,7 @@ An open-source **AI Agent Skill** that turns source documents into reader-first 
 
 [**Read the English HTML brief →**](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html) · [Original article](https://claude.com/resources/articles/maximizing-the-value-of-your-claude-code-sessions) · [Example details](docs/examples/claude-code-session-value.md)
 
-This example uses Anthropic's *Maximizing the value of your Claude Code sessions*. Regenerated on October 23, 2026 with configuration revision 35, released as v0.14.0, the English page opens with a takeaway, a source-grounded visual and a key-question table. Six body sections then explain session costs, cache behavior, context choices, command differences and delegation tradeoffs. Click the preview to read the complete article; no download or sign-in is required. The v0.15.0 Skill update leaves this example unchanged.
+This example uses Anthropic's *Maximizing the value of your Claude Code sessions*. Regenerated on October 23, 2026 with configuration revision 35, released as v0.14.0, the English page opens with a takeaway, a source-grounded visual and a key-question table. Six body sections then explain session costs, cache behavior, context choices, command differences and delegation tradeoffs. Click the preview to read the complete article; no download or sign-in is required. The v0.16.0 Skill update leaves this example unchanged.
 
 [![One-picture summary from the regenerated English HTML brief](docs/assets/claude-code-session-value-preview.png)](https://bobbyyue.github.io/3080-brief/examples/claude-code-session-value.html)
 
@@ -145,6 +145,8 @@ Missing Feishu dependencies block only that output path. The skill shows the sou
 </details>
 
 ## Development verification
+
+Version 0.16.0 strengthens the [checked output path](skills/3080-brief/references/host-integration.md): verify the actual evidence files and the caller's current task before returning checked content. It also keeps writing instructions out of the reader-facing document through the existing contextual review. Applications still need to connect this path explicitly; no application is deployed by installing the Skill. The new calibration utility reports errors and missing runs rather than certifying writing quality. See the [changelog](CHANGELOG.md).
 
 Version 0.15.0 adds [direct-expression checks](skills/3080-brief/references/direct-expression.md) before, during and after drafting. Compare repeated corrections and cautions with equally accurate direct wording, then assess their cumulative effect on the actual reading path. Necessary prohibitions, refusals, negative findings and useful repetition remain valid. Existing reviews and delivery checks require current comparison evidence; no reviewer, review round or word-ban threshold is added. New runs require `expression_plan`, unit `expression_review` and version 5 `reader_value` records.
 

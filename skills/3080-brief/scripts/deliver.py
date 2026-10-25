@@ -42,7 +42,7 @@ def checked_brief(arguments, *, draft=False):
                                 sources=[args.source_snapshot],
                                 reader_lock=lifecycle.reader_lock_from_readiness(args.readiness_receipt))
 
-    return delivery.pack(args.delivery_artifact, paths, verify)
+    return delivery.pack(args.delivery_artifact, paths, verify, opaque_paths=[args.source_snapshot])
 
 
 def checked_scoped(arguments, *, draft=False):
@@ -68,7 +68,8 @@ def checked_scoped(arguments, *, draft=False):
     scripts = Path(__file__).resolve().parent
     return delivery.pack(artifact["path"], [args.plan, args.receipt, lifecycle.state_path(args.lifecycle_run),
                                            *writing_execution.evidence_paths(args.lifecycle_run),
-                                           *scripts.glob("*.py"), scripts.parent / "config" / "3080-brief.json"], verify)
+                                           *scripts.glob("*.py"), scripts.parent / "config" / "3080-brief.json"], verify,
+                         opaque_paths=[entry["path"] for entry in scoped.load_json(args.receipt)["editorial_inputs"]["source"]])
 
 
 def checked_fast(arguments):
@@ -102,11 +103,12 @@ def checked_fast(arguments):
     scripts = Path(__file__).resolve().parent
     return delivery.pack(args.delivery_artifact, [args.result, args.brief_json, args.body_visible_text, *args.text, *args.source, *args.renders,
         *writing_execution.evidence_paths(args.lifecycle_run),
-        lifecycle.state_path(args.lifecycle_run), *scripts.glob("*.py"), scripts.parent / "config/3080-brief.json"], verify)
+        lifecycle.state_path(args.lifecycle_run), *scripts.glob("*.py"), scripts.parent / "config/3080-brief.json"], verify,
+        opaque_paths=args.source)
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(add_help=False)
+    parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
     parser.add_argument("--output", type=Path)
     options, arguments = parser.parse_known_args(sys.argv[1:] if argv is None else argv)
     try:
