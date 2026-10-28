@@ -78,16 +78,17 @@ Validate with `validate_whiteboard.sh` or `validate_html_output.py`. HTML requir
 
 ### 7. Stabilize Comprehension Before Audit
 
-Run cropped-picture replay; every P0 must be understood. HTML needs geometry and full-page replay. Primary reads the extracted opening; bind its answer receipt. Resolve blockers before audit. Require `reader_value` v5: direct alternatives and cumulative burden, contextual deletion and source/reader attribution. Disclose Fast self-checks.
+Resolve blockers before audit: cropped-picture replay must understand every P0; Primary reads the extracted opening with a bound answer receipt; HTML needs geometry and full-page replay. Require `reader_value` v5 direct alternatives, cumulative burden, contextual deletion and source/reader attribution. Disclose Fast self-checks.
+Every mode requires [defensive-expression](references/defensive-expression.md) in context review; unresolved items block completion.
 
 ### 8. Run The Final Independent Audit
 
-Send the first ready candidate to Reader, Source, and Visualization reviewers concurrently. Register batches and original results in the same run. After changes, use before/after manifests and `plan_review_scope.py`; reuse unaffected PASS results. Stop when scoped verification passes; restart full audit only when required. At three completed batches with current failure, use the labeled draft exit and ask for direction.
+Send the ready candidate to Reader, Source and Visualization concurrently; register batches and raw results in the same run. After edits, use before/after manifests and `plan_review_scope.py` to reuse unaffected PASS results. Stop at scoped pass; rerun all only when required. After three completed batches with current failure, return a labeled draft and ask for direction.
 
 ### 9. Verify And Deliver
 
-Inspect authorized Feishu/Word previews, native XML and the live board before checked delivery. For HTML, use `html_runtime_contract.py` and `build_html_brief.py ... --design-plan html_design.json --contract ... --receipt ...`; check HTML, receipt, geometry, rich/fallback views and full-page replay. Verify source unchanged, format/language, citations, TLDR, coverage, theme/colors, accessibility, hashes and dependencies.
+Inspect authorized Feishu/Word previews, native XML and live boards. HTML uses `html_runtime_contract.py` and `build_html_brief.py ... --design-plan html_design.json --contract ... --receipt ...`. Before checked delivery verify HTML, receipt, geometry, rich/fallback views, full-page replay, unchanged source, format/language, citations, TLDR, coverage, theme/colors, accessibility, hashes and dependencies.
 
 ## Delivery
 
-Start [managed execution](references/writing-execution.md) before units; bind native packets, original returns and [checked delivery](references/checked-delivery.md) to that task. Fast stays self-checked. Host adapters use [host_delivery.py](scripts/host_delivery.py); integration and calibration details are in [host-integration.md](references/host-integration.md). Return links and limits; CLI notices last.
+Start [managed execution](references/writing-execution.md) before units, binding packets, raw returns and [checked delivery](references/checked-delivery.md) to the task. Fast stays self-checked. See [host integration](references/host-integration.md) for the `host_delivery.py` adapter and calibration. Return links and limits; CLI notices last.

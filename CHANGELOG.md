@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The project follows [Se
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-10-28
+
+- Add candidate C, confirmed excess D and excess-character R metrics for defensive expressions in the existing contextual review. Assess actual reader impact, direct alternatives and whole-text repetition, including the three TLDR units and visual labels.
+- Require context-review version 4 on the actual visible brief. Missing, stale and unresolved records block checked completion, including the explicit Fast self-check route; necessary source limits remain intact.
+- Record candidates during unit checkpoints and whole-document measurement. Add paired synthetic cases and regressions for semantic-review records, exact spans, counting and protected negative findings.
+- Synchronize configuration revision 39. Keep reviewer counts, retry limits, source preservation, public examples and their provenance unchanged. Regenerate affected reviews or continue existing work with its pinned runtime.
+
 ## [0.16.0] - 2026-10-25
 
 - Bind checked delivery to the actual evidence files and current caller context. Reject changed evidence, conflicting references, stale tasks and output-option abbreviations that could bypass a blocked delivery.

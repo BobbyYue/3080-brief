@@ -1,5 +1,5 @@
 {
-  "version": 38,
+  "version": 39,
   "managed_execution": {
     "policy": "config/execution-policy.json",
     "controller": "scripts/writing_execution.py",
@@ -508,5 +508,10 @@
     "targeted_repair_round_limit": 2,
     "publish_current_after_targeted_limit_with_disclosure": true,
     "stop_on_missing_external_input": true
+  },
+  "defensive_expression": {
+    "script": "scripts/defensive_expression.py",
+    "required_in": "context_review",
+    "version": 1
   }
 }

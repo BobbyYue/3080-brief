@@ -146,6 +146,8 @@ Missing Feishu dependencies block only that output path. The skill shows the sou
 
 ## Development verification
 
+Version 0.17.0 adds [defensive-expression checks](skills/3080-brief/references/defensive-expression.md) across the takeaway, visual labels, table and body. Existing review counts confirmed unnecessary caveats, preserves decision-changing limits, and requires current context-review version 4 before checked completion. Reviewer roles, review rounds and the published example are unchanged.
+
 Version 0.16.0 strengthens the [checked output path](skills/3080-brief/references/host-integration.md): verify the actual evidence files and the caller's current task before returning checked content. It also keeps writing instructions out of the reader-facing document through the existing contextual review. Applications still need to connect this path explicitly; no application is deployed by installing the Skill. The new calibration utility reports errors and missing runs rather than certifying writing quality. See the [changelog](CHANGELOG.md).
 
 Version 0.15.0 adds [direct-expression checks](skills/3080-brief/references/direct-expression.md) before, during and after drafting. Compare repeated corrections and cautions with equally accurate direct wording, then assess their cumulative effect on the actual reading path. Necessary prohibitions, refusals, negative findings and useful repetition remain valid. Existing reviews and delivery checks require current comparison evidence; no reviewer, review round or word-ban threshold is added. New runs require `expression_plan`, unit `expression_review` and version 5 `reader_value` records.
